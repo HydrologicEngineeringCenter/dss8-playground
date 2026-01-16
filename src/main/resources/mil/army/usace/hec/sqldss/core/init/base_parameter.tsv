@@ -1,0 +1,51 @@
+%	19	%	%	Percent
+Area	3	m2	ft2	Surface Area
+Dir	1	deg	deg	Direction
+Code	19	n/a	n/a	Coded Information
+Conc	18	mg/l	ppm	Concentration
+Cond	6	umho/cm	umho/cm	Conductivity
+Count	7	unit	unit	Count
+Currency	8	$	$	Currency
+Depth	16	mm	in	Depth
+Elev	16	m	ft	Elevation
+Energy	11	MWh	MWh	Energy
+Evap	16	mm	in	Evaporation
+EvapRate	17	mm/day	in/day	Evaporation Rate
+Flow	26	cms	cfs	Flow Rate
+Frost	16	cm	in	Ground Frost
+Opening	16	m	ft	Opening Height
+pH	13	su	su	pH
+Power	21	MW	MW	Power
+Precip	16	mm	in	Precipitation
+Pres	22	kPa	in-hg	Pressure
+Rad	15	J/m2	langley	Irradiation
+Speed	17	kph	mph	Speed
+Stage	16	m	ft	Stage
+Stor	25	m3	ac-ft	Storage
+Temp	23	C	F	Temperature
+Thick	16	cm	in	Thickness
+Timing	9	sec	sec	Timing
+Turb	24	JTU	JTU	Turbidity
+Volt	10	volt	volt	Voltage
+Travel	16	km	mi	Accumulated Travel
+SpinRate	2	rpm	rpm	Spin Rate
+Irrad	14	W/m2	langley/min	Irradiance
+TurbJ	24	JTU	JTU	Turbidity
+TurbN	24	NTU	NTU	Turbidity
+Fish	7	unit	unit	Fish Count
+Dist	16	km	mi	Distance
+Ratio	19	n/a	n/a	Ratio
+TurbF	24	FNU	FNU	Turbidity
+Volume	25	m3	ft3	Volume
+Height	16	m	ft	Height
+Rotation	1	deg	deg	Rotation
+Length	16	m	ft	Length
+Width	16	m	ft	Width
+Coeff	19	n/a	n/a	Coefficient
+Head	16	m	ft	Head
+Current	27	ampere	ampere	Current
+Freq	28	Hz	Hz	Frequency
+Probability	19	n/a	n/a	Probability
+DepthVelocity	35	m2/s	ft2/s	Depth Velocity
+Text	19	n/a	n/a	Text Data
+Binary	19	n/a	n/a	Binary Data

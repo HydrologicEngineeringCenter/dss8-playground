@@ -1,0 +1,133 @@
+deg	1		Degrees
+rad	1		Radians
+rev	1		Revolution
+rpm	2		Revolutions per minute
+1000 m2	3	SI	Thousands of square meters
+acre	3	EN	Acre
+cm2	3	SI	Square centimeters
+ft2	3	EN	Square feet
+ha	3	SI	Hectares
+km2	3	SI	Square kilometers
+m2	3	SI	Square meters
+mile2	3	EN	Square miles
+cfs/mi2	4	EN	Cfs per square mile
+cms/km2	4	SI	Cms per square kilometer
+S	5		Siemens
+mho	5		Mhos
+uS	5		Micro-Siemens
+umho	5		Micro-mhos
+umho/cm	6		Micro-mhos per centimeter
+unit	7		Count
+$/kaf	29	EN	Dollars per 1000 acre-feet
+$/mcm	29	SI	Dollars per milliion cubic meters
+$	8		Dollars
+k$	8		1000 Dollars
+ft2/s	35	EN	Depth times velocity
+m2/s	35	SI	Depth times velocity
+day	9		Days
+hr	9		Hours
+min	9		Minutes
+sec	9		Seconds
+ampere	27		Ampere
+volt	10		Volts
+GWh	11		Gigawatt-hours
+J	11	SI	Joules
+MJ	11	SI	Megajoules
+MWh	11		Megawatt-hours
+TWh	11		Terawatt-hour
+Wh	11		Watt-hours
+cal	11	EN	Calories
+kWh	11		Kilowatt-hours
+N	12	SI	Newtons
+lb	12	EN	Pounds
+B	28		B-unit
+Hz	28		Hertz
+MHz	28		MegaHertz
+kHz	28		kiloHertz
+su	13		Standard pH units
+W/m2	14		Watts per square meter
+langley/min	14		Langley per minute
+J/m2	15		Joules per square meters
+langley	15		Langley
+cm	16	SI	Centimeters
+ft	16	EN	Feet
+ftUS	16	EN	Survey Feet
+in	16	EN	Inches
+km	16	SI	Kilometers
+m	16	SI	Meters
+mi	16	EN	Miles
+mm	16	SI	Millimeters
+cm/day	17	SI	Centimeters per day
+ft/hr	17	EN	Feet per hour
+ft/s	17	EN	Feet per second
+in/day	17	EN	Inches per day
+in/hr	17	EN	Inches per hour
+knot	17	EN	Knots
+kph	17	SI	Kilometers per hour
+m/hr	17	SI	Meters per hour
+m/s	17	SI	Meters per second
+mm/day	17	SI	Millimeters per day
+mm/hr	17	SI	Millimeters per hour
+mph	17	EN	Miles per hour
+g/l	18	SI	Grams per liter
+gm/cm3	18	SI	Grams per cubic centimeters
+mg/l	18	SI	Milligrams per liter
+ppm	18		Parts per million
+ug/l	18	SI	micrograms per liter
+g/m3	33	SI	Grams per cubic meter
+lbm/ft3	33	EN	Pounds per cubic feet
+ton/day	34	EN	Tons per day
+tonne/day	34	SI	Tonnes per day
+g	32	SI	Grams
+kg	32	SI	Kilograms
+lbm	32	EN	Pounds
+mg	32	SI	Milligrams
+ton	32	EN	Tons
+tonne	32	SI	Tonnes
+ug	32	SI	micrograms
+%	19		Percent
+n/a	19		No unit applies
+in/deg-day	20	EN	Inches per degree-day
+mm/deg-day	20	SI	Millimeters per degree-day
+GW	21		Gigawatts
+MW	21		Megawatts
+TW	21		Terawatts
+W	21		Watts
+kW	21		Kilowatts
+bar	22		Bars
+in-hg	22	EN	Inches of mercury
+kPa	22	SI	Kilopascals
+mb	22	SI	Millibars
+mm-hg	22	SI	Millimeters of mercury
+psi	22	EN	Pounds per square inch
+1/ft	30	EN	Per foot
+1/m	30	SI	Per meter
+C-day	31	SI	Celsius degree day
+F-day	31	EN	Fahrenheit degree day
+C	23	SI	Centigrade
+F	23	EN	Fahrenheit
+K	23	SI	Kelvins
+FNU	24		Formazin Nephelometric Unit
+JTU	24		Jackson Turbitiy Unit
+NTU	24		Nephelometric Turbidity Unit
+KAF/mon	26	EN	1000 acre-feet per month
+cfs	26	EN	Cubic feet per second
+cms	26	SI	Cubic meters per second
+gpm	26	EN	Gallons per minute
+kcfs	26	EN	Kilo-cubic feet per second
+kcms	26	SI	Kilo-cubic meters per second
+mcm/mon	26	EN	Million cubic meters per month
+mgd	26	EN	Millions of gallons per day
+1000 m3	25	SI	Thousands of cubic meters
+ac-ft	25	EN	Acre-feet
+dsf	25	EN	day-second-foot
+ft3	25	EN	Cubic feet
+gal	25	EN	Gallons
+kaf	25	EN	Kiloacre-feet
+kdsf	25	EN	Kilo-day-second-foot
+kgal	25	EN	Kilogallons
+km3	25	SI	Cubic kilometers
+m3	25	SI	Cubic meters
+mcm	25	SI	Millions of cubic meters
+mgal	25	EN	Millions of gallons
+mile3	25	EN	Cubic miles

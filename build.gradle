@@ -1,0 +1,38 @@
+plugins {
+    id 'java-library'
+    id "com.palantir.git-version" version "3.0.0"
+}
+
+def versionLabel(gitInfo) {
+    def branch = gitInfo.branchName // all branches are snapshots, only tags get released
+    def tag = "test" // gitInfo.lastTag
+    // tag is returned as is. Branch may need cleanup
+    return branch == null ? tag : "99." + branch.replace("/","-") + "-SNAPSHOT"
+}
+
+group = 'mil.army.usace.hec'
+version = versionLabel(versionDetails())
+
+repositories {
+    mavenCentral()
+    maven {
+        url = uri("https://www.hec.usace.army.mil/nexus/repository/maven-public/")
+    }
+}
+
+dependencies {
+    implementation(libs.bundles.hec.monolith) {
+        exclude group: "javax.media", module: "jai_core"
+        exclude group: "javax.media", module: "jai_coded"
+    }
+    api(libs.sqliteJdbc)
+    compileOnly "org.jetbrains:annotations:24.1.0"   // needed to compile, not at runtime
+    testCompileOnly "org.jetbrains:annotations:24.1.0"
+    testImplementation platform('org.junit:junit-bom:5.10.0')
+    testImplementation 'org.junit.jupiter:junit-jupiter'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}
+
+test {
+    useJUnitPlatform()
+}
