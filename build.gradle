@@ -14,18 +14,19 @@ group = 'mil.army.usace.hec'
 version = versionLabel(versionDetails())
 
 repositories {
-    mavenCentral()
     maven {
         url = uri("https://www.hec.usace.army.mil/nexus/repository/maven-public/")
     }
+    mavenCentral()
 }
 
 dependencies {
-    implementation(libs.bundles.hec.monolith) {
+    implementation(libs.heclib)
+    implementation(libs.hec.monolith) {
         exclude group: "javax.media", module: "jai_core"
         exclude group: "javax.media", module: "jai_coded"
     }
-    api(libs.sqliteJdbc)
+    implementation(libs.sqliteJdbc)
     compileOnly "org.jetbrains:annotations:24.1.0"   // needed to compile, not at runtime
     testCompileOnly "org.jetbrains:annotations:24.1.0"
     testImplementation platform('org.junit:junit-bom:5.10.0')

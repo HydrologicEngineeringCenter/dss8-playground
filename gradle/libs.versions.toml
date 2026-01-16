@@ -4,7 +4,7 @@ sqliteJdbc = "3.45.3.0"
 service-annotations = "2.0.1"
 
 # Natives
-heclib = "7-IU-5"
+heclib = "7-IW-5-win-x86_64"
 
 # Third Party
 
@@ -17,13 +17,13 @@ sqliteJdbc = {module = "org.xerial:sqlite-jdbc", version.ref = "sqliteJdbc" }
 service-annotations = { module = "mil.army.usace.hec:service-annotations", version.ref = "service-annotations" }
 
 # Natives
-heclib = { module = "mil.army.usace.hec:javaHeclib" }
+heclib = { module = "mil.army.usace.hec:javaHeclib", version.ref = "heclib" }
 
 # Third Party
 
 # Test
 
-[bundles]
-hec-monolith = ["hec-monolith"]
+#[bundles]
+#hec-monolith = ["hec-monolith"]
 
 # Third party
