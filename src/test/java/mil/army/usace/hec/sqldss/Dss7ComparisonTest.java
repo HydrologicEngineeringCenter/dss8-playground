@@ -1,0 +1,185 @@
+package mil.army.usace.hec.sqldss;
+
+import com.google.common.flogger.FluentLogger;
+import mil.army.usace.hec.sqldss.api.dss7.HecSqlDss;
+import mil.army.usace.hec.sqldss.core.SqlDss;
+import org.apache.poi.ss.formula.functions.T;
+import org.junit.jupiter.api.Test;
+
+import java.io.File;
+import java.io.IOException;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.net.URL;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.List;
+
+import hec.heclib.dss.HecDss;
+import hec.heclib.util.Heclib;
+import hec.io.TimeSeriesContainer;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+
+public class Dss7ComparisonTest {
+
+    private static final Logger log = LoggerFactory.getLogger(Dss7ComparisonTest.class);
+    static FluentLogger logger = FluentLogger.forEnclosingClass();
+    String packageName = Dss7ComparisonTest.class.getPackageName();
+    String packageDir = packageName.replace('.', '/');
+
+    static long startTimer() {
+        return System.currentTimeMillis();
+    }
+
+    static long endTimer(long startTime) {
+        return System.currentTimeMillis() - startTime;
+    }
+
+    static String getFileName(URL resource) throws URISyntaxException, IOException {
+        return new File(resource.toURI()).getCanonicalPath();
+    }
+
+    @ParameterizedTest
+    @CsvSource({"100000", "10000", "1000", "100", "10"})
+    public void compareToDss7(int maxPathnames) throws Exception {
+        String sourceBasename = "time_series_source.dss";
+        String target7Basename = "tester.dss7.dss";
+        String target8Basename = "tester.dss8.dss";
+        String sourceFilename = Paths.get(packageDir,sourceBasename).toString();
+        String target7Filename = Paths.get(packageDir, target7Basename).toString();
+        String target8Filename = Paths.get(packageDir,target8Basename).toString();
+        long startTime;
+        long elapsedCreateDss7 = -1;
+        long elapsedCreateDss8 = -1;
+        long elapsedOpenDss7 = -1;
+        long elapsedOpenDss8 = -1;
+        long elapsedReadDss7 = -1;
+        long elapsedReadDss8 = -1;
+        long elapsedWriteDss7 = -1;
+        long elapsedWriteDss8 = -1;
+        long elapsedOverwriteDss7 = -1;
+        long elapsedOverwriteDss8 = -1;
+        long dss7FileSize;
+        long dss8FileSize;
+
+        URL sourceResource = getClass().getClassLoader().getResource(sourceFilename);
+        URL target7Resource = new URI(sourceResource.toString().replace(sourceBasename, target7Basename)).toURL();
+        URL target8Resource = new URI(sourceResource.toString().replace(sourceBasename, target8Basename)).toURL();
+        assertNotNull(sourceResource, "Missing resource: "+sourceResource);
+
+        Heclib.zset("MLVL", "", 0);
+        //-----------------------------------//
+        // open source DSS7 and read records //
+        //-----------------------------------//
+        startTime = startTimer();
+        HecDss sourceDss = HecDss.open(getFileName(sourceResource));
+        elapsedOpenDss7 = endTimer(startTime);
+        List<String> pathnames = sourceDss.getPathnameList();
+        TimeSeriesContainer[] tscs = new TimeSeriesContainer[Math.min(pathnames.size(), maxPathnames)];
+        startTime = startTimer();
+        for (int i = 0; i < tscs.length; ++i) {
+            tscs[i] = (TimeSeriesContainer) sourceDss.get(pathnames.get(i));
+            tscs[i].fileName = null;
+        }
+        elapsedReadDss7 = endTimer(startTime);
+        sourceDss.close();
+        //-----------------------------------//
+        // create new DSS7 and write records //
+        //-----------------------------------//
+        Files.deleteIfExists(Path.of(getFileName(target7Resource)));
+        startTime = startTimer();
+        HecDss targetDss7 = HecDss.open(getFileName(target7Resource));
+        elapsedCreateDss7 = endTimer(startTime);
+        startTime = startTimer();
+        for (TimeSeriesContainer tsc: tscs) {
+            targetDss7.put(tsc);
+        }
+        targetDss7.close();
+        elapsedWriteDss7 = endTimer(startTime);
+        //------------------------//
+        // overwrite DSS7 records //
+        //------------------------//
+        targetDss7 = HecDss.open(getFileName(target7Resource));
+        startTime = startTimer();
+        for (TimeSeriesContainer tsc: tscs) {
+            targetDss7.put(tsc);
+        }
+        targetDss7.close();
+        elapsedOverwriteDss7 = endTimer(startTime);
+        //------------------------//
+        // get the DSS7 file size //
+        //------------------------//
+        dss7FileSize = Files.size(Path.of(target7Resource.toURI()));
+        //-----------------------------------//
+        // create new DSS8 and write records //
+        //-----------------------------------//
+        Files.deleteIfExists(Path.of(getFileName(target8Resource)));
+        startTime = startTimer();
+        HecSqlDss targetDss8 = HecSqlDss.open(getFileName(target8Resource));
+        targetDss8.setAutoCommit(false);
+        elapsedCreateDss8 = endTimer(startTime);
+        startTime = startTimer();
+        for (int i = 0; i < tscs.length; ++i) {
+            if (i > 0 && i % 100 != 0) {
+                targetDss8.commit();
+            }
+            targetDss8.put(tscs[i]);
+        }
+        targetDss8.commit();
+        targetDss8.close();
+        elapsedWriteDss8 = endTimer(startTime);
+        //-------------------------------------//
+        // open existing DSS8 and read records //
+        //-------------------------------------//
+        startTime = startTimer();
+        targetDss8 = HecSqlDss.open(getFileName(target8Resource));
+        elapsedOpenDss8 = endTimer(startTime);
+        startTime = startTimer();
+        for (int i = 0; i < tscs.length; ++i) {
+            tscs[i] = (TimeSeriesContainer) targetDss8.get(tscs[i].fullName);
+        }
+        elapsedReadDss8 = endTimer(startTime);
+        targetDss8.done();
+        //------------------------//
+        // overwrite DSS8 records //
+        //------------------------//
+        targetDss8 = HecSqlDss.open(getFileName(target8Resource));
+        targetDss8.setAutoCommit(false);
+        startTime = startTimer();
+        for (int i = 0; i < tscs.length; ++i) {
+            if (i > 0 && i % 100 != 0) {
+                targetDss8.commit();
+            }
+            targetDss8.put(tscs[i]);
+        }
+        targetDss8.commit();
+        targetDss8.done();
+        elapsedOverwriteDss8 = endTimer(startTime);
+        //------------------------//
+        // get the DSS8 file size //
+        //------------------------//
+        dss8FileSize = Files.size(Path.of(target8Resource.toURI()));
+        logger.atInfo().log(
+                "Number of Records : "+tscs.length+"\n" +
+                        "DSS7 create new         : "+elapsedCreateDss7+" ms\n" +
+                        "DSS7 open existing      : "+elapsedOpenDss7+" ms\n" +
+                        "DSS7 read records       : "+elapsedReadDss7+" ms\n" +
+                        "DSS7 write records      : "+elapsedWriteDss7+" ms\n" +
+                        "DSS7 overwrite records  : "+elapsedOverwriteDss7+" ms\n" +
+                        "DSS7 file size          : "+dss7FileSize+" bytes\n" +
+                        "DSS8 create new         : "+elapsedCreateDss8+" ms\n" +
+                        "DSS8 open existing      : "+elapsedOpenDss8+" ms\n" +
+                        "DSS8 read records       : "+elapsedReadDss8+" ms\n" +
+                        "DSS8 write records      : "+elapsedWriteDss8+" ms\n" +
+                        "DSS8 overwrite records  : "+elapsedOverwriteDss8+" ms\n" +
+                        "DSS8 file size          : "+dss8FileSize+" bytes"
+        );
+    }
+}

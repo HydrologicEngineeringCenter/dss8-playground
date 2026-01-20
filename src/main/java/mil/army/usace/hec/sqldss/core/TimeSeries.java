@@ -1164,7 +1164,7 @@ public final class TimeSeries {
         if (paramKey < 0) {
             return key;
         }
-        String intvlName = Interval.getInterval(parts[3], conn);
+        String intvlName = Interval.getInterval(parts[3]);
         String durName = Duration.getDuration(parts[4], conn);
         boolean nullKey;
         try (PreparedStatement ps = conn.prepareStatement(
@@ -1203,7 +1203,7 @@ public final class TimeSeries {
             String[] parts = name.split("\\|"); // if not 6 parts, with throw in getTimeSeriesSpecKey()
             long locKey = Location.putLocation(parts[0], conn);
             long paramKey = Parameter.putParameter(parts[1], conn);
-            String intvlName = Interval.getInterval(parts[3], conn);
+            String intvlName = Interval.getInterval(parts[3]);
             String durName = Duration.getDuration(parts[4], conn);
             boolean nullKey;
             try (PreparedStatement ps = conn.prepareStatement(

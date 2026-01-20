@@ -502,7 +502,7 @@ public class HecSqlDss implements AutoCloseable {
         sqldss.commit();
     }
 
-    public void setAutoCommit(boolean state) {
+    public void setAutoCommit(boolean state) throws SQLException {
         sqldss.setAutoCommit(state);
     }
 

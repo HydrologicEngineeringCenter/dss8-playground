@@ -175,8 +175,9 @@ public class SqlDss implements AutoCloseable {
         conn.commit();
     }
 
-    public void setAutoCommit(boolean state) {
+    public void setAutoCommit(boolean state) throws SQLException {
         autoCommit = state;
+        conn.setAutoCommit(autoCommit);
     }
 
     public boolean getAutoCommit() {

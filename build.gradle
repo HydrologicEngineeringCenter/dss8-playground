@@ -20,20 +20,42 @@ repositories {
     mavenCentral()
 }
 
+configurations {
+    javaHeclib
+}
+
 dependencies {
-    implementation(libs.heclib)
+    javaHeclib (libs.heclib)
+    compileOnly (libs.jetbrainsAnnotations)
     implementation(libs.hec.monolith) {
         exclude group: "javax.media", module: "jai_core"
         exclude group: "javax.media", module: "jai_coded"
     }
     implementation(libs.sqliteJdbc)
-    compileOnly "org.jetbrains:annotations:24.1.0"   // needed to compile, not at runtime
-    testCompileOnly "org.jetbrains:annotations:24.1.0"
-    testImplementation platform('org.junit:junit-bom:5.10.0')
-    testImplementation 'org.junit.jupiter:junit-jupiter'
-    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+    testImplementation platform(libs.junitBom)
+    testImplementation (libs.junitJupiter)
+    testRuntimeOnly (libs.junitPlatformLauncher)
+    testCompileOnly (libs.jetbrainsAnnotations)
+    testRuntimeOnly (libs.org.slf4j) // needed for sqlite
 }
 
 test {
     useJUnitPlatform()
+}
+
+tasks.register("UnpackJavaHeclib", Copy) {
+    from {
+        configurations.javaHeclib.collect { zipTree(it) }
+    }
+    into layout.buildDirectory.dir("native")
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+}
+
+tasks.named("test") {
+//    jvmArgs += [
+//            "-XX:StartFlightRecording=filename=${buildDir}/test.jfr,settings=profile",
+//            "-XX:FlightRecorderOptions=stackdepth=256"
+//    ]
+    dependsOn("UnpackJavaHeclib")
+    systemProperty "java.library.path", layout.buildDirectory.dir("native").get().asFile.absolutePath
 }

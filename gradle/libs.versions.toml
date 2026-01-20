@@ -1,29 +1,17 @@
 [versions]
 hec-monolith = "6.0.0-rc02"
 sqliteJdbc = "3.45.3.0"
-service-annotations = "2.0.1"
-
-# Natives
 heclib = "7-IW-5-win-x86_64"
-
-# Third Party
-
-# Test
+org-slf4j = "1.7.36"
+jetbrainsAnnotations = "24.1.0"
+junitBom = "5.10.0"
 
 [libraries]
-hec-monolithbom = { module = "mil.army.usace.hec:hec-monolith-bom", version.ref = "hec-monolith" }
 hec-monolith = { module = "mil.army.usace.hec:hec-monolith", version.ref = "hec-monolith" }
 sqliteJdbc = {module = "org.xerial:sqlite-jdbc", version.ref = "sqliteJdbc" }
-service-annotations = { module = "mil.army.usace.hec:service-annotations", version.ref = "service-annotations" }
-
-# Natives
 heclib = { module = "mil.army.usace.hec:javaHeclib", version.ref = "heclib" }
-
-# Third Party
-
-# Test
-
-#[bundles]
-#hec-monolith = ["hec-monolith"]
-
-# Third party
+org-slf4j = { module = "org.slf4j:slf4j-simple", version.ref = "org-slf4j" }
+jetbrainsAnnotations = { module = "org.jetbrains:annotations", version.ref = "jetbrainsAnnotations" }
+junitBom = { module = "org.junit:junit-bom", version.ref = "junitBom" }
+junitJupiter = { module = "org.junit.jupiter:junit-jupiter" }
+junitPlatformLauncher = { module = "org.junit.platform:junit-platform-launcher" }

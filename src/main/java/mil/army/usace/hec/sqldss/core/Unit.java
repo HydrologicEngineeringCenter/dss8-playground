@@ -99,7 +99,7 @@ public class Unit {
             String[] function,
             Connection conn) throws SQLException, CoreException {
         String baseParameter = parameter.split("-", 2)[0];
-        String sql = "select default_si_unit from base_parameter where name = ? ";
+        String sql = "select default_si_unit from base_parameter where name = ?";
         String dbUnit;
         try (PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, baseParameter);

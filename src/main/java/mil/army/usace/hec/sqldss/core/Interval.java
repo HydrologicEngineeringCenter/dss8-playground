@@ -1,5 +1,7 @@
 package mil.army.usace.hec.sqldss.core;
 
+import org.jetbrains.annotations.NotNull;
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
@@ -14,6 +16,7 @@ import java.util.Map;
 
 public class Interval {
 
+    static Map<String, String> intervalNames = new HashMap<>();
     static Map<String, Integer> intervalMinutes = new HashMap<>();
     static Map<String, String> intervalBlockSizes = new HashMap<>();
 
@@ -33,6 +36,7 @@ public class Interval {
                         continue;
                     }
                     String[] parts = line.split("\t", -1);
+                    intervalNames.put(parts[0].toLowerCase(), parts[0]);
                     intervalMinutes.put(parts[0], Integer.parseInt(parts[1]));
                     intervalBlockSizes.put(parts[0], parts[2]);
                 }
@@ -43,37 +47,35 @@ public class Interval {
         }
     }
 
-    static String getInterval(String name, Connection conn) throws CoreException, SQLException {
+    static @NotNull String getInterval(String name) throws CoreException {
         String actualName;
-        try (PreparedStatement ps = conn.prepareStatement(
-                "select name from interval where name = ?"
-        )) {
-            ps.setString(1, name);
-            try (ResultSet rs = ps.executeQuery()) {
-                rs.next();
-                actualName = rs.getString("name");
-            }
+        actualName = intervalNames.get(name.toLowerCase());
+        if (actualName == null) {
+            throw new CoreException("No such interval: "+name);
         }
         return actualName;
     }
 
     public static int getIntervalMinutes(String interval) throws CoreException {
-        Integer minutes = intervalMinutes.get(interval);
+        String intervalName = getInterval(interval);
+        Integer minutes = intervalMinutes.get(intervalName);
         if (minutes == null) {
             throw new CoreException("No such interval: "+interval);
         }
         return minutes;
     }
 
-    public static String getBlockSize(String interval) throws CoreException {
-        String blockSize = intervalBlockSizes.get(interval);
+    public static @NotNull String getBlockSize(String interval) throws CoreException {
+        String intervalName = getInterval(interval);
+        String blockSize = intervalBlockSizes.get(intervalName);
         if (blockSize == null) {
             throw new CoreException("No such interval: "+interval);
         }
         return blockSize;
     }
 
-    public static int getBlockSizeMinutes(String interval) {
-        return intervalMinutes.get(intervalBlockSizes.get(interval));
+    public static int getBlockSizeMinutes(String interval) throws CoreException {
+        String intervalName = getInterval(interval);
+        return intervalMinutes.get(intervalBlockSizes.get(intervalName));
     }
 }

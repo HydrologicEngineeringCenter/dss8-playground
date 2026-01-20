@@ -1,5 +1,6 @@
 package mil.army.usace.hec.sqldss.mil.army.usace.hec.sqldss;
 
+import com.google.common.flogger.FluentLogger;
 import mil.army.usace.hec.sqldss.core.Location;
 import mil.army.usace.hec.sqldss.core.SqlDss;
 import org.junit.jupiter.api.Test;
@@ -12,8 +13,10 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class CoreTest {
 
+    static FluentLogger logger = FluentLogger.forEnclosingClass();
+
     @Test
-    public static void testLocation() throws Exception {
+    public void testLocation() throws Exception {
         String dbFileName = "test.sqldss";
         String locationName = "ctx:BaseLoc-SubLoc";
         Files.deleteIfExists(Path.of(dbFileName));
