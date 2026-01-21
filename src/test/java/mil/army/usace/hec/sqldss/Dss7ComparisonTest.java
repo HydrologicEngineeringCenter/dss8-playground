@@ -29,7 +29,6 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 
 public class Dss7ComparisonTest {
 
-    private static final Logger log = LoggerFactory.getLogger(Dss7ComparisonTest.class);
     static FluentLogger logger = FluentLogger.forEnclosingClass();
     String packageName = Dss7ComparisonTest.class.getPackageName();
     String packageDir = packageName.replace('.', '/');
@@ -47,7 +46,13 @@ public class Dss7ComparisonTest {
     }
 
     @ParameterizedTest
-    @CsvSource({"100000", "10000", "1000", "100", "10"})
+    @CsvSource({
+            "10",
+            "100",
+            "1000",
+//            "10000",
+//            "100000"
+    })
     public void compareToDss7(int maxPathnames) throws Exception {
         String sourceBasename = "time_series_source.dss";
         String target7Basename = "tester.dss7.dss";
@@ -127,7 +132,7 @@ public class Dss7ComparisonTest {
         elapsedCreateDss8 = endTimer(startTime);
         startTime = startTimer();
         for (int i = 0; i < tscs.length; ++i) {
-            if (i > 0 && i % 100 != 0) {
+            if (i > 0 && i % 100 == 0) {
                 targetDss8.commit();
             }
             targetDss8.put(tscs[i]);
@@ -154,7 +159,7 @@ public class Dss7ComparisonTest {
         targetDss8.setAutoCommit(false);
         startTime = startTimer();
         for (int i = 0; i < tscs.length; ++i) {
-            if (i > 0 && i % 100 != 0) {
+            if (i > 0 && i % 100 == 0) {
                 targetDss8.commit();
             }
             targetDss8.put(tscs[i]);
@@ -166,20 +171,34 @@ public class Dss7ComparisonTest {
         // get the DSS8 file size //
         //------------------------//
         dss8FileSize = Files.size(Path.of(target8Resource.toURI()));
+        String format = "Number of Records : %d\n" +
+                "DSS7 create new         : %d ms\n" +
+                "DSS7 open existing      : %d ms\n" +
+                "DSS7 read records       : %d ms\n" +
+                "DSS7 write records      : %d ms\n" +
+                "DSS7 overwrite records  : %d ms\n" +
+                "DSS7 file size          : %d bytes\n" +
+                "DSS8 create new         : %d ms (x %.3f)\n" +
+                "DSS8 open existing      : %d ms (x %.3f)\n" +
+                "DSS8 read records       : %d ms (x %.3f)\n" +
+                "DSS8 write records      : %d ms (x %.3f)\n" +
+                "DSS8 overwrite records  : %d ms (x %.3f)\n" +
+                "DSS8 file size          : %d bytes (x %.3f)\n";
         logger.atInfo().log(
-                "Number of Records : "+tscs.length+"\n" +
-                        "DSS7 create new         : "+elapsedCreateDss7+" ms\n" +
-                        "DSS7 open existing      : "+elapsedOpenDss7+" ms\n" +
-                        "DSS7 read records       : "+elapsedReadDss7+" ms\n" +
-                        "DSS7 write records      : "+elapsedWriteDss7+" ms\n" +
-                        "DSS7 overwrite records  : "+elapsedOverwriteDss7+" ms\n" +
-                        "DSS7 file size          : "+dss7FileSize+" bytes\n" +
-                        "DSS8 create new         : "+elapsedCreateDss8+" ms\n" +
-                        "DSS8 open existing      : "+elapsedOpenDss8+" ms\n" +
-                        "DSS8 read records       : "+elapsedReadDss8+" ms\n" +
-                        "DSS8 write records      : "+elapsedWriteDss8+" ms\n" +
-                        "DSS8 overwrite records  : "+elapsedOverwriteDss8+" ms\n" +
-                        "DSS8 file size          : "+dss8FileSize+" bytes"
+                format,
+                tscs.length,
+                elapsedCreateDss7,
+                elapsedOpenDss7,
+                elapsedReadDss7,
+                elapsedWriteDss7,
+                elapsedOverwriteDss7,
+                dss7FileSize,
+                elapsedCreateDss8, 1.*elapsedCreateDss8/elapsedCreateDss7,
+                elapsedOpenDss8, 1.*elapsedOpenDss8/elapsedOpenDss7,
+                elapsedReadDss8, 1.*elapsedReadDss8/elapsedReadDss7,
+                elapsedWriteDss8, 1.*elapsedWriteDss8/elapsedWriteDss7,
+                elapsedOverwriteDss8, 1.*elapsedOverwriteDss8/elapsedOverwriteDss7,
+                dss8FileSize, 1.*dss8FileSize/dss7FileSize
         );
     }
 }

@@ -1,5 +1,6 @@
 package mil.army.usace.hec.sqldss.core;
 
+import com.google.common.flogger.FluentLogger;
 import hec.heclib.dss.DSSPathname;
 import hec.heclib.util.HecTime;
 import hec.io.TimeSeriesContainer;
@@ -30,6 +31,8 @@ public final class TimeSeries {
         throw new AssertionError("Cannot instantiate");
     }
 
+    static FluentLogger logger = FluentLogger.forEnclosingClass();
+
     static class TsvRecordHeader {
         Constants.DATA_TYPE dataType;
         int version;
@@ -46,6 +49,14 @@ public final class TimeSeries {
         double minValue = Double.MAX_VALUE;
         double maxValue = Double.MIN_VALUE;
         long lastUpdate;
+    }
+
+    static class TsvData {
+        long[] times = null;
+        double[] values = null;
+        int[] qualities = null;
+        int offset = 0;
+        int count = -1;
     }
 
     @NotNull
@@ -507,8 +518,6 @@ public final class TimeSeries {
             Connection conn,
             Connection tmp
     ) throws CoreException, SQLException, EncodedDateTimeException, IOException {
-        long t1, t2;
-        t1 = System.currentTimeMillis();
         // parse the name
         String[] parts = tsc.fullName.split("\\|", -1);
         String intervalName = parts[3];
@@ -578,6 +587,10 @@ public final class TimeSeries {
         if (tsc.quality != null && Arrays.stream(tsc.quality).anyMatch(q -> q != 0)) {
             qualities = Arrays.copyOf(tsc.quality, tsc.numberValues);
         }
+        else {
+            qualities = new int[tsc.numberValues];
+            Arrays.fill(qualities, 0);
+        }
         // determine blocks
         long[] encodedBlockDates = getBlockStartDates(tsc.startHecTime, tsc.endHecTime, intervalName);
         long[] encodedBlockTimes = Arrays.stream(encodedBlockDates).map(d -> d * 1000000).toArray();
@@ -619,9 +632,14 @@ public final class TimeSeries {
                         + Byte.BYTES                            // has quality?
                         + Long.BYTES                            // date/time of first value
                         + blockCounts[i] * Double.BYTES;        // values
-                if (qualities != null) {
-                    size += blockCounts[i] * Integer.BYTES; // quality codes
-                    hasQuality = 1;
+                if (tsc.quality != null) {
+                    for (int j = 0; j < tsc.numberValues; ++j) {
+                        if (tsc.quality[j] != 0) {
+                            size += blockCounts[i] * Integer.BYTES; // quality codes
+                            hasQuality = 1;
+                            break;
+                        }
+                    }
                 }
                 ByteBuffer buf = ByteBuffer.allocate(size).order(ByteOrder.LITTLE_ENDIAN);
                 buf.put(format);
@@ -773,12 +791,12 @@ public final class TimeSeries {
                 int count;
                 // put incoming data into tmp table
                 long[] incomingEncodedTimes =
-                        EncodedDateTime.makeRegularEncodedDateTimeArray(EncodedDateTime.encodeDateTime(tsc.times[0]),
-                                tsc.numberValues, intervalMinutes);
+                        EncodedDateTime.makeRegularEncodedDateTimeArray(EncodedDateTime.encodeDateTime(tsc.times[blockStarts[i]]),
+                                blockCounts[i], intervalMinutes);
                 try (PreparedStatement ps = tmp.prepareStatement("insert into incoming_tsv (date_time, value, " +
                         "quality) values (?, ?, ?)")) {
                     for (int j = blockStarts[i]; j < blockStarts[i] + blockCounts[i]; ++j) {
-                        ps.setLong(1, incomingEncodedTimes[j]);
+                        ps.setLong(1, incomingEncodedTimes[j-blockStarts[i]]);
                         ps.setDouble(2, tsc.values[j]);
                         ps.setInt(3, tsc.quality == null ? 0 : tsc.quality[j]);
                         ps.executeUpdate();
@@ -795,26 +813,26 @@ public final class TimeSeries {
                     case REPLACE_ALL:
                     case REPLACE_ALL_CREATE:
                     case REPLACE_ALL_DELETE:
-                        try (PreparedStatement ps = tmp.prepareStatement("delete from existing_tsv where date_time " +
-                                "between ? and ?")) {
-                            ps.setLong(1, incomingEncodedTimes[0]);
-                            ps.setLong(2, incomingEncodedTimes[incomingEncodedTimes.length - 1]);
-                            ps.executeUpdate();
-                        }
-                        try (PreparedStatement ps = tmp.prepareStatement(
-                                "insert              " +
-                                        "  into existing_tsv " +
-                                        "       (date_time,  " +
-                                        "        value,      " +
-                                        "        quality     " +
-                                        "       )            " +
-                                        "select date_time,   " +
-                                        "       value,       " +
-                                        "       quality      " +
-                                        "  from incoming_tsv "
-                        )) {
-                            ps.executeUpdate();
-                        }
+//                        try (PreparedStatement ps = tmp.prepareStatement("delete from existing_tsv where date_time " +
+//                                "between ? and ?")) {
+//                            ps.setLong(1, incomingEncodedTimes[0]);
+//                            ps.setLong(2, incomingEncodedTimes[incomingEncodedTimes.length - 1]);
+//                            ps.executeUpdate();
+//                        }
+//                        try (PreparedStatement ps = tmp.prepareStatement(
+//                                "insert              " +
+//                                        "  into existing_tsv " +
+//                                        "       (date_time,  " +
+//                                        "        value,      " +
+//                                        "        quality     " +
+//                                        "       )            " +
+//                                        "select date_time,   " +
+//                                        "       value,       " +
+//                                        "       quality      " +
+//                                        "  from incoming_tsv "
+//                        )) {
+//                            ps.executeUpdate();
+//                        }
                         break;
                     case DO_NOT_REPLACE:
                         try (PreparedStatement ps = tmp.prepareStatement(
@@ -900,159 +918,259 @@ public final class TimeSeries {
                     default:
                         throw new CoreException("Unexpected store rule: " + storeRule.name());
                 }
-                // fill in any gaps in the merged data
-                try (PreparedStatement ps = tmp.prepareStatement("select count(*) from existing_tsv")) {
-                    try (ResultSet rs = ps.executeQuery()) {
-                        rs.next();
-                        count = rs.getInt("count(*)");
-                    }
-                }
-                if (count == 0) {
-                    // delete this record
-                    try (PreparedStatement ps = conn.prepareStatement("delete from tsv where times_series=? and " +
-                            "block_start_date=?")) {
-                        ps.setLong(1, key);
-                        ps.setLong(2, encodedBlockTimes[i]);
-                        ps.executeUpdate();
-                    }
-                }
-                else {
-                    // create a new blob from the merged data
-                    existingEncodedTimes = new long[count];
-                    // check for gaps within the block
-                    List<Integer> gaps = new ArrayList<>();
-                    try (PreparedStatement ps = tmp.prepareStatement("select date_time from existing_tsv order by " +
-                            "date_time")) {
-                        try (ResultSet rs = ps.executeQuery()) {
-                            int lastGap = -2;
-                            long expectedEncodedTime;
-                            for (int j = 0; rs.next(); ++j) {
-                                existingEncodedTimes[j] = rs.getLong(1);
-                                if (j > 0) {
-                                    expectedEncodedTime =
-                                            EncodedDateTime.incrementEncodedDateTime(
-                                                    existingEncodedTimes[j - 1],
-                                                    intervalMinutes,
-                                                    1);
-                                    if (j > lastGap + 2 && existingEncodedTimes[j] > expectedEncodedTime) {
-                                        lastGap = j - 1;
-                                        gaps.add(lastGap);
-                                    }
+                switch (storeRule) {
+                    case REPLACE_ALL:
+                    case REPLACE_ALL_CREATE:
+                    case REPLACE_ALL_DELETE:
+                        TsvData incoming = new TsvData();
+                        incoming.times = encodedTimes;
+                        incoming.values = values;
+                        incoming.qualities = qualities;
+                        incoming.offset = blockStarts[i];
+                        incoming.count = blockCounts[i];
+                        TsvData existing = new TsvData();
+                        existing.times = existingEncodedTimes;
+                        existing.values = existingValues;
+                        existing.qualities = existingQualities;
+                        TsvData merged = new TsvData();
+                        mergeReplaceAll(
+                                incoming,
+                                existing,
+                                merged
+                        );
+                        // create a new blob from the merged data
+                        count = merged.count;
+                        hasQuality = 0;
+                        if (merged.qualities != null) {
+                            for (int j = 0; j < merged.count; ++j) {
+                                if (merged.qualities[j] != 0) {
+                                    hasQuality = 1;
+                                    break;
                                 }
                             }
                         }
-                    }
-                    // fill in any gaps within the block
-                    if (!gaps.isEmpty()) {
-                        // add the missing values
-                        try (PreparedStatement ps = tmp.prepareStatement("insert into existing_tsv (date_time, value," +
-                                " quality) values (?, ?, ?)")) {
-                            for (Integer gap : gaps) {
-                                int g = gap;
-                                long[] fillTimes =
-                                        EncodedDateTime.makeRegularEncodedDateTimeArray(existingEncodedTimes[g],
-                                                existingEncodedTimes[g + 1], intervalMinutes);
-                                for (int j = 1; j < fillTimes.length; ++j) {
-                                    if (fillTimes[j] < existingEncodedTimes[g + 1]) {
-                                        ps.setLong(1, fillTimes[j]);
-                                        ps.setDouble(2, UNDEFINED_DOUBLE);
-                                        ps.setInt(3, 0);
-                                        ps.executeUpdate();
-                                    }
+                        blockInfo.valueCount = count;
+                        blockInfo.firstTime = merged.times[0];
+                        blockInfo.lastTime = merged.times[count-1];
+                        int size = Byte.BYTES        // data type
+                                + Byte.BYTES             // data type version
+                                + Integer.BYTES          // value count
+                                + Byte.BYTES             // has quality?
+                                + Long.BYTES             // date/time of first value
+                                + count * Double.BYTES;  // values
+                        if (hasQuality == 1) {
+                            size += count * Integer.BYTES;
+                        }
+                        buf = ByteBuffer.allocate(size).order(ByteOrder.LITTLE_ENDIAN);
+                        buf.put(format);
+                        buf.put(version);
+                        buf.putInt(count);
+                        buf.put(hasQuality);
+                        buf.putLong(merged.times[0]);
+                        for (int j = 0; j < count; ++j) {
+                            double value = merged.values[j];
+                            if (values[j] != UNDEFINED_DOUBLE) {
+                                if (mustConvert) {
+                                    value = Unit.performConversion(value, unitConvFactor[0], unitConvOffset[0], unitConvFunction[0]);
                                 }
+                                blockInfo.minValue = Math.min(value, blockInfo.minValue);
+                                blockInfo.maxValue = Math.max(value, blockInfo.maxValue);
+                            }
+                            buf.putDouble(value);
+                        }
+                        if (hasQuality == 1) {
+                            for (int j = 0; j < count; ++j) {
+                                buf.putInt(merged.qualities[j]);
                             }
                         }
-                        // re-query for count
+                        // overwrite the existing the blob
+                        try (PreparedStatement ps = conn.prepareStatement(
+                                "update tsv set data=? where time_series=? and block_start_date=?"
+                        )) {
+                            ps.setBytes(1, blob);
+                            ps.setLong(2, key);
+                            ps.setLong(3, encodedBlockDates[i]);
+                            ps.executeUpdate();
+                        }
+                        // overwrite the existing the block info
+                        blockInfo.lastUpdate = System.currentTimeMillis();
+                        try (PreparedStatement ps = conn.prepareStatement(
+                                "update tsv_info\n" +
+                                        "   set value_count = ?,\n" +
+                                        "       first_time  = ?,\n" +
+                                        "       last_time   = ?,\n" +
+                                        "       min_value   = ?,\n" +
+                                        "       max_value   = ?,\n" +
+                                        "       last_update = ?\n" +
+                                        " where time_series = ?\n" +
+                                        "   and block_start_date = ?"
+                        )) {
+                            ps.setLong(1, blockInfo.valueCount);
+                            ps.setLong(2, blockInfo.firstTime);
+                            ps.setLong(3, blockInfo.lastTime);
+                            ps.setDouble(4, blockInfo.minValue);
+                            ps.setDouble(5, blockInfo.maxValue);
+                            ps.setLong(6, blockInfo.lastUpdate);
+                            ps.setLong(7, key);
+                            ps.setLong(8, encodedBlockDates[i]);
+                            ps.executeUpdate();
+                        }
+                        break;
+                    default:
+                        // fill in any gaps in the merged data
                         try (PreparedStatement ps = tmp.prepareStatement("select count(*) from existing_tsv")) {
                             try (ResultSet rs = ps.executeQuery()) {
                                 rs.next();
                                 count = rs.getInt("count(*)");
                             }
                         }
-                    }
-                    // get the merged values and qualities
-                    try (PreparedStatement ps = tmp.prepareStatement("select min(date_time) from existing_tsv")) {
-                        try (ResultSet rs = ps.executeQuery()) {
-                            rs.next();
-                            encodedFirstTime = rs.getLong("min(date_time)");
-                        }
-                    }
-                    blockInfo.valueCount = count;
-                    blockInfo.firstTime = encodedFirstTime;
-                    blockInfo.lastTime = EncodedDateTime.incrementEncodedDateTime(
-                            encodedFirstTime, intervalMinutes,
-                            count-1);
-                    values = new double[count];
-                    qualities = new int[count];
-                    try (PreparedStatement ps = tmp.prepareStatement("select value, quality from existing_tsv order " +
-                            "by date_time")) {
-                        try (ResultSet rs = ps.executeQuery()) {
-                            for (int j = 0; rs.next(); ++j) {
-                                values[j] = rs.getDouble("value");
-                                qualities[j] = rs.getInt("quality");
+                        if (count == 0) {
+                            // delete this record
+                            try (PreparedStatement ps = conn.prepareStatement("delete from tsv where times_series=? and " +
+                                    "block_start_date=?")) {
+                                ps.setLong(1, key);
+                                ps.setLong(2, encodedBlockTimes[i]);
+                                ps.executeUpdate();
                             }
                         }
-                    }
-                    // create a new blob from the merged data
-                    int size = Byte.BYTES        // data type
-                            + Byte.BYTES             // data type version
-                            + Integer.BYTES          // value count
-                            + Byte.BYTES             // has quality?
-                            + Long.BYTES             // date/time of first value
-                            + count * Double.BYTES   // values
-                            + count * Integer.BYTES; // quality codes
-                    buf = ByteBuffer.allocate(size).order(ByteOrder.LITTLE_ENDIAN);
-                    buf.put(format);
-                    buf.put(version);
-                    buf.putInt(count);
-                    buf.put((byte) 1);
-                    buf.putLong(encodedFirstTime);
-                    for (int j = 0; j < count; ++j) {
-                        double value = values[j];
-                        if (values[j] != UNDEFINED_DOUBLE) {
-                            if (mustConvert) {
-                                value = Unit.performConversion(value, unitConvFactor[0], unitConvOffset[0], unitConvFunction[0]);
+                        else {
+                            // create a new blob from the merged data
+                            existingEncodedTimes = new long[count];
+                            // check for gaps within the block
+                            List<Integer> gaps = new ArrayList<>();
+                            try (PreparedStatement ps = tmp.prepareStatement("select date_time from existing_tsv order by " +
+                                    "date_time")) {
+                                try (ResultSet rs = ps.executeQuery()) {
+                                    int lastGap = -2;
+                                    long expectedEncodedTime;
+                                    for (int j = 0; rs.next(); ++j) {
+                                        existingEncodedTimes[j] = rs.getLong(1);
+                                        if (j > 0) {
+                                            expectedEncodedTime =
+                                                    EncodedDateTime.incrementEncodedDateTime(
+                                                            existingEncodedTimes[j - 1],
+                                                            intervalMinutes,
+                                                            1);
+                                            if (j > lastGap + 2 && existingEncodedTimes[j] > expectedEncodedTime) {
+                                                lastGap = j - 1;
+                                                gaps.add(lastGap);
+                                            }
+                                        }
+                                    }
+                                }
                             }
-                            blockInfo.minValue = Math.min(value, blockInfo.minValue);
-                            blockInfo.maxValue = Math.max(value, blockInfo.maxValue);
+                            // fill in any gaps within the block
+                            if (!gaps.isEmpty()) {
+                                // add the missing values
+                                try (PreparedStatement ps = tmp.prepareStatement("insert into existing_tsv (date_time, value," +
+                                        " quality) values (?, ?, ?)")) {
+                                    for (Integer gap : gaps) {
+                                        int g = gap;
+                                        long[] fillTimes =
+                                                EncodedDateTime.makeRegularEncodedDateTimeArray(existingEncodedTimes[g],
+                                                        existingEncodedTimes[g + 1], intervalMinutes);
+                                        for (int j = 1; j < fillTimes.length; ++j) {
+                                            if (fillTimes[j] < existingEncodedTimes[g + 1]) {
+                                                ps.setLong(1, fillTimes[j]);
+                                                ps.setDouble(2, UNDEFINED_DOUBLE);
+                                                ps.setInt(3, 0);
+                                                ps.executeUpdate();
+                                            }
+                                        }
+                                    }
+                                }
+                                // re-query for count
+                                try (PreparedStatement ps = tmp.prepareStatement("select count(*) from existing_tsv")) {
+                                    try (ResultSet rs = ps.executeQuery()) {
+                                        rs.next();
+                                        count = rs.getInt("count(*)");
+                                    }
+                                }
+                            }
+                            // get the merged values and qualities
+                            try (PreparedStatement ps = tmp.prepareStatement("select min(date_time) from existing_tsv")) {
+                                try (ResultSet rs = ps.executeQuery()) {
+                                    rs.next();
+                                    encodedFirstTime = rs.getLong("min(date_time)");
+                                }
+                            }
+                            blockInfo.valueCount = count;
+                            blockInfo.firstTime = encodedFirstTime;
+                            blockInfo.lastTime = EncodedDateTime.incrementEncodedDateTime(
+                                    encodedFirstTime, intervalMinutes,
+                                    count-1);
+                            values = new double[count];
+                            qualities = new int[count];
+                            try (PreparedStatement ps = tmp.prepareStatement("select value, quality from existing_tsv order " +
+                                    "by date_time")) {
+                                try (ResultSet rs = ps.executeQuery()) {
+                                    for (int j = 0; rs.next(); ++j) {
+                                        values[j] = rs.getDouble("value");
+                                        qualities[j] = rs.getInt("quality");
+                                    }
+                                }
+                            }
+                            // create a new blob from the merged data
+                            size = Byte.BYTES        // data type
+                                    + Byte.BYTES             // data type version
+                                    + Integer.BYTES          // value count
+                                    + Byte.BYTES             // has quality?
+                                    + Long.BYTES             // date/time of first value
+                                    + count * Double.BYTES   // values
+                                    + count * Integer.BYTES; // quality codes
+                            buf = ByteBuffer.allocate(size).order(ByteOrder.LITTLE_ENDIAN);
+                            buf.put(format);
+                            buf.put(version);
+                            buf.putInt(count);
+                            buf.put((byte) 1);
+                            buf.putLong(encodedFirstTime);
+                            for (int j = 0; j < count; ++j) {
+                                double value = values[j];
+                                if (values[j] != UNDEFINED_DOUBLE) {
+                                    if (mustConvert) {
+                                        value = Unit.performConversion(value, unitConvFactor[0], unitConvOffset[0], unitConvFunction[0]);
+                                    }
+                                    blockInfo.minValue = Math.min(value, blockInfo.minValue);
+                                    blockInfo.maxValue = Math.max(value, blockInfo.maxValue);
+                                }
+                                buf.putDouble(value);
+                            }
+                            for (int j = 0; j < count; ++j) {
+                                buf.putInt(qualities[j]);
+                            }
+                            // overwrite the existing the blob
+                            try (PreparedStatement ps = conn.prepareStatement(
+                                    "update tsv set data=? where time_series=? and block_start_date=?"
+                            )) {
+                                ps.setBytes(1, blob);
+                                ps.setLong(2, key);
+                                ps.setLong(3, encodedBlockDates[i]);
+                                ps.executeUpdate();
+                            }
+                            // overwrite the existing the block info
+                            blockInfo.lastUpdate = System.currentTimeMillis();
+                            try (PreparedStatement ps = conn.prepareStatement(
+                                    "update tsv_info\n" +
+                                            "   set value_count = ?,\n" +
+                                            "       first_time  = ?,\n" +
+                                            "       last_time   = ?,\n" +
+                                            "       min_value   = ?,\n" +
+                                            "       max_value   = ?,\n" +
+                                            "       last_update = ?\n" +
+                                            " where time_series = ?\n" +
+                                            "   and block_start_date = ?"
+                            )) {
+                                ps.setLong(1, blockInfo.valueCount);
+                                ps.setLong(2, blockInfo.firstTime);
+                                ps.setLong(3, blockInfo.lastTime);
+                                ps.setDouble(4, blockInfo.minValue);
+                                ps.setDouble(5, blockInfo.maxValue);
+                                ps.setLong(6, blockInfo.lastUpdate);
+                                ps.setLong(7, key);
+                                ps.setLong(8, encodedBlockDates[i]);
+                                ps.executeUpdate();
+                            }
                         }
-                        buf.putDouble(value);
-                    }
-                    for (int j = 0; j < count; ++j) {
-                        buf.putInt(qualities[j]);
-                    }
-                    // overwrite the existing the blob
-                    try (PreparedStatement ps = conn.prepareStatement(
-                            "update tsv set data=? where time_series=? and block_start_date=?"
-                    )) {
-                        ps.setBytes(1, blob);
-                        ps.setLong(2, key);
-                        ps.setLong(3, encodedBlockDates[i]);
-                        ps.executeUpdate();
-                    }
-                    // overwrite the existing the block info
-                    blockInfo.lastUpdate = System.currentTimeMillis();
-                    try (PreparedStatement ps = conn.prepareStatement(
-                            "update tsv_info\n" +
-                            "   set value_count = ?,\n" +
-                            "       first_time  = ?,\n" +
-                            "       last_time   = ?,\n" +
-                            "       min_value   = ?,\n" +
-                            "       max_value   = ?,\n" +
-                            "       last_update = ?\n" +
-                            " where time_series = ?\n" +
-                            "   and block_start_date = ?"
-                    )) {
-                        ps.setLong(1, blockInfo.valueCount);
-                        ps.setLong(2, blockInfo.firstTime);
-                        ps.setLong(3, blockInfo.lastTime);
-                        ps.setDouble(4, blockInfo.minValue);
-                        ps.setDouble(5, blockInfo.maxValue);
-                        ps.setLong(6, blockInfo.lastUpdate);
-                        ps.setLong(7, key);
-                        ps.setLong(8, encodedBlockDates[i]);
-                        ps.executeUpdate();
-                    }
                 }
             }
             if (existingOffsetMinutes == -1) {
@@ -1280,5 +1398,66 @@ public final class TimeSeries {
                 tsc.endHecTime.set(tsc.times[tsc.numberValues-1]);
             }
         }
+    }
+
+    static void mergeReplaceAll(
+            TsvData incoming,
+            TsvData existing,
+            TsvData merged
+    ) {
+        int count = 0;
+        count += incoming.count == -1 ? incoming.times.length : incoming.count;
+        count += existing.count == -1 ? existing.times.length : existing.count;
+        merged.times = new long[count];
+        merged.values = new double[count];
+        merged.qualities = new int[count];
+
+        int i = incoming.offset;
+        int e = existing.offset;
+        int m = 0;
+        //--------------------------------------------------//
+        // copy within limits of both incoming and existing //
+        //--------------------------------------------------//
+        while (i < incoming.offset + incoming.count && e < existing.offset + existing.count) {
+            if (incoming.times[i] <= existing.times[e]) {
+                while (incoming.times[i] <= existing.times[e]) {
+                    merged.times[m] = incoming.times[i];
+                    merged.values[m] = incoming.values[i];
+                    merged.qualities[m] = incoming.qualities[i];
+                    ++i;
+                    ++m;
+                }
+                ++e;
+            }
+            if (existing.times[e] < incoming.times[i]) {
+                while (existing.times[e] < incoming.times[i]) {
+                    merged.times[m] = existing.times[i];
+                    merged.values[m] = existing.values[i];
+                    merged.qualities[m] = existing.qualities[i];
+                    ++e;
+                    ++m;
+                }
+                ++i;
+            }
+        }
+        //------------------------------------------------//
+        // fill remainder with whichever wasn't exhausted //
+        //------------------------------------------------//
+        while (i < incoming.offset + incoming.count) {
+            merged.times[m] = incoming.times[i];
+            merged.values[m] = incoming.values[i];
+            merged.qualities[m] = incoming.qualities[i];
+            ++i;
+            ++m;
+        }
+        while (e < existing.offset + existing.count) {
+            merged.times[m] = existing.times[e];
+            merged.values[m] = existing.values[e];
+            merged.qualities[m] = existing.qualities[e];
+            ++e;
+            ++m;
+        }
+        merged.offset = 0;
+        merged.count = m;
     }
 }

@@ -52,10 +52,6 @@ tasks.register("UnpackJavaHeclib", Copy) {
 }
 
 tasks.named("test") {
-//    jvmArgs += [
-//            "-XX:StartFlightRecording=filename=${buildDir}/test.jfr,settings=profile",
-//            "-XX:FlightRecorderOptions=stackdepth=256"
-//    ]
     dependsOn("UnpackJavaHeclib")
     systemProperty "java.library.path", layout.buildDirectory.dir("native").get().asFile.absolutePath
 }
