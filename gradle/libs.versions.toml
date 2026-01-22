@@ -1,7 +1,7 @@
 [versions]
-hec-monolith = "6.0.0-rc02"
+hec-monolith = "7.0.4"
 sqliteJdbc = "3.45.3.0"
-heclib = "7-IW-5-win-x86_64"
+heclib = "7-JA-5-win-x86_64"
 org-slf4j = "1.7.36"
 jetbrainsAnnotations = "24.1.0"
 junitBom = "5.10.0"

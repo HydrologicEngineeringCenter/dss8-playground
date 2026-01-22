@@ -3,6 +3,7 @@ package mil.army.usace.hec.sqldss;
 import com.google.common.flogger.FluentLogger;
 import mil.army.usace.hec.sqldss.api.dss7.HecSqlDss;
 import mil.army.usace.hec.sqldss.core.SqlDss;
+import mil.army.usace.hec.sqldss.core.TimeSeries;
 import org.apache.poi.ss.formula.functions.T;
 import org.junit.jupiter.api.Test;
 
@@ -14,6 +15,7 @@ import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Arrays;
 import java.util.List;
 
 import hec.heclib.dss.HecDss;
@@ -51,7 +53,7 @@ public class Dss7ComparisonTest {
             "100",
             "1000",
             "10000",
-//            "100000"
+            "100000"
     })
     public void compareToDss7(int maxPathnames) throws Exception {
         String sourceBasename = "time_series_source.dss";
@@ -131,6 +133,7 @@ public class Dss7ComparisonTest {
         targetDss8.setAutoCommit(false);
         elapsedCreateDss8 = endTimer(startTime);
         startTime = startTimer();
+        long t1;
         for (int i = 0; i < tscs.length; ++i) {
             if (i > 0 && i % 100 == 0) {
                 targetDss8.commit();
@@ -171,6 +174,9 @@ public class Dss7ComparisonTest {
         // get the DSS8 file size //
         //------------------------//
         dss8FileSize = Files.size(Path.of(target8Resource.toURI()));
+        //----------------//
+        // output results //
+        //----------------//
         String format = "Number of Records : %d\n" +
                 "DSS7 create new         : %d ms\n" +
                 "DSS7 open existing      : %d ms\n" +
