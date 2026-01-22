@@ -26,6 +26,9 @@ import static mil.army.usace.hec.sqldss.core.Constants.DATA_TYPE.RTS;
 public final class TimeSeries {
     public static final String SQL_SELECT_TS_BLOCK = "select data from tsv where time_series = %d and " +
             "block_start_date =?";
+    public static final int QUALITY_MISSING_VALUE = 5;
+    public static final int QUALITY_REJECTED_VALUE = 17;
+    public static final int QUALITY_SCREENED_VALIDITY_MASK = 31;
 
     private TimeSeries() {
         throw new AssertionError("Cannot instantiate");
@@ -512,6 +515,48 @@ public final class TimeSeries {
         return minutes == 0;
     }
 
+    static void setBlockInfo(
+            @NotNull TsvInfo blockInfo,
+            int count,
+            long firstTime,
+            long lastTime,
+            @NotNull double[] values,
+            int[] qualities,
+            int valueOffset
+    ) {
+        blockInfo.valueCount = count;
+        blockInfo.firstTime = firstTime;
+        blockInfo.lastTime = lastTime;
+        blockInfo.minValue = Double.MAX_VALUE;
+        blockInfo.maxValue = Double.MIN_VALUE;
+        if (qualities == null) {
+            for (int i = valueOffset; i < valueOffset + count; ++i) {
+                if (values[i] != UNDEFINED_DOUBLE) {
+                    if (values[i] < blockInfo.minValue) {
+                        blockInfo.minValue = values[i];
+                    }
+                    if (values[i] > blockInfo.maxValue) {
+                        blockInfo.maxValue = values[i];
+                    }
+                }
+            }
+        }
+        else {
+            for (int i = valueOffset; i < valueOffset + count; ++i) {
+                if (values[i] != UNDEFINED_DOUBLE
+                        && (qualities[i] & QUALITY_SCREENED_VALIDITY_MASK) != QUALITY_MISSING_VALUE
+                        && (qualities[i] & QUALITY_SCREENED_VALIDITY_MASK) != QUALITY_REJECTED_VALUE) {
+                    if (values[i] < blockInfo.minValue) {
+                        blockInfo.minValue = values[i];
+                    }
+                    if (values[i] > blockInfo.maxValue) {
+                        blockInfo.maxValue = values[i];
+                    }
+                }
+            }
+        }
+        blockInfo.lastUpdate = System.currentTimeMillis();
+    }
     static void putRegularTimeSeriesValues(
             @NotNull TimeSeriesContainer tsc,
             Constants.REGULAR_STORE_RULE storeRule,
@@ -641,6 +686,15 @@ public final class TimeSeries {
                         }
                     }
                 }
+                setBlockInfo(
+                        blockInfo,
+                        blockCounts[i],
+                        firstTime,
+                        EncodedDateTime.incrementEncodedDateTime(firstTime, intervalMinutes, blockCounts[i]-1),
+                        tsc.values,
+                        tsc.quality,
+                        blockStarts[i]
+                );
                 ByteBuffer buf = ByteBuffer.allocate(size).order(ByteOrder.LITTLE_ENDIAN);
                 buf.put(format);
                 buf.put(version);
@@ -649,12 +703,12 @@ public final class TimeSeries {
                 buf.putLong(firstTime);
                 for (int j = blockStarts[i]; j < blockStarts[i] + blockCounts[i]; ++j) {
                     double value = tsc.values[j];
-                    if (tsc.values[j] != UNDEFINED_DOUBLE) {
-                        if(mustConvert) {
-                            value = Unit.performConversion(value, unitConvFactor[0], unitConvOffset[0], unitConvFunction[0]);
-                        }
-                        blockInfo.minValue = Math.min(value, blockInfo.minValue);
-                        blockInfo.maxValue = Math.max(value, blockInfo.maxValue);
+                    int quality = hasQuality == 1 ? tsc.quality[j] : 0;
+                    if (mustConvert
+                            && value != UNDEFINED_DOUBLE
+                            && (quality & QUALITY_SCREENED_VALIDITY_MASK) != QUALITY_MISSING_VALUE
+                            && (quality & QUALITY_SCREENED_VALIDITY_MASK) != QUALITY_REJECTED_VALUE) {
+                        value = Unit.performConversion(value, unitConvFactor[0], unitConvOffset[0], unitConvFunction[0]);
                     }
                     buf.putDouble(value);
                 }
@@ -680,10 +734,6 @@ public final class TimeSeries {
                     ps.executeUpdate();
                 }
                 // insert the block info
-                blockInfo.valueCount = blockCounts[i];
-                blockInfo.firstTime = firstTime;
-                blockInfo.lastTime = EncodedDateTime.incrementEncodedDateTime(firstTime, intervalMinutes, blockCounts[i]-1);
-                blockInfo.lastUpdate = System.currentTimeMillis();
                 try (PreparedStatement ps = conn.prepareStatement(
                         "insert " +
                                 "into tsv_info " +
@@ -949,9 +999,15 @@ public final class TimeSeries {
                                 }
                             }
                         }
-                        blockInfo.valueCount = count;
-                        blockInfo.firstTime = merged.times[0];
-                        blockInfo.lastTime = merged.times[count-1];
+                        setBlockInfo(
+                                blockInfo,
+                                count,
+                                merged.times[0],
+                                merged.times[count-1],
+                                merged.values,
+                                merged.qualities,
+                                0
+                        );
                         int size = Byte.BYTES        // data type
                                 + Byte.BYTES             // data type version
                                 + Integer.BYTES          // value count
@@ -969,12 +1025,12 @@ public final class TimeSeries {
                         buf.putLong(merged.times[0]);
                         for (int j = 0; j < count; ++j) {
                             double value = merged.values[j];
-                            if (values[j] != UNDEFINED_DOUBLE) {
-                                if (mustConvert) {
-                                    value = Unit.performConversion(value, unitConvFactor[0], unitConvOffset[0], unitConvFunction[0]);
-                                }
-                                blockInfo.minValue = Math.min(value, blockInfo.minValue);
-                                blockInfo.maxValue = Math.max(value, blockInfo.maxValue);
+                            int quality = hasQuality == 1 ? merged.qualities[j] : 0;
+                            if (mustConvert
+                                    && value != UNDEFINED_DOUBLE
+                                    && (quality & QUALITY_SCREENED_VALIDITY_MASK) != QUALITY_MISSING_VALUE
+                                    && (quality & QUALITY_SCREENED_VALIDITY_MASK) != QUALITY_REJECTED_VALUE) {
+                                value = Unit.performConversion(value, unitConvFactor[0], unitConvOffset[0], unitConvFunction[0]);
                             }
                             buf.putDouble(value);
                         }
@@ -993,7 +1049,6 @@ public final class TimeSeries {
                             ps.executeUpdate();
                         }
                         // overwrite the existing the block info
-                        blockInfo.lastUpdate = System.currentTimeMillis();
                         try (PreparedStatement ps = conn.prepareStatement(
                                 "update tsv_info\n" +
                                         "   set value_count = ?,\n" +
@@ -1111,6 +1166,22 @@ public final class TimeSeries {
                                 }
                             }
                             // create a new blob from the merged data
+                            setBlockInfo(
+                                    blockInfo,
+                                    count,
+                                    encodedFirstTime,
+                                    EncodedDateTime.incrementEncodedDateTime(encodedFirstTime, intervalMinutes, count-1),
+                                    values,
+                                    qualities,
+                                    0
+                            );
+                            hasQuality = 0;
+                            for (int j = 0; j < qualities.length; ++j) {
+                                if (qualities[j] != 0) {
+                                    hasQuality = 1;
+                                    break;
+                                }
+                            }
                             size = Byte.BYTES        // data type
                                     + Byte.BYTES             // data type version
                                     + Integer.BYTES          // value count
@@ -1122,21 +1193,23 @@ public final class TimeSeries {
                             buf.put(format);
                             buf.put(version);
                             buf.putInt(count);
-                            buf.put((byte) 1);
+                            buf.put(hasQuality);
                             buf.putLong(encodedFirstTime);
                             for (int j = 0; j < count; ++j) {
                                 double value = values[j];
-                                if (values[j] != UNDEFINED_DOUBLE) {
-                                    if (mustConvert) {
-                                        value = Unit.performConversion(value, unitConvFactor[0], unitConvOffset[0], unitConvFunction[0]);
-                                    }
-                                    blockInfo.minValue = Math.min(value, blockInfo.minValue);
-                                    blockInfo.maxValue = Math.max(value, blockInfo.maxValue);
+                                int quality = hasQuality == 1 ? qualities[j] : 0;
+                                if (mustConvert
+                                        && value != UNDEFINED_DOUBLE
+                                        && (quality & QUALITY_SCREENED_VALIDITY_MASK) != QUALITY_MISSING_VALUE
+                                        && (quality & QUALITY_SCREENED_VALIDITY_MASK) != QUALITY_REJECTED_VALUE) {
+                                    value = Unit.performConversion(value, unitConvFactor[0], unitConvOffset[0], unitConvFunction[0]);
                                 }
                                 buf.putDouble(value);
                             }
-                            for (int j = 0; j < count; ++j) {
-                                buf.putInt(qualities[j]);
+                            if (hasQuality == 1) {
+                                for (int j = 0; j < count; ++j) {
+                                    buf.putInt(qualities[j]);
+                                }
                             }
                             // overwrite the existing the blob
                             try (PreparedStatement ps = conn.prepareStatement(
@@ -1148,7 +1221,6 @@ public final class TimeSeries {
                                 ps.executeUpdate();
                             }
                             // overwrite the existing the block info
-                            blockInfo.lastUpdate = System.currentTimeMillis();
                             try (PreparedStatement ps = conn.prepareStatement(
                                     "update tsv_info\n" +
                                             "   set value_count = ?,\n" +
@@ -1360,11 +1432,15 @@ public final class TimeSeries {
         return key;
     }
 
-    public static void trimTimeSeriesContainer(TimeSeriesContainer tsc) {
+    public static void trimTimeSeriesContainer(@NotNull TimeSeriesContainer tsc) {
         int firstNonMissing = -1;
         int lastNonMissing = -1;
         for(int i = 0; i < tsc.numberValues; ++i) {
-            if (tsc.values[i] != UNDEFINED_DOUBLE && (tsc.quality == null || (tsc.quality[i] & 7) != 5)) {
+            if (tsc.values[i] != UNDEFINED_DOUBLE
+                    && (tsc.quality == null
+                    || (tsc.quality[i] & QUALITY_SCREENED_VALIDITY_MASK) != QUALITY_MISSING_VALUE
+                    || (tsc.quality[i] & QUALITY_SCREENED_VALIDITY_MASK) != QUALITY_REJECTED_VALUE))
+            {
                 firstNonMissing = i;
                 break;
             }
@@ -1382,7 +1458,11 @@ public final class TimeSeries {
         }
         else {
             for (int i = tsc.numberValues-1; i >= firstNonMissing; --i) {
-                if (tsc.values[i] != UNDEFINED_DOUBLE && (tsc.quality == null || (tsc.quality[i] & 7) != 5)) {
+                if (tsc.values[i] != UNDEFINED_DOUBLE
+                        && (tsc.quality == null
+                        || (tsc.quality[i] & QUALITY_SCREENED_VALIDITY_MASK) != QUALITY_MISSING_VALUE
+                        || (tsc.quality[i] & QUALITY_SCREENED_VALIDITY_MASK) != QUALITY_REJECTED_VALUE))
+                {
                     lastNonMissing = i;
                     break;
                 }
@@ -1459,5 +1539,6 @@ public final class TimeSeries {
         }
         merged.offset = 0;
         merged.count = m;
+        long ts2 = System.currentTimeMillis();
     }
 }

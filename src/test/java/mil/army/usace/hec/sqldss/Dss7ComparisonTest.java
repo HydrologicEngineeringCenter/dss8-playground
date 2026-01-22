@@ -50,7 +50,7 @@ public class Dss7ComparisonTest {
             "10",
             "100",
             "1000",
-//            "10000",
+            "10000",
 //            "100000"
     })
     public void compareToDss7(int maxPathnames) throws Exception {
