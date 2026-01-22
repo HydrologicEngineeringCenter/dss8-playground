@@ -5,6 +5,8 @@ import org.jetbrains.annotations.NotNull;
 
 public final class EncodedDateTime {
 
+    public static final int DATE_TO_TIME_FACTOR = 1_000_000;
+
     private EncodedDateTime() {
         throw new AssertionError("Cannot instantiate");
     }
@@ -164,6 +166,14 @@ public final class EncodedDateTime {
                 "%d-%02d-%02dT%02d:%02d:%02d",
                 dt[0], dt[1], dt[2], dt[3], dt[4], dt[5]
         );
+    }
+
+    public static long toEncodedDate(long encodedDateTime) {
+        return encodedDateTime / DATE_TO_TIME_FACTOR;
+    }
+
+    public static long toEncodedDateTime(long encodedDate) {
+        return encodedDate * DATE_TO_TIME_FACTOR;
     }
 
     public static int[] toValues(long encoded) throws EncodedDateTimeException {

@@ -29,6 +29,11 @@ public final class TimeSeries {
     public static final int QUALITY_MISSING_VALUE = 5;
     public static final int QUALITY_REJECTED_VALUE = 17;
     public static final int QUALITY_SCREENED_VALIDITY_MASK = 31;
+    public static final int CENTURY_MINUTES = 52560000;
+    public static final int DECADE_MINUTES = 5256000;
+    public static final int YEAR_MINUTES = 525600;
+    public static final int MONTH_MINUTES = 43200;
+    public static final int DAY_MINUTES = 1440;
 
     private TimeSeries() {
         throw new AssertionError("Cannot instantiate");
@@ -312,7 +317,9 @@ public final class TimeSeries {
         double[][] valueArrays = new double[encodedBlockDates.length - 1][];
         int[][] qualityArrays = new int[encodedBlockDates.length - 1][];
         // get each block
+        logger.atInfo().log("length = %d", encodedBlockDates.length);
         for (int i = 0; i < encodedBlockDates.length - 1; ++i) {
+            logger.atInfo().log("block start = %d", encodedBlockDates[i]);
             try (PreparedStatement ps = conn.prepareStatement(String.format(SQL_SELECT_TS_BLOCK, key))) {
                 ps.setLong(1, encodedBlockDates[i]);
                 try (ResultSet rs = ps.executeQuery()) {
@@ -373,7 +380,7 @@ public final class TimeSeries {
             timeArrays[i] = new int[valueCount];
             valueArrays[i] = new double[valueCount];
             qualityArrays[i] = new int[valueCount];
-            if (intervalMinutes < 30 * 1440) {
+            if (intervalMinutes < 30 * DAY_MINUTES) {
                 int minutes = firstTime.value();
                 for (int j = 0; j < valueCount; ++j) {
                     timeArrays[i][j] = minutes;
@@ -401,7 +408,7 @@ public final class TimeSeries {
         int count = 0;
         for (int i = 0; i < timeArrays.length; ++i) {
             if (i > 0) {
-                if (intervalMinutes < 30 * 1440) {
+                if (intervalMinutes < 30 * DAY_MINUTES) {
                     int nextTime = times[count - 1] + intervalMinutes;
                     for (; nextTime < timeArrays[i][0]; nextTime += intervalMinutes, ++count) {
                         if (count == size) {
@@ -483,28 +490,12 @@ public final class TimeSeries {
         String[] parts = name.split("\\|", -1);
         String intervalName = parts[3];
         int intervalMinutes = Interval.getIntervalMinutes(intervalName);
-        try (Connection tmp = DriverManager.getConnection("jdbc:sqlite::memory:")) {
-            try (Statement st = tmp.createStatement()) {
-                st.execute(
-                        "create table existing_tsv(             " +
-                                "        date_time integer primary key, " +
-                                "        value real,                    " +
-                                "        quality integer);              "
-                );
-                st.execute(
-                        "create table incoming_tsv(             " +
-                                "        date_time integer primary key, " +
-                                "        value real,                    " +
-                                "        quality integer);              "
-                );
-            }
-            if (intervalMinutes == 0) {
-                throw new CoreException("Cannot yet store irregular time series");
-            }
-            else {
-                Constants.REGULAR_STORE_RULE sr = Constants.REGULAR_STORE_RULE.valueOf(storeRule.toUpperCase());
-                putRegularTimeSeriesValues(tsc, sr, conn, tmp);
-            }
+        if (intervalMinutes == 0) {
+            throw new CoreException("Cannot yet store irregular time series");
+        }
+        else {
+            Constants.REGULAR_STORE_RULE sr = Constants.REGULAR_STORE_RULE.valueOf(storeRule.toUpperCase());
+            putRegularTimeSeriesValues(tsc, sr, conn);
         }
     }
 
@@ -560,15 +551,14 @@ public final class TimeSeries {
     static void putRegularTimeSeriesValues(
             @NotNull TimeSeriesContainer tsc,
             Constants.REGULAR_STORE_RULE storeRule,
-            Connection conn,
-            Connection tmp
+            Connection conn
     ) throws CoreException, SQLException, EncodedDateTimeException, IOException {
         // parse the name
         String[] parts = tsc.fullName.split("\\|", -1);
         String intervalName = parts[3];
         // verify the interval
         int intervalMinutes = tsc.getTimeIntervalSeconds() / 60;
-        if (intervalMinutes < 43200) {
+        if (intervalMinutes < MONTH_MINUTES) {
             for (int i = 1; i < tsc.numberValues; ++i) {
                 if (tsc.times[i] - tsc.times[i - 1] != intervalMinutes) {
                     throw new CoreException("Time series is not regular interval");
@@ -638,7 +628,7 @@ public final class TimeSeries {
         }
         // determine blocks
         long[] encodedBlockDates = getBlockStartDates(tsc.startHecTime, tsc.endHecTime, intervalName);
-        long[] encodedBlockTimes = Arrays.stream(encodedBlockDates).map(d -> d * 1000000).toArray();
+        long[] encodedBlockTimes = Arrays.stream(encodedBlockDates).map(EncodedDateTime::toEncodedDateTime).toArray();
         int[] blockStarts = new int[encodedBlockTimes.length];
         int[] blockCounts = new int[encodedBlockTimes.length];
         blockStarts[0] = 0;
@@ -763,11 +753,6 @@ public final class TimeSeries {
                 //-------------------//
                 // record does exist //
                 //-------------------//
-                try (Statement st = tmp.createStatement()) {
-                    st.executeUpdate(
-                            "delete from incoming_tsv;" +
-                                    "delete from existing_tsv;");
-                }
                 // retrieve the existing data
                 HecTime firstIncomingTime = new HecTime();
                 firstIncomingTime.set(tsc.times[blockStarts[i]]);
@@ -944,71 +929,50 @@ public final class TimeSeries {
         }
     }
 
-    @NotNull
-    static long[] getBlockStartDates(HecTime startTime, HecTime endTime, String intervalName) throws CoreException,
-            EncodedDateTimeException {
-        long[] blockStartDates;
-        int[] julFirstBlock = {0, 0, 0};
-        int[] julLastBlock = {0, 0, 0};
-        int[] intvlCode = {0};
-        int blockMinutes;
-        if (DSSPathname.getTSBlockInfo(intervalName, startTime.julian(), julFirstBlock, intvlCode, null, null) != 0) {
-            throw new CoreException("Error getting block start for " + startTime + " and " + intervalName);
-        }
-        if (DSSPathname.getTSBlockInfo(intervalName, endTime.julian(), julLastBlock, intvlCode, null, null) != 0) {
-            throw new CoreException("Error getting block start for " + startTime + " and " + intervalName);
-        }
-        switch (intvlCode[0]) {
-            case 1:
-                blockMinutes = 1440;
+    static long getBlockStartDate(long valueTime, String intervalName) throws CoreException, EncodedDateTimeException {
+        int[] blockStartVals = EncodedDateTime.toValues(valueTime);
+        blockStartVals[3] = blockStartVals[4] = blockStartVals[5] = 0;
+        int blockSizeMinutes = Interval.getBlockSizeMinutes(intervalName);
+        switch(blockSizeMinutes) {
+            case CENTURY_MINUTES:
+                blockStartVals[0] -= blockStartVals[0] % 100;
+                blockStartVals[1] = blockStartVals[2] = 1;
                 break;
-            case 2:
-                blockMinutes = 30 * 1440;
+            case DECADE_MINUTES:
+                blockStartVals[0] -= blockStartVals[0] % 10;
+                blockStartVals[1] = blockStartVals[2] = 1;
                 break;
-            case 3:
-                blockMinutes = 365 * 1440;
+            case YEAR_MINUTES:
+                blockStartVals[1] = blockStartVals[2] = 1;
                 break;
-            case 4:
-                blockMinutes = 10 * 365 * 1440;
+            case MONTH_MINUTES:
+                blockStartVals[2] = 1;
                 break;
-            case 5:
-                blockMinutes = 100 * 365 * 1440;
+            case DAY_MINUTES:
                 break;
             default:
-                throw new CoreException("Unexpected block interval code: " + intvlCode[0]);
+                throw new CoreException("Unexpected block minutes: "+blockSizeMinutes);
         }
-        HecTime blockStart = new HecTime();
-        blockStart.showTimeAsBeginningOfDay(true);
-        blockStart.setYearMonthDay(julFirstBlock[0], julFirstBlock[1], julFirstBlock[2], 0);
-        HecTime lastBlockStart = new HecTime();
-        lastBlockStart.showTimeAsBeginningOfDay(true);
-        lastBlockStart.setYearMonthDay(julLastBlock[0], julLastBlock[1], julLastBlock[2], 0);
-        lastBlockStart.increment(1, blockMinutes);
-        ArrayList<HecTime> hecTimes = new ArrayList<>();
-        while (blockStart.lessThan(lastBlockStart)) {
-            hecTimes.add(new HecTime(blockStart));
-            blockStart.increment(1, blockMinutes);
-        }
-        hecTimes.add(new HecTime(blockStart));
-        blockStartDates = new long[hecTimes.size()];
-        for (int i = 0; i < blockStartDates.length; ++i) {
-            blockStartDates[i] = EncodedDateTime.encodeDate(hecTimes.get(i));
-        }
-        return blockStartDates;
+        return EncodedDateTime.encodeDate(blockStartVals);
     }
 
-    static String getBlockSizeForInterval(String name, Connection conn) throws SQLException {
-        String blockSize;
-        try (PreparedStatement ps = conn.prepareStatement(
-                "select block_size from interval where name = ?"
-        )) {
-            ps.setString(1, name);
-            try (ResultSet rs = ps.executeQuery()) {
-                rs.next();
-                blockSize = rs.getString("block_size");
-            }
+    static long @NotNull [] getBlockStartDates(HecTime startTime, HecTime endTime, String intervalName) throws CoreException,
+            EncodedDateTimeException {
+        long encodedStartTime = EncodedDateTime.encodeDateTime(startTime);
+        long encodedEndTime = EncodedDateTime.encodeDateTime(endTime);
+        long blockStartTime = EncodedDateTime.toEncodedDateTime(getBlockStartDate(encodedStartTime, intervalName));
+        int blockMinutes = Interval.getBlockSizeMinutes(intervalName);
+        List<Long> blockStartTimeList = new ArrayList<>();
+        while (blockStartTime <= encodedEndTime) {
+            blockStartTimeList.add(blockStartTime);
+            blockStartTime = EncodedDateTime.incrementEncodedDateTime(blockStartTime, blockMinutes, 1);
         }
-        return blockSize;
+        blockStartTimeList.add(blockStartTime);
+        long[] blockStartDates = new long[blockStartTimeList.size()];
+        for (int i = 0; i < blockStartDates.length; ++i) {
+            blockStartDates[i] = EncodedDateTime.toEncodedDate(blockStartTimeList.get(i));
+        }
+        return blockStartDates;
     }
 
     @NotNull

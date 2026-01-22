@@ -107,12 +107,11 @@ public class HecSqlDss implements AutoCloseable {
                     throw new ApiException("No implicit or explicit time window, and no D pathname part");
                 }
                 startTime = EncodedDateTime.encodeDateTime(parts[4]);
-                endTime = EncodedDateTime.addMinutes(
-                        EncodedDateTime.incrementEncodedDateTime(
-                                startTime,
-                                Interval.getBlockSizeMinutes(parts[5]),
-                                1),
-                        -1);
+                endTime = EncodedDateTime.incrementEncodedDateTime(
+                        startTime,
+                        Interval.getBlockSizeMinutes(parts[5]),
+                        1);
+                startTime = EncodedDateTime.addMinutes(startTime, Interval.getIntervalMinutes(parts[5]));
             }
             String coreName = null;
             boolean exists = false;

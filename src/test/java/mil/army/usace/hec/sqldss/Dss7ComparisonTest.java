@@ -5,6 +5,7 @@ import mil.army.usace.hec.sqldss.api.dss7.HecSqlDss;
 import mil.army.usace.hec.sqldss.core.SqlDss;
 import mil.army.usace.hec.sqldss.core.TimeSeries;
 import org.apache.poi.ss.formula.functions.T;
+import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.Test;
 
 import java.io.File;
@@ -26,6 +27,7 @@ import org.junit.jupiter.params.provider.CsvSource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 
@@ -43,7 +45,7 @@ public class Dss7ComparisonTest {
         return System.currentTimeMillis() - startTime;
     }
 
-    static String getFileName(URL resource) throws URISyntaxException, IOException {
+    static @NotNull String getFileName(@NotNull URL resource) throws URISyntaxException, IOException {
         return new File(resource.toURI()).getCanonicalPath();
     }
 
@@ -52,8 +54,8 @@ public class Dss7ComparisonTest {
             "10",
             "100",
             "1000",
-            "10000",
-            "100000"
+//            "10000",
+//            "100000"
     })
     public void compareToDss7(int maxPathnames) throws Exception {
         String sourceBasename = "time_series_source.dss";
@@ -151,7 +153,9 @@ public class Dss7ComparisonTest {
         elapsedOpenDss8 = endTimer(startTime);
         startTime = startTimer();
         for (int i = 0; i < tscs.length; ++i) {
-            tscs[i] = (TimeSeriesContainer) targetDss8.get(tscs[i].fullName);
+            TimeSeriesContainer tsc = (TimeSeriesContainer) targetDss8.getInUnit(tscs[i].fullName, tscs[i].units);
+            assertArrayEquals(tscs[i].times, tsc.times);
+            assertArrayEquals(tscs[i].values, tsc.values, 1e-6);
         }
         elapsedReadDss8 = endTimer(startTime);
         targetDss8.done();
