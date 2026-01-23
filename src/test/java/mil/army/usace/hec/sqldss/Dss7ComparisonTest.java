@@ -152,7 +152,9 @@ public class Dss7ComparisonTest {
         targetDss8 = HecSqlDss.open(getFileName(target8Resource));
         elapsedOpenDss8 = endTimer(startTime);
         startTime = startTimer();
+        targetDss8.setTrimMissing(true);
         for (int i = 0; i < tscs.length; ++i) {
+            logger.atInfo().log("tscs[%d] = %s", i, tscs[i]);
             TimeSeriesContainer tsc = (TimeSeriesContainer) targetDss8.getInUnit(tscs[i].fullName, tscs[i].units);
             assertArrayEquals(tscs[i].times, tsc.times);
             assertArrayEquals(tscs[i].values, tsc.values, 1e-6);

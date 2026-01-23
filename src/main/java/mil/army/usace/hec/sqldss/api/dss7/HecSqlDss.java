@@ -132,13 +132,16 @@ public class HecSqlDss implements AutoCloseable {
                     sqldss.getTrimMissing(),
                     sqldss.getConnection()
             );
+            if (sqldss.getTrimMissing()) {
+                TimeSeries.trimTimeSeriesContainer((tsc));
+            }
             ApiUtil.updateTscToApi(tsc);
             if (unit != null) {
                 Unit.convertUnits(tsc, unit, sqldss.getConnection());
             }
             return tsc;
         }
-        else {
+       else {
             throw new ApiException("Pathname not recognized as a valid data type");
         }
     }
@@ -168,7 +171,7 @@ public class HecSqlDss implements AutoCloseable {
                 startHecTime = EncodedDateTime.toHecTime(encodedStartTime);
                 endHecTime = EncodedDateTime.toHecTime(encodedEndTime);
             }
-            else {
+           else {
                 startHecTime = new HecTime();
                 endHecTime = new HecTime();
                 startHecTime.set(startTime);
@@ -187,7 +190,7 @@ public class HecSqlDss implements AutoCloseable {
             }
             return tsc;
         }
-        else {
+       else {
             throw new ApiException("Pathname not recognized as a valid data type");
         }
     }
@@ -214,11 +217,11 @@ public class HecSqlDss implements AutoCloseable {
                 }
                 return tsc;
             }
-            else {
+           else {
                 return getInUnit(pathname, unit);
             }
         }
-        else {
+       else {
             throw new ApiException("Pathname not recognized as a valid data type");
         }
     }
@@ -242,7 +245,7 @@ public class HecSqlDss implements AutoCloseable {
 
             TimeSeries.putTimeSeriesValues(tsc2, storeRule, sqldss.getConnection());
         }
-        else {
+       else {
             throw new ApiException("Cannot store " + dataContainer.getClass().getName() + " objects");
         }
     }
