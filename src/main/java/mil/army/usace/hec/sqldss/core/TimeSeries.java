@@ -56,12 +56,12 @@ public final class TimeSeries {
         long lastUpdate;
     }
 
-    static class TsvData {
-        long[] times = null;
-        double[] values = null;
-        int[] qualities = null;
-        int offset = 0;
-        int count = -1;
+    public static class TsvData {
+        public long[] times = null;
+        public double[] values = null;
+        public int[] qualities = null;
+        public int offset = 0;
+        public int count = -1;
     }
 
     @NotNull
@@ -1222,9 +1222,9 @@ public final class TimeSeries {
         }
     }
 
-    static void mergeTimeSeries(
+    public static void mergeTimeSeries(
             int intervalMinutes,
-            Constants.REGULAR_STORE_RULE storeRule,
+            @NotNull Constants.REGULAR_STORE_RULE storeRule,
             @NotNull TsvData incoming,
             @NotNull TsvData existing,
             @NotNull TsvData merged
@@ -1297,6 +1297,7 @@ public final class TimeSeries {
                     merged.qualities[m] = incoming.qualities == null ? 0 : incoming.qualities[i];
                     ++m;
                     if (++i + incoming.offset >= incoming.count) {
+                        ++e;
                         break outer;
                     }
                 }

@@ -193,8 +193,8 @@ public class Unit {
         else {
             return value * factor + offset;
         }
-
     }
+
     static double executeFunction(double value, @NotNull String function) throws CoreException {
         String[] parts = function.split("\\s+", -1);
         ArrayDeque<String> stack = new ArrayDeque<>();
