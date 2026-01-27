@@ -1,5 +1,7 @@
 package mil.army.usace.hec.sqldss.core;
 
+import org.jetbrains.annotations.NotNull;
+
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -46,7 +48,7 @@ public class Parameter {
         return key;
     }
 
-    static String getBaseParameter(String name, Connection conn) throws CoreException, SQLException {
+    static @NotNull String getBaseParameter(String name, Connection conn) throws CoreException, SQLException {
         try (PreparedStatement ps = conn.prepareStatement(
                 "select name from base_parameter where name = ?"
         )) {
@@ -62,7 +64,7 @@ public class Parameter {
         }
     }
 
-    static long getParameterKey(String name, Connection conn) throws CoreException, SQLException {
+    static long getParameterKey(@NotNull String name, Connection conn) throws CoreException, SQLException {
         String baseParameter = name;
         String subParameter = "";
         boolean nullKey;

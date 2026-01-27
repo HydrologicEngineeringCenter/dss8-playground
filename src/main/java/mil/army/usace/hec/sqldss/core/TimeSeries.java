@@ -1,7 +1,6 @@
 package mil.army.usace.hec.sqldss.core;
 
 import com.google.common.flogger.FluentLogger;
-import hec.heclib.dss.DSSPathname;
 import hec.heclib.util.HecTime;
 import hec.io.TimeSeriesContainer;
 import org.jetbrains.annotations.NotNull;
@@ -10,11 +9,9 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.sql.Connection;
-import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -384,13 +381,17 @@ public final class TimeSeries {
                 int bufPosition = 0;
                 byte dataType = buf.get(bufPosition);
                 bufPosition += Byte.BYTES;
-                if (dataType != 9) { // RTS
-                    throw new CoreException("Expected data type of 9 (RTS), got " + dataType);
+                if (dataType != Constants.RECORD_TYPE.RTD.getCode()) {
+                    throw new CoreException(String.format(
+                            "Expected data type of %d (%s), got %d",
+                            Constants.RECORD_TYPE.RTD.getCode(),
+                            Constants.RECORD_TYPE.RTD.name(),
+                            dataType));
                 }
                 byte dataTypeVersion = buf.get(bufPosition);
                 bufPosition += Byte.BYTES;
                 if (dataTypeVersion != 1) {
-                    throw new CoreException("Don't know how to decode RTS version " + dataTypeVersion);
+                    throw new CoreException("Don't know how to decode RTD version " + dataTypeVersion);
                 }
                 int blockValueCount = buf.getInt(bufPosition);
                 bufPosition += Integer.BYTES;
@@ -587,7 +588,7 @@ public final class TimeSeries {
             int count,
             long firstTime,
             long lastTime,
-            @NotNull double[] values,
+            double @NotNull [] values,
             int[] qualities,
             int valueOffset
     ) {
@@ -715,7 +716,7 @@ public final class TimeSeries {
         }
         // store the time series values
         byte[] blob;
-        byte format = 9; // RTS
+        byte format = (byte) Constants.RECORD_TYPE.RTD.getCode();
         byte version = 1;
         byte hasQuality = 0;
         for (int i = 0; i < encodedBlockDates.length - 1; ++i) {
@@ -840,13 +841,17 @@ public final class TimeSeries {
                 int bufPosition = 0;
                 byte dataType = buf.get(bufPosition);
                 bufPosition += Byte.BYTES;
-                if (dataType != 9) { // RTS
-                    throw new CoreException("Expected data type of 9 (RTS), got " + dataType);
+                if (dataType != Constants.RECORD_TYPE.RTD.getCode()) {
+                    throw new CoreException(String.format(
+                            "Expected data type of %d (%s), got %d",
+                            Constants.RECORD_TYPE.RTD.getCode(),
+                            Constants.RECORD_TYPE.RTD.name(),
+                            dataType));
                 }
                 byte dataTypeVersion = buf.get(bufPosition);
                 bufPosition += Byte.BYTES;
                 if (dataTypeVersion != 1) {
-                    throw new CoreException("Don't know how to decode RTS version " + dataTypeVersion);
+                    throw new CoreException("Don't know how to decode RTD version " + dataTypeVersion);
                 }
                 int valueCount = buf.getInt(bufPosition);
                 bufPosition += Integer.BYTES;
@@ -983,15 +988,16 @@ public final class TimeSeries {
                 }
                 // overwrite the existing the block info
                 try (PreparedStatement ps = conn.prepareStatement(
-                        "update tsv_info\n" +
-                                "   set value_count = ?,\n" +
-                                "       first_time  = ?,\n" +
-                                "       last_time   = ?,\n" +
-                                "       min_value   = ?,\n" +
-                                "       max_value   = ?,\n" +
-                                "       last_update = ?\n" +
-                                " where time_series = ?\n" +
-                                "   and block_start_date = ?"
+                        """
+                                update tsv_info
+                                   set value_count = ?,
+                                       first_time  = ?,
+                                       last_time   = ?,
+                                       min_value   = ?,
+                                       max_value   = ?,
+                                       last_update = ?
+                                 where time_series = ?
+                                   and block_start_date = ?"""
                 )) {
                     ps.setLong(1, blockInfo.valueCount);
                     ps.setLong(2, blockInfo.firstTime);

@@ -19,7 +19,52 @@ public class Constants {
             "PER-MIN",
             "PER-MAX"
     };
-    
+
+    public enum RECORD_TYPE {
+        ARR(90, "Array"),
+        RTD(105, "Regular-interval time series doubles"),
+        RTAD( 106, "Regular-interval time series double pattern"),
+        RTPD(107, "Regular-interval time series double profile"),
+        ITD(115, "Irregular-interval time series doubles"),
+        ITAD( 116, "Iregular-interval time series double pattern"),
+        ITPD(117, "Iregular-interval time series double profile"),
+        PDD(205, "Paired Data doubles"),
+        TXT(300, "Text Data"),
+        TT(310, "Text Table"),
+        GUT(400, "Gridded - Undefined grib with time"),
+        GU(401, "Gridded - Undefined grid"),
+        GHT(410, "Gridded - HRAP grid with time reference"),
+        GH(411, "Gridded - HRAP grid"),
+        GAT(420, "Gridded - Albers with time reference"),
+        GA(421, "Gridded - Albers"),
+        GST(430, "Gridded - Specified Grid with time reference"),
+        GS(431, "Gridded - Specified Grid"),
+        TIN(450, "Spatial - TIN"),
+        FILE(600, "Generic File"),
+        IMAGE(610, "Image");
+
+        private final int code;
+        private final String description;
+
+        RECORD_TYPE(int code, String description) {
+            this.code = code;
+            this.description = description;
+        }
+
+        public int getCode() {
+            return code;
+        }
+
+        public String getDescription() { return description; }
+
+        public static RECORD_TYPE fromCode(int code) {
+            for (RECORD_TYPE t : values()) {
+                if (t.code == code) return t;
+            }
+            throw new IllegalArgumentException("Unknown RECORD_TYPE code: " + code);
+        }
+    }
+
     public enum DATA_TYPE {
         ARRAY(1),
         FILE(2),

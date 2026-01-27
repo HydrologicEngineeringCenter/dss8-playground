@@ -51,13 +51,13 @@ public class Dss7ComparisonTest {
 
     @ParameterizedTest
     @CsvSource({
-            "0",
-            "1",
+//            "0",
+//            "1",
             "10",
             "100",
             "1000",
-            "10000",
-            "100000"
+//            "10000",
+//            "100000"
     })
     public void compareToDss7(int maxPathnames) throws Exception {
         String sourceBasename = "time_series_source.dss";

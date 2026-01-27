@@ -61,7 +61,7 @@ public final class EncodedDateTime {
         return (((((y * 100L + m) * 100 + d) * 100 + h) * 100 + n) * 100 + s);
     }
 
-    static void normalizeDateTime(@NotNull int[] values) throws EncodedDateTimeException {
+    static void normalizeDateTime(int @NotNull [] values) throws EncodedDateTimeException {
         int len = values.length;
         if (len > 5) {
             // seconds
@@ -115,25 +115,12 @@ public final class EncodedDateTime {
     }
 
     static int lastDay(int y, int m) throws EncodedDateTimeException {
-        switch (m) {
-            case 1:
-            case 3:
-            case 5:
-            case 7:
-            case 8:
-            case 10:
-            case 12:
-                return 31;
-            case 2:
-                return isLeap(y) ? 29 : 28;
-            case 4:
-            case 6:
-            case 9:
-            case 11:
-                return 30;
-            default:
-                throw new EncodedDateTimeException("Invalid month: " + m);
-        }
+        return switch (m) {
+            case 1, 3, 5, 7, 8, 10, 12 -> 31;
+            case 2 -> isLeap(y) ? 29 : 28;
+            case 4, 6, 9, 11 -> 30;
+            default -> throw new EncodedDateTimeException("Invalid month: " + m);
+        };
     }
 
     static boolean isLeap(int y) {
@@ -218,12 +205,16 @@ public final class EncodedDateTime {
     }
 
     public static int intervalsBetween(long encodedStartTime, long encodedEndTime, int intervalMinutes) throws EncodedDateTimeException {
-        int count;
+        if (encodedStartTime > encodedEndTime) {
+            throw new EncodedDateTimeException(String.format("Start time (%d) must not be greater than end time (%d)", encodedStartTime, encodedEndTime));
+        }
+        int count = 0;
         long encodedTime;
-        for (count = 0, encodedTime = encodedStartTime;
-             encodedTime <= encodedEndTime;
-             ++count, encodedTime = incrementEncodedDateTime(encodedTime, intervalMinutes, 1))
-            ;
+        encodedTime = encodedStartTime;
+        while (encodedTime <= encodedEndTime) {
+            ++count;
+            encodedTime = incrementEncodedDateTime(encodedTime, intervalMinutes, 1);
+        }
         return count - 1;
     }
 

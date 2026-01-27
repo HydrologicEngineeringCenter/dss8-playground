@@ -92,6 +92,8 @@ public class SqlDss implements AutoCloseable {
             if (!exists) {
                 Init.initializeDb(conn);
             }
+            Interval.load(conn);
+            BaseParameter.load(conn);
         }
     }
 

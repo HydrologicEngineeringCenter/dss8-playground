@@ -231,15 +231,14 @@ public class Unit {
     }
 
     static double performOperation(double arg1, double arg2, String operator) throws CoreException {
-        switch (operator) {
-            case "+" : return arg1 + arg2;
-            case "-" : return arg1 - arg2;
-            case "*" : return arg1 * arg2;
-            case "/" : return arg1 / arg2;
-            case "//": return Math.floor(arg1 / arg2);
-            case "^" :
-            case "**": return Math.pow(arg1, arg2);
-            default  : throw new CoreException("Unexpected operator: " + operator);
-        }
+        return switch (operator) {
+            case "+" -> arg1 + arg2;
+            case "-" -> arg1 - arg2;
+            case "*" -> arg1 * arg2;
+            case "/" -> arg1 / arg2;
+            case "//" -> Math.floor(arg1 / arg2);
+            case "^", "**" -> Math.pow(arg1, arg2);
+            default -> throw new CoreException("Unexpected operator: " + operator);
+        };
     }
 }

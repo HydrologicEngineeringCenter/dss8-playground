@@ -3,7 +3,6 @@ package mil.army.usace.hec.sqldss.core.init;
 import hec.heclib.util.HecTime;
 import mil.army.usace.hec.sqldss.core.Constants;
 import mil.army.usace.hec.sqldss.core.CoreException;
-import mil.army.usace.hec.sqldss.core.SqlDss;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.BufferedReader;
@@ -44,9 +43,10 @@ public class Init {
     
     public static void createDssInfoTable(@NotNull Connection conn) throws SQLException {
         String sql =
-                "create table dss_info(\n" +
-                        "  key text collate nocase primary key,\n" +
-                        "  value text)";
+                """
+                        create table dss_info(
+                          key text collate nocase primary key,
+                          value text)""";
         try (PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.executeUpdate();
         }
@@ -69,9 +69,10 @@ public class Init {
 
     public static void createAbstractParamTable(@NotNull Connection conn) throws SQLException, IOException, CoreException {
         String sql =
-                "create table abstract_parameter(\n" +
-                        "  key integer primary key,\n" +
-                        "  name text unique collate nocase)";
+                """
+                        create table abstract_parameter(
+                          key integer primary key,
+                          name text unique collate nocase)""";
         try (PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.executeUpdate();
         }
@@ -98,12 +99,13 @@ public class Init {
 
     public static void createUnitTable(@NotNull Connection conn) throws SQLException, IOException, CoreException {
         String sql =
-                "create table unit(\n" +
-                        "    name text collate nocase primary key,\n" +
-                        "    abstract_parameter_key integer not null,\n" +
-                        "    unit_system text,\n" +
-                        "    long_name text not null,\n" +
-                        "    foreign key (abstract_parameter_key) references abstract_parameter (key))";
+                """
+                        create table unit(
+                            name text collate nocase primary key,
+                            abstract_parameter_key integer not null,
+                            unit_system text,
+                            long_name text not null,
+                            foreign key (abstract_parameter_key) references abstract_parameter (key))""";
         try (Statement st = conn.createStatement()) {
             st.executeUpdate(sql);
         }
@@ -134,10 +136,11 @@ public class Init {
 
     public static void createUnitAliasTable(@NotNull Connection conn) throws SQLException, IOException, CoreException {
         String sql =
-                "create table unit_alias(\n" +
-                        "  alias text collate nocase primary key,\n" +
-                        "  unit text not null,\n" +
-                        "  foreign key (unit) references unit (name))";
+                """
+                        create table unit_alias(
+                          alias text collate nocase primary key,
+                          unit text not null,
+                          foreign key (unit) references unit (name))""";
         try (PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.executeUpdate();
         }
@@ -166,23 +169,25 @@ public class Init {
 
     public static void createUnitConversionTable(@NotNull Connection conn) throws SQLException, IOException, CoreException {
         String sql =
-                "create table unit_conversion(\n" +
-                        "  from_unit text collate nocase not null,\n" +
-                        "  to_unit text collate nocase not null,\n" +
-                        "  factor real,\n" +
-                        "  offset real,\n" +
-                        "  function text,\n" +
-                        "  primary key (from_unit, to_unit),\n" +
-                        "  foreign key (from_unit) references unit (name),\n" +
-                        "  foreign key (to_unit) references unit (name))";
+                """
+                        create table unit_conversion(
+                          from_unit text collate nocase not null,
+                          to_unit text collate nocase not null,
+                          factor real,
+                          offset real,
+                          function text,
+                          primary key (from_unit, to_unit),
+                          foreign key (from_unit) references unit (name),
+                          foreign key (to_unit) references unit (name))""";
         try (PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.executeUpdate();
         }
         sql =
-                "insert\n" +
-                        "  into unit_conversion\n" +
-                        "  (from_unit, to_unit, factor, offset, function)\n" +
-                        "  values (?, ?, ?, ?, ?)";
+                """
+                        insert
+                          into unit_conversion
+                          (from_unit, to_unit, factor, offset, function)
+                          values (?, ?, ?, ?, ?)""";
 
         try (PreparedStatement ps = conn.prepareStatement(sql)) {
             try (InputStream in = Init.class.getResourceAsStream("unit_conversion.tsv")) {
@@ -221,15 +226,16 @@ public class Init {
 
     public static void createBaseParameterTable(@NotNull Connection conn) throws SQLException, IOException, CoreException {
         String sqlTable =
-                "create table base_parameter(\n" +
-                        "  name text collate nocase primary key,\n" +
-                        "  abstract_parameter_key integer not null,\n" +
-                        "  default_si_unit text not null,\n" +
-                        "  default_en_unit text not null,\n" +
-                        "  long_name text,\n" +
-                        "  foreign key (abstract_parameter_key) references abstract_parameter (key),\n" +
-                        "  foreign key (default_si_unit) references unit (name),\n" +
-                        "  foreign key (default_en_unit) references unit (name))";
+                """
+                        create table base_parameter(
+                          name text collate nocase primary key,
+                          abstract_parameter_key integer not null,
+                          default_si_unit text not null,
+                          default_en_unit text not null,
+                          long_name text,
+                          foreign key (abstract_parameter_key) references abstract_parameter (key),
+                          foreign key (default_si_unit) references unit (name),
+                          foreign key (default_en_unit) references unit (name))""";
         try (PreparedStatement ps = conn.prepareStatement(sqlTable)) {
             ps.executeUpdate();
         }
@@ -265,10 +271,11 @@ public class Init {
 
     public static void createIntervalTable(@NotNull Connection conn) throws SQLException, IOException, CoreException {
         String sqlTable =
-                "create table interval(\n" +
-                        "  name collate nocase primary key,\n" +
-                        "  minutes integer not null,\n" +
-                        "  block_size text not null)";
+                """
+                        create table interval(
+                          name collate nocase primary key,
+                          minutes integer not null,
+                          block_size text not null)""";
 
         String sqlIndex = "create index idx_interval_minutes on interval (minutes)";
 
@@ -306,9 +313,10 @@ public class Init {
 
     public static void createDurationTable(@NotNull Connection conn) throws SQLException, IOException, CoreException {
         String sqlTable =
-                "create table duration(\n" +
-                        "  name text collate nocase primary key,\n" +
-                        "  minutes integer not null)";
+                """
+                        create table duration(
+                          name text collate nocase primary key,
+                          minutes integer not null)""";
 
         String sqlInsert = "insert into duration (name, minutes) values(?, ?)";
 
@@ -340,11 +348,12 @@ public class Init {
 
     public static void createParameterTable(@NotNull Connection conn) throws SQLException {
         String sqlTable =
-                "create table parameter(\n" +
-                        "  key integer primary key,\n" +
-                        "  base_parameter text not null collate nocase,\n" +
-                        "  sub_parameter text default ('') collate nocase,\n" +
-                        "  foreign key (base_parameter) references base_parameter (name))";
+                """
+                        create table parameter(
+                          key integer primary key,
+                          base_parameter text not null collate nocase,
+                          sub_parameter text default ('') collate nocase,
+                          foreign key (base_parameter) references base_parameter (name))""";
 
         String sqlIndex = "create unique index idx_parameter on parameter (base_parameter, sub_parameter)";
 
@@ -358,10 +367,11 @@ public class Init {
 
     public static void createBaseLocationTable(@NotNull Connection conn) throws SQLException {
         String sqlTable =
-                "create table base_location(\n" +
-                        "  key integer primary key,\n" +
-                        "  context text not null default ('') collate nocase, -- office, A pathname part, ...\n" +
-                        "  name text not null collate nocase)";
+                """
+                        create table base_location(
+                          key integer primary key,
+                          context text not null default ('') collate nocase, -- office, A pathname part, ...
+                          name text not null collate nocase)""";
 
         String sqlIndex = "create unique index idx_base_location on base_location (context, name)";
 
@@ -375,11 +385,12 @@ public class Init {
 
     public static void createLocationTable(@NotNull Connection conn) throws SQLException {
         String sqlTable =
-                "create table location(\n" +
-                        "  key integer primary key,\n" +
-                        "  base_location integer,\n" +
-                        "  sub_location text default ('') collate nocase,\n" +
-                        "  foreign key (base_location) references base_location (key))";
+                """
+                        create table location(
+                          key integer primary key,
+                          base_location integer,
+                          sub_location text default ('') collate nocase,
+                          foreign key (base_location) references base_location (key))""";
 
         String sqlIndex = "create unique index idx_location on location (base_location, sub_location)";
 
@@ -393,10 +404,11 @@ public class Init {
 
     public static void createLocationInfoTable(@NotNull Connection conn) throws SQLException {
         String sqlTable =
-                "create table location_info(\n" +
-                        "  key integer primary key,\n" +
-                        "  info text not null, -- JSON object\n" +
-                        "  foreign key (key) references location (key))";
+                """
+                        create table location_info(
+                          key integer primary key,
+                          info text not null, -- JSON object
+                          foreign key (key) references location (key))""";
 
         try (PreparedStatement ps = conn.prepareStatement(sqlTable)) {
             ps.executeUpdate();
@@ -405,19 +417,20 @@ public class Init {
 
     public static void createTimeSeriesTable(@NotNull Connection conn) throws SQLException {
         String sqlTable =
-                "create table time_series(\n" +
-                        "  key integer primary key,\n" +
-                        "  location integer not null,\n" +
-                        "  parameter integer not null,\n" +
-                        "  parameter_type text not null check (parameter_type in (:types:)),\n" +
-                        "  interval text not null,\n" +
-                        "  duration text not null,\n" +
-                        "  version text default ('') collate nocase,\n" +
-                        "  interval_offset text default (''), -- ISO 8601 (e.g., PT15M)\n" +
-                        "  foreign key (location) references location (key),\n" +
-                        "  foreign key (parameter) references parameter (key),\n" +
-                        "  foreign key (interval) references interval (name),\n" +
-                        "  foreign key (duration) references duration (name))";
+                """
+                        create table time_series(
+                          key integer primary key,
+                          location integer not null,
+                          parameter integer not null,
+                          parameter_type text not null check (parameter_type in (:types:)),
+                          interval text not null,
+                          duration text not null,
+                          version text default ('') collate nocase,
+                          interval_offset text default (''), -- ISO 8601 (e.g., PT15M)
+                          foreign key (location) references location (key),
+                          foreign key (parameter) references parameter (key),
+                          foreign key (interval) references interval (name),
+                          foreign key (duration) references duration (name))""";
 
         StringBuilder sb = new StringBuilder();
         for (int i = 0; i < Constants.PARAMETER_TYPES.length; ++i) {
@@ -438,12 +451,13 @@ public class Init {
 
     public static void createTsvTable(@NotNull Connection conn) throws SQLException {
         String sqlTable =
-                "create table tsv(\n" +
-                        "  time_series integer,\n" +
-                        "  block_start_date integer, -- encoded -?\\d+\\d{2}\\d{2} for extended dates\n" +
-                        "  data blob,\n" +
-                        "  primary key (time_series, block_start_date),\n" +
-                        "  foreign key (time_series) references time_series (key))";
+                """
+                        create table tsv(
+                          time_series integer,
+                          block_start_date integer, -- encoded -?\\d+\\d{2}\\d{2} for extended dates
+                          data blob,
+                          primary key (time_series, block_start_date),
+                          foreign key (time_series) references time_series (key))""";
 
         try (PreparedStatement ps = conn.prepareStatement(sqlTable)) {
             ps.executeUpdate();
@@ -452,17 +466,18 @@ public class Init {
 
     public static void createTsvInfoTable(@NotNull Connection conn) throws SQLException {
         String sqlTable =
-                "create table tsv_info(\n" +
-                        "  time_series integer,\n" +
-                        "  block_start_date integer,       -- encoded -?\\d+\\d{2}\\d{2} for extended dates\n" +
-                        "  value_count integer not null,\n" +
-                        "  first_time integer not null,    -- encoded -?\\d+\\d{2}\\d{2} d{2}:d{2}:d{2} for extended dates\n" +
-                        "  last_time integer not null,     -- encoded -?\\d+\\d{2}\\d{2} d{2}:d{2}:d{2} for extended dates\n" +
-                        "  min_value real,\n" +
-                        "  max_value real,\n" +
-                        "  last_update integer not null,   -- Unix epoch millisecionds\n" +
-                        "  primary key (time_series, block_start_date),\n" +
-                        "  foreign key (time_series) references time_series (key))";
+                """
+                        create table tsv_info(
+                          time_series integer,
+                          block_start_date integer,       -- encoded -?\\d+\\d{2}\\d{2} for extended dates
+                          value_count integer not null,
+                          first_time integer not null,    -- encoded -?\\d+\\d{2}\\d{2} d{2}:d{2}:d{2} for extended dates
+                          last_time integer not null,     -- encoded -?\\d+\\d{2}\\d{2} d{2}:d{2}:d{2} for extended dates
+                          min_value real,
+                          max_value real,
+                          last_update integer not null,   -- Unix epoch millisecionds
+                          primary key (time_series, block_start_date),
+                          foreign key (time_series) references time_series (key))""";
 
         try (PreparedStatement ps = conn.prepareStatement(sqlTable)) {
             ps.executeUpdate();

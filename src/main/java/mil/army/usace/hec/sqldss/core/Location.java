@@ -1,5 +1,7 @@
 package mil.army.usace.hec.sqldss.core;
 
+import org.jetbrains.annotations.NotNull;
+
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -11,7 +13,7 @@ public class Location {
         throw new AssertionError("Cannot instantiate");
     }
 
-    public static long getLocationKey(String locationName, Connection conn) throws SQLException {
+    public static long getLocationKey(@NotNull String locationName, Connection conn) throws SQLException {
         String context = "";
         String location;
         String baseLocation;

@@ -1,12 +1,9 @@
 package mil.army.usace.hec.sqldss.core;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.List;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 
 public class BaseParameter {
 
@@ -15,26 +12,20 @@ public class BaseParameter {
     }
 
     static String[] baseParameters;
-    static {
-        try (InputStream in = BaseParameter.class.getResourceAsStream("init/base_parameter.tsv")) {
-            if (in == null) {
-                throw new CoreException("Could not open base_parameter resource");
-            }
-            try (BufferedReader br = new BufferedReader(new InputStreamReader(in, StandardCharsets.UTF_8))) {
-                List<String> baseParamList = new ArrayList<>();
-                String line;
-                while ((line = br.readLine()) != null) {
-                    if (line.isEmpty() || line.startsWith("*")) {
-                        continue;
-                    }
-                    String[] parts = line.split("\t", -1);
-                    baseParamList.add(parts[0]);
-                }
-                baseParameters = baseParamList.toArray(new String[0]);
+
+    public static void load(Connection conn) throws SQLException {
+        try (PreparedStatement ps = conn.prepareStatement("select count(*) from base_parameter")) {
+            try(ResultSet rs = ps.executeQuery()) {
+                int count = (int)rs.getLong("count(*)");
+                baseParameters = new String[count];
             }
         }
-        catch (IOException | CoreException e) {
-            throw new RuntimeException(e);
+        try (PreparedStatement ps = conn.prepareStatement("select name from base_parameter")) {
+            try (ResultSet rs = ps.executeQuery()) {
+                for(int i = 0; rs.next(); ++i) {
+                    baseParameters[i] = rs.getString("name");
+                }
+            }
         }
     }
 

@@ -2,11 +2,6 @@ package mil.army.usace.hec.sqldss.core;
 
 import org.jetbrains.annotations.NotNull;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.nio.charset.StandardCharsets;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -24,26 +19,19 @@ public class Interval {
         throw new AssertionError("Cannot instantiate");
     }
 
-    static {
-        try (InputStream in = Interval.class.getResourceAsStream("init/interval.tsv")) {
-            if (in == null) {
-                throw new CoreException("Could not open interval resource");
-            }
-            try (BufferedReader br = new BufferedReader(new InputStreamReader(in, StandardCharsets.UTF_8))) {
-                String line;
-                while ((line = br.readLine()) != null) {
-                    if (line.isEmpty() || line.startsWith("*")) {
-                        continue;
-                    }
-                    String[] parts = line.split("\t", -1);
-                    intervalNames.put(parts[0].toLowerCase(), parts[0]);
-                    intervalMinutes.put(parts[0], Integer.parseInt(parts[1]));
-                    intervalBlockSizes.put(parts[0], parts[2]);
+    public static void load(Connection conn) throws SQLException {
+        String sql = "select * from interval";
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    String name = rs.getString("name");
+                    int minutes = (int)rs.getLong("minutes");
+                    String blockSize = rs.getString("block_size");
+                    intervalNames.put(name.toLowerCase(), name);
+                    intervalMinutes.put(name, minutes);
+                    intervalBlockSizes.put(name, blockSize);
                 }
             }
-        }
-        catch (IOException | CoreException e) {
-            throw new RuntimeException(e);
         }
     }
 

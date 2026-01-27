@@ -28,8 +28,7 @@ import java.io.IOException;
 import java.sql.SQLException;
 import java.util.List;
 
-import static mil.army.usace.hec.sqldss.core.TimeSeries.getAllTimeSeriesValues;
-import static mil.army.usace.hec.sqldss.core.TimeSeries.getTimeSeriesValues;
+import static mil.army.usace.hec.sqldss.core.TimeSeries.*;
 
 public class HecSqlDss implements AutoCloseable {
 
@@ -243,7 +242,7 @@ public class HecSqlDss implements AutoCloseable {
                                sqldss.getIrregularStoreRuleValue().name() :
                                sqldss.getRegularStoreRuleValue().name();
 
-            TimeSeries.putTimeSeriesValues(tsc2, storeRule, sqldss.getConnection());
+            putTimeSeriesValues(tsc2, storeRule, sqldss.getConnection());
         }
        else {
             throw new ApiException("Cannot store " + dataContainer.getClass().getName() + " objects");
