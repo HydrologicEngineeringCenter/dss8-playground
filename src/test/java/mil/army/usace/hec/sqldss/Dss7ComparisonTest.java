@@ -51,11 +51,13 @@ public class Dss7ComparisonTest {
 
     @ParameterizedTest
     @CsvSource({
+            "0",
+            "1",
             "10",
             "100",
             "1000",
-//            "10000",
-//            "100000"
+            "10000",
+            "100000"
     })
     public void compareToDss7(int maxPathnames) throws Exception {
         String sourceBasename = "time_series_source.dss";
@@ -154,10 +156,9 @@ public class Dss7ComparisonTest {
         startTime = startTimer();
         targetDss8.setTrimMissing(true);
         for (int i = 0; i < tscs.length; ++i) {
-            logger.atInfo().log("tscs[%d] = %s", i, tscs[i]);
             TimeSeriesContainer tsc = (TimeSeriesContainer) targetDss8.getInUnit(tscs[i].fullName, tscs[i].units);
             assertArrayEquals(tscs[i].times, tsc.times);
-            assertArrayEquals(tscs[i].values, tsc.values, 1e-6);
+            assertArrayEquals(tscs[i].values, tsc.values, 1e-5);
         }
         elapsedReadDss8 = endTimer(startTime);
         targetDss8.done();

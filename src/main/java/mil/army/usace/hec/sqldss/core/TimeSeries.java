@@ -423,6 +423,9 @@ public final class TimeSeries {
                             intervalMinutes) - 1;
                 }
                 int valueCount = lastValueOffset - firstValueOffset + 1;
+                if (firstValueOffset > 0) {
+                    encodedFirstTime = EncodedDateTime.incrementEncodedDateTime(encodedFirstTime, intervalMinutes, firstValueOffset);
+                }
                 HecTime firstTime = EncodedDateTime.toHecTime(encodedFirstTime);
                 HecTime intervalTime = new HecTime(firstTime);
                 intervalTime.adjustToIntervalOffset(intervalMinutes, 0);
@@ -449,7 +452,6 @@ public final class TimeSeries {
                         bufPosition += Integer.BYTES;
                     }
                 }
-                firstTime.addMinutes(thisOffset);
                 timeArrays[i] = new int[valueCount];
                 valueArrays[i] = new double[valueCount];
                 qualityArrays[i] = new int[valueCount];
@@ -895,6 +897,30 @@ public final class TimeSeries {
                 existing.offset = 0;
                 existing.count = existingValues.length;
                 TsvData merged = new TsvData();
+                if (mustConvert) {
+                    if (incoming.qualities == null) {
+                        for (int j = incoming.offset; j < incoming.offset + incoming.count; ++j) {
+                            if (incoming.values[j] != UNDEFINED_DOUBLE) {
+                                incoming.values[j] = Unit.performConversion(
+                                        incoming.values[j], unitConvFactor[0],
+                                        unitConvOffset[0],
+                                        unitConvFunction[0]);
+                            }
+                        }
+                    }
+                    else {
+                        for (int j = incoming.offset; j < incoming.offset + incoming.count; ++j) {
+                            if (incoming.values[j] != UNDEFINED_DOUBLE
+                                    && (incoming.qualities[j] & QUALITY_SCREENED_VALIDITY_MASK) != QUALITY_MISSING_VALUE
+                                    && (incoming.qualities[j] & QUALITY_SCREENED_VALIDITY_MASK) != QUALITY_REJECTED_VALUE) {
+                                incoming.values[j] = Unit.performConversion(
+                                        incoming.values[j], unitConvFactor[0],
+                                        unitConvOffset[0],
+                                        unitConvFunction[0]);
+                            }
+                        }
+                    }
+                }
                 mergeTimeSeries(
                         intervalMinutes,
                         storeRule,
@@ -938,15 +964,7 @@ public final class TimeSeries {
                 buf.put(hasQuality);
                 buf.putLong(merged.times[0]);
                 for (int j = 0; j < count; ++j) {
-                    double value = merged.values[j];
-                    int quality = hasQuality == 1 ? merged.qualities[j] : 0;
-                    if (mustConvert
-                            && value != UNDEFINED_DOUBLE
-                            && (quality & QUALITY_SCREENED_VALIDITY_MASK) != QUALITY_MISSING_VALUE
-                            && (quality & QUALITY_SCREENED_VALIDITY_MASK) != QUALITY_REJECTED_VALUE) {
-                        value = Unit.performConversion(value, unitConvFactor[0], unitConvOffset[0], unitConvFunction[0]);
-                    }
-                    buf.putDouble(value);
+                    buf.putDouble(merged.values[j]);
                 }
                 if (hasQuality == 1) {
                     for (int j = 0; j < count; ++j) {
@@ -1253,7 +1271,7 @@ public final class TimeSeries {
     ) throws EncodedDateTimeException {
         long first = Math.min(incoming.times[incoming.offset], existing.times[existing.offset]);
         long last = Math.max(incoming.times[incoming.offset + incoming.count - 1], existing.times[existing.offset + existing.count - 1]);
-        int count = EncodedDateTime.intervalsBetween(first, last, intervalMinutes) + 1;
+        int count = EncodedDateTime.intervalsBetween(first, last, intervalMinutes) + 2;
         merged.times = EncodedDateTime.makeRegularEncodedDateTimeArray(first, count, intervalMinutes);
         merged.values = new double[count];
         merged.qualities = new int[count];
@@ -1264,6 +1282,7 @@ public final class TimeSeries {
         //--------------------------------------------------//
         // copy within limits of both incoming and existing //
         //--------------------------------------------------//
+        outer:
         while (i < incoming.offset + incoming.count && e < existing.offset + existing.count) {
             if (incoming.times[i] <= existing.times[e]) {
                 while (incoming.times[i] <= existing.times[e]) {
@@ -1271,11 +1290,11 @@ public final class TimeSeries {
                     merged.values[m] = incoming.values[i];
                     merged.qualities[m] = incoming.qualities == null ? 0 : incoming.qualities[i];
                     ++m;
-                    if (++i + incoming.offset == incoming.count) {
-                        break;
+                    if (++i + incoming.offset >= incoming.count) {
+                        break outer;
                     }
                 }
-                if (++e + existing.offset == existing.count) {
+                if (++e + existing.offset >= existing.count) {
                     break;
                 }
             }
@@ -1285,8 +1304,8 @@ public final class TimeSeries {
                     merged.values[m] = existing.values[e];
                     merged.qualities[m] = existing.qualities == null ? 0 : existing.qualities[e];
                     ++m;
-                    if (++e + existing.offset == existing.count) {
-                        break;
+                    if (++e + existing.offset >= existing.count) {
+                        break outer;
                     }
                 }
             }
