@@ -5,6 +5,7 @@ heclib = "7-JA-5-win-x86_64"
 org-slf4j = "1.7.36"
 jetbrainsAnnotations = "24.1.0"
 junitBom = "5.10.0"
+jacksonDatabind = "2.17.1"
 
 [libraries]
 hec-monolith = { module = "mil.army.usace.hec:hec-monolith", version.ref = "hec-monolith" }
@@ -15,3 +16,4 @@ jetbrainsAnnotations = { module = "org.jetbrains:annotations", version.ref = "je
 junitBom = { module = "org.junit:junit-bom", version.ref = "junitBom" }
 junitJupiter = { module = "org.junit.jupiter:junit-jupiter" }
 junitPlatformLauncher = { module = "org.junit.platform:junit-platform-launcher" }
+jacksonDatabind = { module = "com.fasterxml.jackson.core:jackson-databind", version.ref = "jacksonDatabind" }

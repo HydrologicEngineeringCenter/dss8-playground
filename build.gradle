@@ -32,6 +32,7 @@ dependencies {
         exclude group: "javax.media", module: "jai_coded"
     }
     implementation(libs.sqliteJdbc)
+    implementation (libs.jacksonDatabind)
     testImplementation platform(libs.junitBom)
     testImplementation (libs.junitJupiter)
     testRuntimeOnly (libs.junitPlatformLauncher)

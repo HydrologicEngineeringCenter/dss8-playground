@@ -1,11 +1,18 @@
 package mil.army.usace.hec.sqldss.core;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import org.jetbrains.annotations.NotNull;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map;
 
 public class Location {
 
@@ -13,11 +20,16 @@ public class Location {
         throw new AssertionError("Cannot instantiate");
     }
 
-    public static long getLocationKey(@NotNull String locationName, Connection conn) throws SQLException {
+    public static long getLocationKey(@NotNull String locationName,Connection conn) throws SQLException {
+        return getLocationKey(locationName, new String[1], conn);
+    }
+
+    public static long getLocationKey(@NotNull String locationName, String @NotNull [] info, Connection conn) throws SQLException {
         String context = "";
         String location;
         String baseLocation;
         String subLocation = "";
+        info[0] = "";
         long baseKey;
         long key;
         boolean nullKey;
@@ -58,7 +70,7 @@ public class Location {
         // query for location //
         //--------------------//
         try (PreparedStatement ps = conn.prepareStatement(
-                "select key from location where base_location=? and sub_location=?"
+                "select key, info from location where base_location=? and sub_location=?"
         )) {
             ps.setLong(1, baseKey);
             ps.setString(2, subLocation);
@@ -66,6 +78,7 @@ public class Location {
                 rs.next();
                 key = rs.getLong("key");
                 nullKey = rs.wasNull();
+                info[0] = rs.getString("info");
             }
         }
         if (nullKey) {
@@ -75,16 +88,70 @@ public class Location {
     }
 
     public static long putLocation(String locationName, Connection conn) throws SQLException, CoreException {
+        return putLocation(locationName, null, true, conn);
+    }
+
+    public static long putLocation(String locationName, String info, boolean mergeInfo, Connection conn) throws SQLException, CoreException {
         String context = "";
         String location;
         String baseLocation;
         String subLocation = "";
         long baseKey;
         boolean nullKey;
-        long key = getLocationKey(locationName, conn);
+        String[] existingInfo = new String[1];
+        long key = getLocationKey(locationName, existingInfo, conn);
         if (key > 0) {
+            //-------------------------------------------------------------------//
+            // location already exists: compare info and see if we need to merge //
+            //-------------------------------------------------------------------//
+            info = info == null ? "" : info;
+            existingInfo[0] = existingInfo[0] == null ? "" : existingInfo[0];
+            if (!info.equals(existingInfo[0])) {
+                if (mergeInfo) {
+                    if (info.isEmpty()) {
+                        info = existingInfo[0];
+                    }
+                    else if (!existingInfo[0].isEmpty()) {
+                        //-------------------------------------//
+                        // actually merge the two info strings //
+                        //-------------------------------------//
+                        try {
+                            ObjectMapper mapper = new ObjectMapper();
+                            JsonNode existingRoot = mapper.readTree(existingInfo[0]);
+                            JsonNode incomingRoot = mapper.readTree(info);
+                            HashMap<String, JsonNode> mergedItems = new HashMap<>();
+                            for (Iterator<Map.Entry<String, JsonNode>> it = existingRoot.fields(); it.hasNext(); ) {
+                                Map.Entry<String, JsonNode> item = it.next();
+                                mergedItems.put((String) item.getKey(), (JsonNode) item.getValue());
+                            }
+                            for (Iterator<Map.Entry<String, JsonNode>> it = incomingRoot.fields(); it.hasNext(); ) {
+                                Map.Entry<String, JsonNode> item = it.next();
+                                mergedItems.put((String) item.getKey(), (JsonNode) item.getValue());
+                            }
+                            info = mapper.writeValueAsString(mergedItems);
+                        }
+                        catch (JsonProcessingException e) {
+                            throw new CoreException(e);
+                        }
+                    }
+                }
+                if (!info.equals(existingInfo[0])) {
+                    //------------------------------//
+                    // write the merged info string //
+                    //------------------------------//
+                    String sql = "update location set info = ? where key = ?";
+                    try (PreparedStatement ps = conn.prepareStatement(sql)) {
+                        ps.setString(1, info);
+                        ps.setLong(2, key);
+                        ps.executeUpdate();
+                    }
+                }
+            }
             return key;
         }
+        //--------------------------------------//
+        // location doesn't exist, so create it //
+        //--------------------------------------//
         if (locationName.indexOf(':') == -1) {
             location = locationName;
         }
@@ -143,10 +210,11 @@ public class Location {
         // insert location //
         //-----------------//
         try (PreparedStatement ps = conn.prepareStatement(
-                "insert into location (base_location, sub_location) values (?, ?)"
+                "insert into location (base_location, sub_location, info) values (?, ?, ?)"
         )) {
             ps.setLong(1, baseKey);
             ps.setString(2, subLocation);
+            ps.setString(3, info);
             ps.executeUpdate();
         }
         try (PreparedStatement ps = conn.prepareStatement(

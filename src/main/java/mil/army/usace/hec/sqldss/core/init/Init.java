@@ -390,6 +390,7 @@ public class Init {
                           key integer primary key,
                           base_location integer,
                           sub_location text default ('') collate nocase,
+                          info text default (''), -- JSON object
                           foreign key (base_location) references base_location (key))""";
 
         String sqlIndex = "create unique index idx_location on location (base_location, sub_location)";
