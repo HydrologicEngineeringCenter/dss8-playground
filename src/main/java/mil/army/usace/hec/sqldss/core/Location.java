@@ -112,27 +112,7 @@ public class Location {
                         info = existingInfo[0];
                     }
                     else if (!existingInfo[0].isEmpty()) {
-                        //-------------------------------------//
-                        // actually merge the two info strings //
-                        //-------------------------------------//
-                        try {
-                            ObjectMapper mapper = new ObjectMapper();
-                            JsonNode existingRoot = mapper.readTree(existingInfo[0]);
-                            JsonNode incomingRoot = mapper.readTree(info);
-                            HashMap<String, JsonNode> mergedItems = new HashMap<>();
-                            for (Iterator<Map.Entry<String, JsonNode>> it = existingRoot.fields(); it.hasNext(); ) {
-                                Map.Entry<String, JsonNode> item = it.next();
-                                mergedItems.put((String) item.getKey(), (JsonNode) item.getValue());
-                            }
-                            for (Iterator<Map.Entry<String, JsonNode>> it = incomingRoot.fields(); it.hasNext(); ) {
-                                Map.Entry<String, JsonNode> item = it.next();
-                                mergedItems.put((String) item.getKey(), (JsonNode) item.getValue());
-                            }
-                            info = mapper.writeValueAsString(mergedItems);
-                        }
-                        catch (JsonProcessingException e) {
-                            throw new CoreException(e);
-                        }
+                        info = Util.mergeJsonStrings(info, existingInfo[0]);
                     }
                 }
                 if (!info.equals(existingInfo[0])) {
