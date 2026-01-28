@@ -91,4 +91,23 @@ public class Parameter {
         }
         return key;
     }
+
+    static String getParameter(@NotNull String name, Connection conn) throws CoreException, SQLException {
+        String sql = """
+                select base_parameter,
+                       sub_parameter
+                  from parameter
+                 where p.key = ?""";
+        long key = getParameterKey(name, conn);
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
+            try (ResultSet rs = ps.executeQuery(sql)) {
+                rs.next();
+                String baseParameter = rs.getString("base_parameter");
+                String subParameter = rs.getString("sub_parameter");
+                return subParameter == null || subParameter.isEmpty()
+                        ? baseParameter
+                        : String.format("%s-%s", baseParameter, subParameter);
+            }
+        }
+    }
 }

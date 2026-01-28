@@ -1,5 +1,7 @@
 package mil.army.usace.hec.sqldss.core;
 
+import org.jetbrains.annotations.NotNull;
+
 public class Constants {
     private Constants() {
         throw new AssertionError("Cannot instantiate");
@@ -19,6 +21,31 @@ public class Constants {
             "PER-MIN",
             "PER-MAX"
     };
+
+    public enum UNIT_SYSTEM {
+        SI(0, "Système International"),
+        EN(1, "English (Imperial)");
+        private final int code;
+        private final String description;
+
+        UNIT_SYSTEM(int code, String description) {
+            this.code = code;
+            this.description = description;
+        }
+
+        public int getCode() {
+            return code;
+        }
+
+        public String getDescription() { return description; }
+
+        public static @NotNull UNIT_SYSTEM fromCode(int code) {
+            for (UNIT_SYSTEM t : values()) {
+                if (t.code == code) return t;
+            }
+            throw new IllegalArgumentException("Unknown UNIT_SYSTEM code: " + code);
+        }
+    }
 
     public enum RECORD_TYPE {
         ARR(90, "Array"),
@@ -57,7 +84,7 @@ public class Constants {
 
         public String getDescription() { return description; }
 
-        public static RECORD_TYPE fromCode(int code) {
+        public static @NotNull RECORD_TYPE fromCode(int code) {
             for (RECORD_TYPE t : values()) {
                 if (t.code == code) return t;
             }
@@ -91,7 +118,7 @@ public class Constants {
             return code;
         }
 
-        public static DATA_TYPE fromCode(int code) {
+        public static @NotNull DATA_TYPE fromCode(int code) {
             for (DATA_TYPE t : values()) {
                 if (t.code == code) return t;
             }
@@ -117,7 +144,7 @@ public class Constants {
             return code;
         }
 
-        public static REGULAR_STORE_RULE fromCode(int code) {
+        public static @NotNull REGULAR_STORE_RULE fromCode(int code) {
             for (REGULAR_STORE_RULE t : values()) {
                 if (t.code == code) return t;
             }
@@ -143,7 +170,7 @@ public class Constants {
             return code;
         }
 
-        public static IRREGULAR_STORE_RULE fromCode(int code) {
+        public static @NotNull IRREGULAR_STORE_RULE fromCode(int code) {
             for (IRREGULAR_STORE_RULE t : values()) {
                 if (t.code == code) return t;
             }

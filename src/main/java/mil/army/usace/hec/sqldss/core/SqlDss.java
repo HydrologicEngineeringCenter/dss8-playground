@@ -7,10 +7,11 @@ import org.jetbrains.annotations.NotNull;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.SQLException;
-import java.sql.Statement;
+import java.sql.*;
+import java.util.HashMap;
+import java.util.Map;
+
+import static mil.army.usace.hec.sqldss.core.Constants.UNIT_SYSTEM.EN;
 
 public class SqlDss implements AutoCloseable {
     private Connection conn = null;
@@ -19,8 +20,10 @@ public class SqlDss implements AutoCloseable {
     private Long endTime = null;
     private boolean trimMissing = false;
     private boolean autoCommit = true;
+    private Constants.UNIT_SYSTEM unitSystem = EN;
     private Constants.REGULAR_STORE_RULE regularStoreRule = Constants.REGULAR_STORE_RULE.REPLACE_ALL;
     private Constants.IRREGULAR_STORE_RULE irregularStoreRule = Constants.IRREGULAR_STORE_RULE.REPLACE_ALL;
+    private final Map<String, String> retrieveUnits = new HashMap<>();
 
 
     private SqlDss() {
@@ -76,8 +79,6 @@ public class SqlDss implements AutoCloseable {
             if (endTime == null) {
                 throw new CoreException("Start time may not be specified without end time");
             }
-            this.startTime = EncodedDateTime.encodeDateTime(startTime);
-            this.endTime = EncodedDateTime.encodeDateTime(endTime);
         }
         this.startTime = startTime == null ? null : EncodedDateTime.encodeDateTime(startTime);
         this.endTime = endTime == null ? null : EncodedDateTime.encodeDateTime(endTime);
@@ -184,6 +185,52 @@ public class SqlDss implements AutoCloseable {
 
     public boolean getAutoCommit() {
         return autoCommit;
+    }
+
+    public void setUnitSystem(Constants.UNIT_SYSTEM unitSystem) {
+        this.unitSystem = unitSystem;
+    }
+
+    public Constants.UNIT_SYSTEM getUnitSystem() {
+        return unitSystem;
+    }
+
+    public void clearRetrieveUnits() {
+        retrieveUnits.clear();
+    }
+
+    public void clearRetrieveUnits(String parameter) throws CoreException, SQLException {
+        retrieveUnits.remove(Parameter.getParameter(parameter, getConnection()));
+    }
+
+    public void setRetrieveUnit(String parameter, String unit) throws CoreException, SQLException {
+        retrieveUnits.put(
+                Parameter.getParameter(parameter, getConnection()),
+                Unit.getUnit(unit, getConnection())
+        );
+    }
+
+    public String getRetrieveUnit(String parameter) {
+        return retrieveUnits.get(parameter);
+    }
+
+    public String getUnitSystemUnit(Constants.UNIT_SYSTEM unitSystem, String parameter) throws SQLException {
+        String baseParameter = parameter.indexOf('-') == -1 ? parameter : parameter.split("-", 2)[0];
+        String sql = String.format("select default_%s_unit from base_parameter where name = ?", unitSystem.name());
+        try (PreparedStatement ps = getConnection().prepareStatement(sql)) {
+            try (ResultSet rs = ps.executeQuery()) {
+                rs.next();
+                return rs.getString(1);
+            }
+        }
+    }
+
+    public String getEffectiveRetrieveUnit(String parameter) throws SQLException {
+        String unit = getRetrieveUnit(parameter);
+        if (unit == null) {
+            unit = getUnitSystemUnit(unitSystem, parameter);
+        }
+        return unit;
     }
 
     @Override
