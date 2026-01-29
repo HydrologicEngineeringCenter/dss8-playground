@@ -26,8 +26,7 @@ import java.sql.SQLException;
 import java.util.*;
 
 import static com.fasterxml.jackson.databind.node.JsonNodeType.STRING;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 
 public class CoreTest {
 
@@ -131,6 +130,9 @@ public class CoreTest {
         String locationName = "ctx:BaseLoc-SubLoc";
         try (SqlDss db = getDb()) {
             Connection conn = db.getConnection();
+            //-------------------//
+            // test merging info //
+            //-------------------//
             Location.putLocation(locationName, conn);
             String[] existingInfo = new String[1];
             assertEquals(1, Location.getLocationKey(locationName, existingInfo, conn));
@@ -150,6 +152,23 @@ public class CoreTest {
             assertTrue(equalJsonStrings(info3, info[0]));
             Location.putLocation(locationName, info2, false, conn);
             Location.getLocationKey(locationName, info, conn);
+            assertTrue(equalJsonStrings(info2, info[0]));
+            assertThrows(
+                    CoreException.class,
+                    () -> Location.putLocation(
+                            locationName,
+                            "{\"elevation\": 500, \"active: true}",
+                            false,
+                            conn),
+                    "Invalid JSON info:");
+            //---------------------------------//
+            // test get location keys and info //
+            //---------------------------------//
+            long key = Location.getLocationKey(locationName, conn);
+            assertEquals(1, key);;
+            info[0] = Location.getLocationInfo(key, conn);
+            assertTrue(equalJsonStrings(info2, info[0]));
+            info[0] = Location.getLocationInfo(locationName, conn);
             assertTrue(equalJsonStrings(info2, info[0]));
         }
     }

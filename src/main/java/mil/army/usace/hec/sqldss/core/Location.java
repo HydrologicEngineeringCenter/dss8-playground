@@ -20,8 +20,26 @@ public class Location {
         throw new AssertionError("Cannot instantiate");
     }
 
-    public static long getLocationKey(@NotNull String locationName,Connection conn) throws SQLException {
+    public static long getLocationKey(@NotNull String locationName, Connection conn) throws SQLException {
         return getLocationKey(locationName, new String[1], conn);
+    }
+
+    public static String getLocationInfo(@NotNull String locationName, Connection conn) throws SQLException {
+        String[] info = new String[1];
+        getLocationKey(locationName, info, conn);
+        return info[0];
+    }
+
+    public static String getLocationInfo(long key, Connection conn) throws SQLException {
+        try (PreparedStatement ps = conn.prepareStatement(
+                "select info from location where key = ?"
+        )) {
+            ps.setLong(1, key);
+            try (ResultSet rs = ps.executeQuery()) {
+                rs.next();
+                return rs.getString("info");
+            }
+        }
     }
 
     public static long getLocationKey(@NotNull String locationName, String @NotNull [] info, Connection conn) throws SQLException {
@@ -105,6 +123,9 @@ public class Location {
             // location already exists: compare info and see if we need to merge //
             //-------------------------------------------------------------------//
             info = info == null ? "" : info;
+            if (!info.isEmpty()) {
+                Util.validateJsonString(info);
+            }
             existingInfo[0] = existingInfo[0] == null ? "" : existingInfo[0];
             if (!info.equals(existingInfo[0])) {
                 if (mergeInfo) {

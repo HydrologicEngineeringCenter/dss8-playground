@@ -41,6 +41,15 @@ public class Util {
         }
     }
 
+    public static void validateJsonString(String jsonStr) throws CoreException {
+        ObjectMapper mapper = new ObjectMapper();
+        try {
+            JsonNode existingRoot = mapper.readTree(jsonStr);
+        } catch (JsonProcessingException e) {
+            throw new CoreException(String.format("Invalid JSON info: %s", jsonStr));
+        }
+    }
+
     public static String mergeJsonStrings(String incoming, String existing) throws CoreException {
         try {
             ObjectMapper mapper = new ObjectMapper();
