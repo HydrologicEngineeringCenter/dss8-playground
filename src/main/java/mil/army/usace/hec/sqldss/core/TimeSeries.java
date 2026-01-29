@@ -104,15 +104,25 @@ public final class TimeSeries {
     }
 
     @NotNull
-    public static TimeSeriesContainer getTimeSeriesValues(String name, HecTime startTime, HecTime endTime, boolean trimMissing,
-                                                          Connection conn) throws CoreException, SQLException,
+    public static TimeSeriesContainer getTimeSeriesValues(String name, long startTime, long endTime, boolean trimMissing,
+                                                          SqlDss sqldss) throws CoreException, SQLException,
+            EncodedDateTimeException, IOException {
+        TimeSeriesContainer tsc;
+        String parameter = name.split("\\|", 3)[1];
+        String unit = sqldss.getEffectiveRetrieveUnit(parameter);
+        return getTimeSeriesValues(name, startTime, endTime, trimMissing, unit, sqldss.getConnection());
+    }
+
+    @NotNull
+    public static TimeSeriesContainer getTimeSeriesValues(String name, long startTime, long endTime, boolean trimMissing,
+                                                          String unit, Connection conn) throws CoreException, SQLException,
             EncodedDateTimeException, IOException {
         TimeSeriesContainer tsc;
         if (isIrregular(name)) {
             throw new CoreException("Cannot yet retrieve irregular time series");
         }
         else {
-            tsc = getRegularTimeSeriesValues(name, startTime, endTime, conn);
+            tsc = getRegularTimeSeriesValues(name, startTime, endTime, unit, conn);
         }
         if (trimMissing) {
             trimTimeSeriesContainer(tsc);
@@ -120,20 +130,24 @@ public final class TimeSeries {
         return tsc;
     }
 
-    @NotNull
-    public static TimeSeriesContainer getAllTimeSeriesValues(String name, boolean trimMissing, Connection conn) throws CoreException,
+    public static TimeSeriesContainer getAllTimeSeriesValues(String name, boolean trimMissing, SqlDss sqldss) throws CoreException,
             SQLException, EncodedDateTimeException, IOException {
         TimeSeriesContainer tsc;
-        if (isIrregular(name)) {
-            throw new CoreException("Cannot yet retrieve irregular time series");
+        String parameter = name.split("\\|", 3)[1];
+        String unit = sqldss.getEffectiveRetrieveUnit(parameter);
+        return getAllTimeSeriesValues(name, trimMissing, unit, sqldss.getConnection());
+    }
+
+    @NotNull
+    public static TimeSeriesContainer getAllTimeSeriesValues(String name, boolean trimMissing, String unit, Connection conn) throws CoreException,
+            SQLException, EncodedDateTimeException, IOException {
+        TimeSeriesContainer tsc;
+        Long[] extents = new Long[2];
+        getTimeSeriesExtents(name, extents, conn);
+        if (extents[0] == null) {
+            throw new CoreException("No data for time series");
         }
-        else {
-            tsc = getAllRegularTimeSeriesValues(name, conn);
-        }
-        if (trimMissing) {
-            trimTimeSeriesContainer(tsc);
-        }
-        return tsc;
+        return getTimeSeriesValues(name, extents[0], extents[1], true, unit, conn);
     }
 
     static void getFirstLastBlockAndInterval(long key, Long[] blockExtents, String[] intervalName, Connection conn) throws SQLException, CoreException {
@@ -218,23 +232,11 @@ public final class TimeSeries {
     }
 
     @NotNull
-    static TimeSeriesContainer getAllRegularTimeSeriesValues(String name, Connection conn) throws CoreException,
-            SQLException, EncodedDateTimeException, IOException {
-        Long[] extents = new Long[2];
-        getTimeSeriesExtents(name, extents, conn);
-        if (extents[0] == null) {
-            throw new CoreException("No data for time series");
-        }
-        return getRegularTimeSeriesValues(name, EncodedDateTime.toHecTime(extents[0]),
-                EncodedDateTime.toHecTime(extents[1]), conn);
-    }
-
-    @NotNull
-    static TimeSeriesContainer getRegularTimeSeriesValues(@NotNull String name, HecTime startTime, HecTime endTime,
-                                                          Connection conn) throws CoreException, SQLException,
+    static TimeSeriesContainer getRegularTimeSeriesValues(@NotNull String name, long startTime, long endTime,
+                                                          String unit, Connection conn) throws CoreException, SQLException,
             EncodedDateTimeException, IOException {
-        long encodedStartTime = EncodedDateTime.encodeDateTime(startTime);
-        long encodedEndTime = EncodedDateTime.encodeDateTime(endTime);
+        HecTime startHecTime = EncodedDateTime.toHecTime(startTime);
+        HecTime endHecTime = EncodedDateTime.toHecTime(endTime);
         TimeSeriesContainer tsc = new TimeSeriesContainer();
         String[] nameParts = name.split("\\|", -1);
         String locationName = nameParts[0];
@@ -309,7 +311,7 @@ public final class TimeSeries {
         tsc.interval = intervalMinutes;
         existingOffsetMinutes = Duration.iso8601ToMinutes(existingOffsetStr);
         // determine blocks
-        long[] encodedBlockDates = getBlockStartDates(startTime, endTime, intervalName);
+        long[] encodedBlockDates = getBlockStartDates(startHecTime, endHecTime, intervalName);
         byte[] blob;
         int[][] timeArrays = new int[encodedBlockDates.length - 1][];
         double[][] valueArrays = new double[encodedBlockDates.length - 1][];
@@ -337,21 +339,21 @@ public final class TimeSeries {
                 ) + 1;
                 int firstValueOffset = -1;
                 int lastValueOffset = -1;
-                if (encodedStartTime <= encodedFirstTime) {
+                if (startTime <= encodedFirstTime) {
                     firstValueOffset = 0;
                 }
                 else {
                     firstValueOffset = EncodedDateTime.intervalsBetween(
                             encodedFirstTime,
-                            encodedStartTime,
+                            startTime,
                             intervalMinutes);
                 }
-                if (encodedEndTime >= encodedLastTime) {
+                if (endTime >= encodedLastTime) {
                     lastValueOffset = blockValueCount - 1;
                 }
                 else {
                     lastValueOffset = blockValueCount - EncodedDateTime.intervalsBetween(
-                            encodedEndTime,
+                            endTime,
                             encodedLastTime,
                             intervalMinutes) - 1;
                 }
@@ -406,21 +408,21 @@ public final class TimeSeries {
                         blockValueCount - 1);
                 int firstValueOffset = -1;
                 int lastValueOffset = -1;
-                if (encodedStartTime <= encodedFirstTime) {
+                if (startTime <= encodedFirstTime) {
                     firstValueOffset = 0;
                 }
                 else {
                     firstValueOffset = EncodedDateTime.intervalsBetween(
                             encodedFirstTime,
-                            encodedStartTime,
+                            startTime,
                             intervalMinutes);
                 }
-                if (encodedEndTime >= encodedLastTime) {
+                if (endTime >= encodedLastTime) {
                     lastValueOffset = blockValueCount - 1;
                 }
                 else {
                     lastValueOffset = blockValueCount - EncodedDateTime.intervalsBetween(
-                            encodedEndTime,
+                            endTime,
                             encodedLastTime,
                             intervalMinutes) - 1;
                 }
@@ -540,8 +542,11 @@ public final class TimeSeries {
             tsc.setQuality(Arrays.copyOf(qualities, count));
         }
         tsc.numberValues = count;
-        tsc.setStartTime(startTime);
-        tsc.setEndTime(endTime);
+        tsc.setStartTime(startHecTime);
+        tsc.setEndTime(endHecTime);
+        if (unit != null && !unit.equals(tsc.units)) {
+            Unit.convertUnits(tsc, unit, conn);
+        }
         return tsc;
     }
 

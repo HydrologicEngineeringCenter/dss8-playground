@@ -88,7 +88,14 @@ public class HecSqlDss implements AutoCloseable {
 
     public DataContainer get(String pathname) throws ApiException, EncodedDateTimeException, CoreException,
             SQLException, IOException {
-        return getInUnit(pathname, null);
+        if (ApiUtil.isTimeSeriesApiName(pathname)) {
+            String parameter = pathname.split("/", -1)[3];
+            String unit = sqldss.getEffectiveRetrieveUnit(parameter);
+            return getInUnit(pathname, unit);
+        }
+        else {
+            throw new ApiException("Pathname not recognized as a valid data type");
+        }
     }
 
     public DataContainer getInUnit(String pathname, String unit) throws ApiException, EncodedDateTimeException, CoreException,
@@ -126,18 +133,12 @@ public class HecSqlDss implements AutoCloseable {
             }
             tsc = getTimeSeriesValues(
                     coreName,
-                    EncodedDateTime.toHecTime(startTime),
-                    EncodedDateTime.toHecTime(endTime),
+                    startTime,
+                    endTime,
                     sqldss.getTrimMissing(),
+                    unit,
                     sqldss.getConnection()
             );
-            if (sqldss.getTrimMissing()) {
-                TimeSeries.trimTimeSeriesContainer((tsc));
-            }
-            ApiUtil.updateTscToApi(tsc);
-            if (unit != null) {
-                Unit.convertUnits(tsc, unit, sqldss.getConnection());
-            }
             return tsc;
         }
        else {
@@ -146,7 +147,14 @@ public class HecSqlDss implements AutoCloseable {
     }
 
     public DataContainer get(String pathname, String startTime, String endTime) throws Exception {
-        return getInUnit(pathname, null, startTime, endTime);
+        if (ApiUtil.isTimeSeriesApiName(pathname)) {
+            String parameter = pathname.split("/", -1)[3];
+            String unit = sqldss.getEffectiveRetrieveUnit(parameter);
+            return getInUnit(pathname, unit, startTime, endTime);
+        }
+        else {
+            throw new ApiException("Pathname not recognized as a valid data type");
+        }
     }
 
     public DataContainer getInUnit(String pathname, String unit, String startTime, String endTime) throws Exception {
@@ -178,15 +186,12 @@ public class HecSqlDss implements AutoCloseable {
             }
             tsc = getTimeSeriesValues(
                     ApiUtil.toApiName(pathname),
-                    startHecTime,
-                    endHecTime,
+                    EncodedDateTime.encodeDateTime(startHecTime),
+                    EncodedDateTime.encodeDateTime(endHecTime),
                     sqldss.getTrimMissing(),
+                    unit,
                     sqldss.getConnection()
             );
-            ApiUtil.updateTscToApi(tsc);
-            if (unit != null) {
-                Unit.convertUnits(tsc, unit, sqldss.getConnection());
-            }
             return tsc;
         }
        else {
@@ -196,7 +201,14 @@ public class HecSqlDss implements AutoCloseable {
 
     public DataContainer get(String pathname, boolean readEntireSet) throws ApiException, CoreException, SQLException
             , EncodedDateTimeException, IOException {
-        return getInUnit(pathname, null, readEntireSet);
+        if (ApiUtil.isTimeSeriesApiName(pathname)) {
+            String parameter = pathname.split("/", -1)[3];
+            String unit = sqldss.getEffectiveRetrieveUnit(parameter);
+            return getInUnit(pathname, unit, readEntireSet);
+        }
+        else {
+            throw new ApiException("Pathname not recognized as a valid data type");
+        }
     }
 
     public DataContainer getInUnit(String pathname, String unit, boolean readEntireSet) throws ApiException, CoreException, SQLException
@@ -209,11 +221,9 @@ public class HecSqlDss implements AutoCloseable {
                 TimeSeriesContainer tsc = getAllTimeSeriesValues(
                         ApiUtil.toCoreName(pathname),
                         sqldss.getTrimMissing(),
+                        unit,
                         sqldss.getConnection());
                 ApiUtil.updateTscToApi(tsc);
-                if (unit != null) {
-                    Unit.convertUnits(tsc, unit, sqldss.getConnection());
-                }
                 return tsc;
             }
            else {

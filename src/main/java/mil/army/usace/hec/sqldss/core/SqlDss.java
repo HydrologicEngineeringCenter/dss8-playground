@@ -89,7 +89,6 @@ public class SqlDss implements AutoCloseable {
         try (Statement st = conn.createStatement()) {
             st.execute("pragma page_size = 8192");
             st.execute("pragma foreign_keys = ON");
-            conn.setAutoCommit(false);
             if (!exists) {
                 Init.initializeDb(conn);
             }
@@ -214,10 +213,11 @@ public class SqlDss implements AutoCloseable {
         return retrieveUnits.get(parameter);
     }
 
-    public String getUnitSystemUnit(Constants.UNIT_SYSTEM unitSystem, String parameter) throws SQLException {
+    public String getUnitSystemUnit(Constants.@NotNull UNIT_SYSTEM unitSystem, @NotNull String parameter) throws SQLException {
         String baseParameter = parameter.indexOf('-') == -1 ? parameter : parameter.split("-", 2)[0];
         String sql = String.format("select default_%s_unit from base_parameter where name = ?", unitSystem.name());
         try (PreparedStatement ps = getConnection().prepareStatement(sql)) {
+            ps.setString(1, baseParameter);
             try (ResultSet rs = ps.executeQuery()) {
                 rs.next();
                 return rs.getString(1);

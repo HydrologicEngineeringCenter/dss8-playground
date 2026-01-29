@@ -151,7 +151,6 @@ public class CoreTest {
             Location.putLocation(locationName, info2, false, conn);
             Location.getLocationKey(locationName, info, conn);
             assertTrue(equalJsonStrings(info2, info[0]));
-            db.commit();
         }
     }
 }

@@ -23,6 +23,8 @@ public class Init {
     }
 
     public static void initializeDb(Connection conn) throws SQLException, CoreException, IOException {
+        boolean isAutoCommit = conn.getAutoCommit();
+        if (isAutoCommit) conn.setAutoCommit(false);
         createDssInfoTable(conn);
         createAbstractParamTable(conn);
         createUnitTable(conn);
@@ -39,6 +41,7 @@ public class Init {
         createTsvTable(conn);
         createTsvInfoTable(conn);
         conn.commit();
+        if (isAutoCommit) conn.setAutoCommit(true);
     }
     
     public static void createDssInfoTable(@NotNull Connection conn) throws SQLException {
