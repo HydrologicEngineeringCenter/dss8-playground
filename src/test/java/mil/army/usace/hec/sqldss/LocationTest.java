@@ -1,6 +1,5 @@
 package mil.army.usace.hec.sqldss.mil.army.usace.hec.sqldss;
 
-import com.fasterxml.jackson.annotation.JsonKey;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -10,14 +9,9 @@ import mil.army.usace.hec.sqldss.core.CoreException;
 import mil.army.usace.hec.sqldss.core.EncodedDateTimeException;
 import mil.army.usace.hec.sqldss.core.Location;
 import mil.army.usace.hec.sqldss.core.SqlDss;
-import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.io.TempDir;
 
-import java.io.File;
 import java.io.IOException;
-import java.net.URISyntaxException;
-import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -25,10 +19,9 @@ import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.*;
 
-import static com.fasterxml.jackson.databind.node.JsonNodeType.STRING;
 import static org.junit.jupiter.api.Assertions.*;
 
-public class CoreTest {
+public class LocationTest {
 
     static FluentLogger logger = FluentLogger.forEnclosingClass();
     static SqlDss _db = null;

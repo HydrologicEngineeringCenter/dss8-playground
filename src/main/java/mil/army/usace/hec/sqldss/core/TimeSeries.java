@@ -1239,52 +1239,67 @@ public final class TimeSeries {
             case REPLACE_ALL:
             case REPLACE_ALL_CREATE:
             case REPLACE_ALL_DELETE:
-                mergeReplaceAll(
-                        intervalMinutes,
-                        incoming,
-                        existing,
-                        merged
-                );
+                mergeReplaceAll(intervalMinutes, incoming, existing, merged);
                 break;
             case DO_NOT_REPLACE:
-                mergeDoNotReplace(
-                        intervalMinutes,
-                        incoming,
-                        existing,
-                        merged
-                );
+                mergeDoNotReplace(intervalMinutes, incoming, existing, merged);
                 break;
             case REPLACE_MISSING_VALUES_ONLY:
-                mergeReplaceMissingValuesOnly(
-                        intervalMinutes,
-                        incoming,
-                        existing,
-                        merged
-                );
+                mergeReplaceMissingValuesOnly(intervalMinutes, incoming, existing, merged);
                 break;
             case REPLACE_WITH_NON_MISSING:
-                mergeReplaceWithNonMissing(
-                        intervalMinutes,
-                        incoming,
-                        existing,
-                        merged
-                );
+                mergeReplaceWithNonMissing(intervalMinutes, incoming, existing, merged);
                 break;
             default:
                 throw new CoreException("Unexpected regular store rule: " + storeRule.name());
         }
     }
 
+    public static void mergeTimeSeries(
+            @NotNull IRREGULAR_STORE_RULE storeRule,
+            @NotNull TsvData incoming,
+            @NotNull TsvData existing,
+            @NotNull TsvData merged
+    ) throws CoreException, EncodedDateTimeException {
+        int intervalMinutes = 0;
+        switch (storeRule) {
+            case REPLACE_ALL:
+            case MERGE:
+                mergeReplaceAll(intervalMinutes, incoming, existing, merged);
+                break;
+            case DO_NOT_REPLACE:
+                mergeDoNotReplace(intervalMinutes, incoming, existing, merged);
+                break;
+            case REPLACE_MISSING_VALUES_ONLY:
+                mergeReplaceMissingValuesOnly(intervalMinutes, incoming, existing, merged);
+                break;
+            case REPLACE_WITH_NON_MISSING:
+                mergeReplaceWithNonMissing(intervalMinutes, incoming, existing, merged);
+                break;
+            case DELETE_INSERT:
+                mergeDeleteInsert(incoming, existing, merged);
+                break;
+            default:
+                throw new CoreException("Unexpected regular store rule: " + storeRule.name());
+        }
+    }
     static void mergeReplaceAll(
             int intervalMinutes,
             @NotNull TsvData incoming,
             @NotNull TsvData existing,
             @NotNull TsvData merged
     ) throws EncodedDateTimeException {
-        long first = Math.min(incoming.times[incoming.offset], existing.times[existing.offset]);
-        long last = Math.max(incoming.times[incoming.offset + incoming.count - 1], existing.times[existing.offset + existing.count - 1]);
-        int count = EncodedDateTime.intervalsBetween(first, last, intervalMinutes) + 2;
-        merged.times = EncodedDateTime.makeRegularEncodedDateTimeArray(first, count, intervalMinutes);
+        int count;
+        if (intervalMinutes == 0) {
+            count = incoming.count + existing.count;
+            merged.times = new long[count];
+        }
+        else {
+            long first = Math.min(incoming.times[incoming.offset], existing.times[existing.offset]);
+            long last = Math.max(incoming.times[incoming.offset + incoming.count - 1], existing.times[existing.offset + existing.count - 1]);
+            count = EncodedDateTime.intervalsBetween(first, last, intervalMinutes) + 2;
+            merged.times = EncodedDateTime.makeRegularEncodedDateTimeArray(first, count, intervalMinutes);
+        }
         merged.values = new double[count];
         merged.qualities = new int[count];
 
@@ -1309,7 +1324,10 @@ public final class TimeSeries {
                         break outer;
                     }
                 }
-                if (++e + existing.offset >= existing.count) {
+                if (existing.times[e] > merged.times[m-1]) {
+                    continue;
+                }
+                else if (++e + existing.offset >= existing.count) {
                     break;
                 }
             }
@@ -1325,21 +1343,23 @@ public final class TimeSeries {
                 }
             }
         }
-        //-----------------------------------------------//
-        // fill any blanks between incoming and existing //
-        //-----------------------------------------------//
-        if (i < incoming.offset + incoming.count) {
-            while (merged.times[m] < incoming.times[i]) {
-                merged.values[m] = UNDEFINED_DOUBLE;
-                merged.qualities[m] = 0;
-                ++m;
+        if (intervalMinutes > 0) {
+            //-----------------------------------------------//
+            // fill any blanks between incoming and existing //
+            //-----------------------------------------------//
+            if (i < incoming.offset + incoming.count) {
+                while (merged.times[m] < incoming.times[i]) {
+                    merged.values[m] = UNDEFINED_DOUBLE;
+                    merged.qualities[m] = 0;
+                    ++m;
+                }
             }
-        }
-        if (e < existing.offset + existing.count) {
-            while (merged.times[m] < existing.times[e]) {
-                merged.values[m] = UNDEFINED_DOUBLE;
-                merged.qualities[m] = 0;
-                ++m;
+            if (e < existing.offset + existing.count) {
+                while (merged.times[m] < existing.times[e]) {
+                    merged.values[m] = UNDEFINED_DOUBLE;
+                    merged.qualities[m] = 0;
+                    ++m;
+                }
             }
         }
         //------------------------------------------------//
@@ -1369,10 +1389,17 @@ public final class TimeSeries {
             @NotNull TsvData existing,
             @NotNull TsvData merged
     ) throws EncodedDateTimeException {
-        long first = Math.min(incoming.times[incoming.offset], existing.times[existing.offset]);
-        long last = Math.max(incoming.times[incoming.offset + incoming.count - 1], existing.times[existing.offset + existing.count - 1]);
-        int count = EncodedDateTime.intervalsBetween(first, last, intervalMinutes) + 2;
-        merged.times = EncodedDateTime.makeRegularEncodedDateTimeArray(first, count, intervalMinutes);
+        int count;
+        if (intervalMinutes == 0) {
+            count = incoming.count + existing.count;
+            merged.times = new long[count];
+        }
+        else {
+            long first = Math.min(incoming.times[incoming.offset], existing.times[existing.offset]);
+            long last = Math.max(incoming.times[incoming.offset + incoming.count - 1], existing.times[existing.offset + existing.count - 1]);
+            count = EncodedDateTime.intervalsBetween(first, last, intervalMinutes) + 2;
+            merged.times = EncodedDateTime.makeRegularEncodedDateTimeArray(first, count, intervalMinutes);
+        }
         merged.values = new double[count];
         merged.qualities = new int[count];
 
@@ -1394,6 +1421,9 @@ public final class TimeSeries {
                         ++e;
                         break outer;
                     }
+                }
+                if (existing.times[e] > merged.times[m-1]) {
+                    continue;
                 }
                 if (++e + existing.offset >= existing.count) {
                     break;
@@ -1461,10 +1491,17 @@ public final class TimeSeries {
             @NotNull TsvData existing,
             @NotNull TsvData merged
     ) throws EncodedDateTimeException {
-        long first = Math.min(incoming.times[incoming.offset], existing.times[existing.offset]);
-        long last = Math.max(incoming.times[incoming.offset + incoming.count - 1], existing.times[existing.offset + existing.count - 1]);
-        int count = EncodedDateTime.intervalsBetween(first, last, intervalMinutes) + 2;
-        merged.times = EncodedDateTime.makeRegularEncodedDateTimeArray(first, count, intervalMinutes);
+        int count;
+        if (intervalMinutes == 0) {
+            count = incoming.count + existing.count;
+            merged.times = new long[count];
+        }
+        else {
+            long first = Math.min(incoming.times[incoming.offset], existing.times[existing.offset]);
+            long last = Math.max(incoming.times[incoming.offset + incoming.count - 1], existing.times[existing.offset + existing.count - 1]);
+            count = EncodedDateTime.intervalsBetween(first, last, intervalMinutes) + 2;
+            merged.times = EncodedDateTime.makeRegularEncodedDateTimeArray(first, count, intervalMinutes);
+        }
         merged.values = new double[count];
         merged.qualities = new int[count];
 
@@ -1479,12 +1516,129 @@ public final class TimeSeries {
             if (incoming.times[i] <= existing.times[e]) {
                 while (incoming.times[i] <= existing.times[e]) {
                     if (
-                            existing.values[e] == UNDEFINED_DOUBLE
-                                    && (
-                                    existing.qualities == null
-                                            || (
-                                            ((existing.qualities[e] & QUALITY_SCREENED_VALIDITY_MASK) == QUALITY_MISSING_VALUE)
-                                                    || ((existing.qualities[e] & QUALITY_SCREENED_VALIDITY_MASK) == QUALITY_REJECTED_VALUE)
+                            existing.times[e] != incoming.times[i] ||
+                                    existing.values[e] == UNDEFINED_DOUBLE
+                                            && (
+                                            existing.qualities == null
+                                                    || (
+                                                    ((existing.qualities[e] & QUALITY_SCREENED_VALIDITY_MASK) == QUALITY_MISSING_VALUE)
+                                                            || ((existing.qualities[e] & QUALITY_SCREENED_VALIDITY_MASK) == QUALITY_REJECTED_VALUE)
+                                            )
+                                    )
+                    ) {
+                        merged.times[m] = incoming.times[i];
+                        merged.values[m] = incoming.values[i];
+                        merged.qualities[m] = incoming.qualities == null ? 0 : incoming.qualities[i];
+                    }
+                    else {
+                        merged.times[m] = existing.times[e];
+                        merged.values[m] = existing.values[e];
+                        merged.qualities[m] = existing.qualities == null ? 0 : existing.qualities[e];
+                    }
+                    ++m;
+                    if (++i + incoming.offset >= incoming.count) {
+                        if (incoming.times[i-1] >= existing.times[e]) {
+                            ++e;
+                        }
+                        break outer;
+                    }
+                }
+                if (existing.times[e] > merged.times[m-1]) {
+                    continue;
+                }
+                if (++e + existing.offset >= existing.count) {
+                    break;
+                }
+            }
+            if (existing.times[e] < incoming.times[i]) {
+                while (existing.times[e] < incoming.times[i]) {
+                    merged.times[m] = existing.times[e];
+                    merged.values[m] = existing.values[e];
+                    merged.qualities[m] = existing.qualities == null ? 0 : existing.qualities[e];
+                    ++m;
+                    if (++e + existing.offset >= existing.count) {
+                        break outer;
+                    }
+                }
+            }
+        }
+        if (intervalMinutes > 0) {
+            //-----------------------------------------------//
+            // fill any blanks between incoming and existing //
+            //-----------------------------------------------//
+            if (i < incoming.offset + incoming.count) {
+                while (merged.times[m] < incoming.times[i]) {
+                    merged.values[m] = UNDEFINED_DOUBLE;
+                    merged.qualities[m] = 0;
+                    ++m;
+                }
+            }
+            if (e < existing.offset + existing.count) {
+                while (merged.times[m] < existing.times[e]) {
+                    merged.values[m] = UNDEFINED_DOUBLE;
+                    merged.qualities[m] = 0;
+                    ++m;
+                }
+            }
+        }
+        //------------------------------------------------//
+        // fill remainder with whichever wasn't exhausted //
+        //------------------------------------------------//
+        while (i < incoming.offset + incoming.count) {
+            merged.times[m] = incoming.times[i];
+            merged.values[m] = incoming.values[i];
+            merged.qualities[m] = incoming.qualities == null ? 0 : incoming.qualities[i];
+            ++i;
+            ++m;
+        }
+        while (e < existing.offset + existing.count) {
+            merged.times[m] = existing.times[e];
+            merged.values[m] = existing.values[e];
+            merged.qualities[m] = existing.qualities == null ? 0 : existing.qualities[e];
+            ++e;
+            ++m;
+        }
+        merged.offset = 0;
+        merged.count = m;
+    }
+
+    static void mergeReplaceWithNonMissing(
+            int intervalMinutes,
+            @NotNull TsvData incoming,
+            @NotNull TsvData existing,
+            @NotNull TsvData merged
+    ) throws EncodedDateTimeException {
+        int count;
+        if (intervalMinutes == 0) {
+            count = incoming.count + existing.count;
+            merged.times = new long[count];
+        }
+        else {
+            long first = Math.min(incoming.times[incoming.offset], existing.times[existing.offset]);
+            long last = Math.max(incoming.times[incoming.offset + incoming.count - 1], existing.times[existing.offset + existing.count - 1]);
+            count = EncodedDateTime.intervalsBetween(first, last, intervalMinutes) + 2;
+            merged.times = EncodedDateTime.makeRegularEncodedDateTimeArray(first, count, intervalMinutes);
+        }
+        merged.values = new double[count];
+        merged.qualities = new int[count];
+
+        int i = incoming.offset;
+        int e = existing.offset;
+        int m = 0;
+        //--------------------------------------------------//
+        // copy within limits of both incoming and existing //
+        //--------------------------------------------------//
+        outer:
+        while (i < incoming.offset + incoming.count && e < existing.offset + existing.count) {
+            if (incoming.times[i] <= existing.times[e]) {
+                while (incoming.times[i] <= existing.times[e]) {
+                    if (
+                            incoming.values[i] != UNDEFINED_DOUBLE
+                                    || (
+                                    incoming.qualities != null
+                                            && (
+                                            ((incoming.qualities[i] & QUALITY_SCREENED_VALIDITY_MASK) == QUALITY_MISSING_VALUE)
+                                                    || ((incoming.qualities[i] & QUALITY_SCREENED_VALIDITY_MASK) == QUALITY_REJECTED_VALUE)
                                     )
                             )
                     ) {
@@ -1504,6 +1658,9 @@ public final class TimeSeries {
                         }
                         break outer;
                     }
+                }
+                if (existing.times[e] > merged.times[m-1]) {
+                    continue;
                 }
                 if (++e + existing.offset >= existing.count) {
                     break;
@@ -1559,107 +1716,11 @@ public final class TimeSeries {
         merged.count = m;
     }
 
-    static void mergeReplaceWithNonMissing(
-            int intervalMinutes,
+    static void mergeDeleteInsert(
             @NotNull TsvData incoming,
             @NotNull TsvData existing,
             @NotNull TsvData merged
-    ) throws EncodedDateTimeException {
-        long first = Math.min(incoming.times[incoming.offset], existing.times[existing.offset]);
-        long last = Math.max(incoming.times[incoming.offset + incoming.count - 1], existing.times[existing.offset + existing.count - 1]);
-        int count = EncodedDateTime.intervalsBetween(first, last, intervalMinutes) + 2;
-        merged.times = EncodedDateTime.makeRegularEncodedDateTimeArray(first, count, intervalMinutes);
-        merged.values = new double[count];
-        merged.qualities = new int[count];
-
-        int i = incoming.offset;
-        int e = existing.offset;
-        int m = 0;
-        //--------------------------------------------------//
-        // copy within limits of both incoming and existing //
-        //--------------------------------------------------//
-        outer:
-        while (i < incoming.offset + incoming.count && e < existing.offset + existing.count) {
-            if (incoming.times[i] <= existing.times[e]) {
-                while (incoming.times[i] <= existing.times[e]) {
-                    if (
-                            incoming.values[i] != UNDEFINED_DOUBLE
-                                    || (
-                                    incoming.qualities != null
-                                            && (
-                                            ((incoming.qualities[i] & QUALITY_SCREENED_VALIDITY_MASK) == QUALITY_MISSING_VALUE)
-                                                    || ((incoming.qualities[i] & QUALITY_SCREENED_VALIDITY_MASK) == QUALITY_REJECTED_VALUE)
-                                    )
-                            )
-                    ) {
-                        merged.times[m] = incoming.times[i];
-                        merged.values[m] = incoming.values[i];
-                        merged.qualities[m] = incoming.qualities == null ? 0 : incoming.qualities[i];
-                    }
-                    else {
-                        merged.times[m] = existing.times[e];
-                        merged.values[m] = existing.values[e];
-                        merged.qualities[m] = existing.qualities == null ? 0 : existing.qualities[e];
-                    }
-                    ++m;
-                    if (++i + incoming.offset >= incoming.count) {
-                        if (incoming.times[i-1] >= existing.times[e]) {
-                            ++e;
-                        }
-                        break outer;
-                    }
-                }
-                if (++e + existing.offset >= existing.count) {
-                    break;
-                }
-            }
-            if (existing.times[e] < incoming.times[i]) {
-                while (existing.times[e] < incoming.times[i]) {
-                    merged.times[m] = existing.times[e];
-                    merged.values[m] = existing.values[e];
-                    merged.qualities[m] = existing.qualities == null ? 0 : existing.qualities[e];
-                    ++m;
-                    if (++e + existing.offset >= existing.count) {
-                        break outer;
-                    }
-                }
-            }
-        }
-        //-----------------------------------------------//
-        // fill any blanks between incoming and existing //
-        //-----------------------------------------------//
-        if (i < incoming.offset + incoming.count) {
-            while (merged.times[m] < incoming.times[i]) {
-                merged.values[m] = UNDEFINED_DOUBLE;
-                merged.qualities[m] = 0;
-                ++m;
-            }
-        }
-        if (e < existing.offset + existing.count) {
-            while (merged.times[m] < existing.times[e]) {
-                merged.values[m] = UNDEFINED_DOUBLE;
-                merged.qualities[m] = 0;
-                ++m;
-            }
-        }
-        //------------------------------------------------//
-        // fill remainder with whichever wasn't exhausted //
-        //------------------------------------------------//
-        while (i < incoming.offset + incoming.count) {
-            merged.times[m] = incoming.times[i];
-            merged.values[m] = incoming.values[i];
-            merged.qualities[m] = incoming.qualities == null ? 0 : incoming.qualities[i];
-            ++i;
-            ++m;
-        }
-        while (e < existing.offset + existing.count) {
-            merged.times[m] = existing.times[e];
-            merged.values[m] = existing.values[e];
-            merged.qualities[m] = existing.qualities == null ? 0 : existing.qualities[e];
-            ++e;
-            ++m;
-        }
-        merged.offset = 0;
-        merged.count = m;
+    ) {
+        throw new AssertionError("Not implemented");
     }
 }

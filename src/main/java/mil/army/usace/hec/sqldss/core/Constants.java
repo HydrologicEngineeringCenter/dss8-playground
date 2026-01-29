@@ -154,7 +154,7 @@ public class Constants {
 
     public enum IRREGULAR_STORE_RULE {
         REPLACE_ALL(0),
-        MERGE(0), // alias for MERGE for backward compatibility
+        MERGE(0), // alias for REPLACE_ALL for backward compatibility
         DELETE_INSERT(1),
         REPLACE_MISSING_VALUES_ONLY(2),
         REPLACE_WITH_NON_MISSING(3),
