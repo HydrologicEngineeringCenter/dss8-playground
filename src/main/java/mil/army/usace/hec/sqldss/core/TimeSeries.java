@@ -1338,8 +1338,17 @@ public final class TimeSeries {
                     merged.qualities[m] = existing.qualities == null ? 0 : existing.qualities[e];
                     ++m;
                     if (++e + existing.offset >= existing.count) {
+                        if (existing.times[e-1] >= incoming.times[i]) {
+                            ++i;
+                        }
                         break outer;
                     }
+                }
+                if (incoming.times[i] > merged.times[m-1]) {
+                    continue;
+                }
+                if (++i + incoming.offset >= incoming.count) {
+                    break;
                 }
             }
         }
@@ -1418,7 +1427,9 @@ public final class TimeSeries {
                     merged.qualities[m] = incoming.qualities == null ? 0 : incoming.qualities[i];
                     ++m;
                     if (++i + incoming.offset >= incoming.count) {
-                        ++e;
+                        if (existing.times[e] <= merged.times[m-1]) {
+                            ++e;
+                        }
                         break outer;
                     }
                 }
@@ -1437,31 +1448,36 @@ public final class TimeSeries {
                     ++m;
                     if (++e + existing.offset >= existing.count) {
                         if (existing.times[e-1] >= incoming.times[i]) {
-                                ++i;
+                            ++i;
                         }
                         break outer;
                     }
+                }
+                if (incoming.times[i] > merged.times[m-1]) {
+                    continue;
                 }
                 if (++i + incoming.offset >= incoming.count) {
                     break;
                 }
             }
         }
-        //-----------------------------------------------//
-        // fill any blanks between incoming and existing //
-        //-----------------------------------------------//
-        if (i < incoming.offset + incoming.count) {
-            while (merged.times[m] < incoming.times[i]) {
-                merged.values[m] = UNDEFINED_DOUBLE;
-                merged.qualities[m] = 0;
-                ++m;
+        if (intervalMinutes > 0) {
+            //-----------------------------------------------//
+            // fill any blanks between incoming and existing //
+            //-----------------------------------------------//
+            if (i < incoming.offset + incoming.count) {
+                while (merged.times[m] < incoming.times[i]) {
+                    merged.values[m] = UNDEFINED_DOUBLE;
+                    merged.qualities[m] = 0;
+                    ++m;
+                }
             }
-        }
-        if (e < existing.offset + existing.count) {
-            while (merged.times[m] < existing.times[e]) {
-                merged.values[m] = UNDEFINED_DOUBLE;
-                merged.qualities[m] = 0;
-                ++m;
+            if (e < existing.offset + existing.count) {
+                while (merged.times[m] < existing.times[e]) {
+                    merged.values[m] = UNDEFINED_DOUBLE;
+                    merged.qualities[m] = 0;
+                    ++m;
+                }
             }
         }
         //------------------------------------------------//
@@ -1537,7 +1553,7 @@ public final class TimeSeries {
                     }
                     ++m;
                     if (++i + incoming.offset >= incoming.count) {
-                        if (incoming.times[i-1] >= existing.times[e]) {
+                        if (existing.times[e] <= merged.times[m-1]) {
                             ++e;
                         }
                         break outer;
@@ -1557,8 +1573,17 @@ public final class TimeSeries {
                     merged.qualities[m] = existing.qualities == null ? 0 : existing.qualities[e];
                     ++m;
                     if (++e + existing.offset >= existing.count) {
+                        if (existing.times[e-1] >= incoming.times[i]) {
+                            ++i;
+                        }
                         break outer;
                     }
+                }
+                if (incoming.times[i] > merged.times[m-1]) {
+                    continue;
+                }
+                if (++i + incoming.offset >= incoming.count) {
+                    break;
                 }
             }
         }
@@ -1633,7 +1658,8 @@ public final class TimeSeries {
             if (incoming.times[i] <= existing.times[e]) {
                 while (incoming.times[i] <= existing.times[e]) {
                     if (
-                            incoming.values[i] != UNDEFINED_DOUBLE
+                            existing.times[e] != incoming.times[i] ||
+                                    incoming.values[i] != UNDEFINED_DOUBLE
                                     || (
                                     incoming.qualities != null
                                             && (
@@ -1653,7 +1679,7 @@ public final class TimeSeries {
                     }
                     ++m;
                     if (++i + incoming.offset >= incoming.count) {
-                        if (incoming.times[i-1] >= existing.times[e]) {
+                        if (existing.times[e] <= merged.times[m-1]) {
                             ++e;
                         }
                         break outer;
@@ -1673,26 +1699,37 @@ public final class TimeSeries {
                     merged.qualities[m] = existing.qualities == null ? 0 : existing.qualities[e];
                     ++m;
                     if (++e + existing.offset >= existing.count) {
+                        if (existing.times[e-1] >= incoming.times[i]) {
+                            ++i;
+                        }
                         break outer;
                     }
                 }
+                if (incoming.times[i] > merged.times[m-1]) {
+                    continue;
+                }
+                if (++i + incoming.offset >= incoming.count) {
+                    break;
+                }
             }
         }
-        //-----------------------------------------------//
-        // fill any blanks between incoming and existing //
-        //-----------------------------------------------//
-        if (i < incoming.offset + incoming.count) {
-            while (merged.times[m] < incoming.times[i]) {
-                merged.values[m] = UNDEFINED_DOUBLE;
-                merged.qualities[m] = 0;
-                ++m;
+        if (intervalMinutes > 0) {
+            //-----------------------------------------------//
+            // fill any blanks between incoming and existing //
+            //-----------------------------------------------//
+            if (i < incoming.offset + incoming.count) {
+                while (merged.times[m] < incoming.times[i]) {
+                    merged.values[m] = UNDEFINED_DOUBLE;
+                    merged.qualities[m] = 0;
+                    ++m;
+                }
             }
-        }
-        if (e < existing.offset + existing.count) {
-            while (merged.times[m] < existing.times[e]) {
-                merged.values[m] = UNDEFINED_DOUBLE;
-                merged.qualities[m] = 0;
-                ++m;
+            if (e < existing.offset + existing.count) {
+                while (merged.times[m] < existing.times[e]) {
+                    merged.values[m] = UNDEFINED_DOUBLE;
+                    merged.qualities[m] = 0;
+                    ++m;
+                }
             }
         }
         //------------------------------------------------//
@@ -1721,6 +1758,37 @@ public final class TimeSeries {
             @NotNull TsvData existing,
             @NotNull TsvData merged
     ) {
-        throw new AssertionError("Not implemented");
+        int count = incoming.count + existing.count;
+        merged.times = new long[count];
+        merged.values = new double[count];
+        merged.qualities = new int[count];
+
+        long deleteWindowStart = incoming.times[incoming.offset];
+        long deleteWindowEnd = incoming.times[incoming.offset+incoming.count-1];
+        int e = existing.offset;
+        int m = 0;
+        
+        for (; e < existing.offset+existing.count && existing.times[e] < deleteWindowStart; ++e) {
+            merged.times[m] = existing.times[e];
+            merged.values[m] = existing.values[e];
+            merged.qualities[m] = existing.qualities == null ? 0 : existing.qualities[e];
+            ++m;
+        }
+        for(int i = incoming.offset; i < incoming.offset+incoming.count; ++i) {
+            merged.times[m] = incoming.times[i];
+            merged.values[m] = incoming.values[i];
+            merged.qualities[m] = incoming.qualities == null ? 0 : incoming.qualities[i];
+            ++m;
+        }
+        for (; e < existing.offset+existing.count && existing.times[e] <= deleteWindowEnd; ++e) {
+        }
+        for (; e < existing.offset+existing.count; ++e) {
+            merged.times[m] = existing.times[e];
+            merged.values[m] = existing.values[e];
+            merged.qualities[m] = existing.qualities == null ? 0 : existing.qualities[e];
+            ++m;
+        }
+        merged.offset = 0;
+        merged.count = m;
     }
 }

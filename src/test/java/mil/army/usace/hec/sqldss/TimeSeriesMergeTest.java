@@ -1274,37 +1274,738 @@ public class TimeSeriesMergeTest {
 
     @Test
     public void testIrregularReplaceWithNonMissingNoOverlap() throws Exception {
+
+        existing.times = new long[]{20250101000000L,20250101010000L,20250101020000L};
+        existing.values = new double[]{10, UNDEFINED_DOUBLE, 12};
+        existing.count = existing.values.length;
+        incoming.times = new long[]{20250101060000L,20250101070000L,20250101080000L};
+        incoming.values = new double[]{106, UNDEFINED_DOUBLE, 108};
+        incoming.count = incoming.values.length;
+        long[] expectedMergedTimes = new long[]{
+                20250101000000L,
+                20250101010000L,
+                20250101020000L,
+                20250101060000L,
+                20250101070000L,
+                20250101080000L};
+        int expectedMergedCount = expectedMergedTimes.length;
+        double[] expectedMergedValues = {
+                10,
+                UNDEFINED_DOUBLE,
+                12,
+                106,
+                UNDEFINED_DOUBLE,
+                108};
+
+        TimeSeries.mergeTimeSeries(
+                Constants.IRREGULAR_STORE_RULE.REPLACE_WITH_NON_MISSING,
+                incoming,
+                existing,
+                merged
+        );
+
+        assertEquals(expectedMergedCount, merged.count);
+        if (merged.times.length > merged.count) {
+            merged.times = Arrays.copyOfRange(merged.times, 0, merged.count);
+            merged.values = Arrays.copyOfRange(merged.values, 0, merged.count);
+            merged.qualities = Arrays.copyOfRange(merged.qualities, 0, merged.count);
+        }
+        assertArrayEquals(expectedMergedTimes, merged.times);
+        assertArrayEquals(expectedMergedValues, merged.values);
     }
 
     @Test
-    public void testIrregularReplaceWithNonMissingOverlap() throws Exception {
+    public void testIrregularReplaceWithNonMissingOverlapAligned() throws Exception {
+
+        existing.times = new long[]{
+                20250101000000L,
+                20250101010000L,
+                20250101020000L,
+                20250101030000L,
+                20250101040000L,
+                20250101050000L,
+                20250101060000L,
+                20250101070000L,
+                20250101080000L};
+        existing.values = new double[]{10,11,12,13,UNDEFINED_DOUBLE,UNDEFINED_DOUBLE,16,17,18};
+        existing.count = existing.values.length;
+        incoming.times = new long[]{
+                20250101030000L,
+                20250101040000L,
+                20250101050000L};
+        incoming.values = new double[]{103, UNDEFINED_DOUBLE, 105};
+        incoming.count = 3;
+        long[] expectedMergedTimes = new long[]{
+                20250101000000L,
+                20250101010000L,
+                20250101020000L,
+                20250101030000L,
+                20250101040000L,
+                20250101050000L,
+                20250101060000L,
+                20250101070000L,
+                20250101080000L};
+        int expectedMergedCount = expectedMergedTimes.length;
+        double[] expectedMergedValues = {10,11,12,103,UNDEFINED_DOUBLE,105,16,17,18};
+
+        TimeSeries.mergeTimeSeries(
+                Constants.IRREGULAR_STORE_RULE.REPLACE_WITH_NON_MISSING,
+                incoming,
+                existing,
+                merged
+        );
+
+        assertEquals(expectedMergedCount, merged.count);
+        if (merged.times.length > merged.count) {
+            merged.times = Arrays.copyOfRange(merged.times, 0, merged.count);
+            merged.values = Arrays.copyOfRange(merged.values, 0, merged.count);
+            merged.qualities = Arrays.copyOfRange(merged.qualities, 0, merged.count);
+        }
+        assertArrayEquals(expectedMergedTimes, merged.times);
+        assertArrayEquals(expectedMergedValues, merged.values);
     }
 
     @Test
-    public void testIrregularReplaceWithNonMissingPartialOverlap() throws Exception {
+    public void testIrregularReplaceWithNonMissingOverlapNonAligned() throws Exception {
+
+        existing.times = new long[]{
+                20250101000000L,
+                20250101010000L,
+                20250101020000L,
+                20250101030000L,
+                20250101040000L,
+                20250101050000L,
+                20250101060000L,
+                20250101070000L,
+                20250101080000L};
+        existing.values = new double[]{10,11,12,13,UNDEFINED_DOUBLE,UNDEFINED_DOUBLE,16,17,18};
+        existing.count = existing.values.length;
+        incoming.times = new long[]{
+                20250101031500L,
+                20250101041500L,
+                20250101051500L};
+        incoming.values = new double[]{103.25, UNDEFINED_DOUBLE, 105.25};
+        incoming.count = 3;
+        long[] expectedMergedTimes = new long[]{
+                20250101000000L,
+                20250101010000L,
+                20250101020000L,
+                20250101030000L,
+                20250101031500L,
+                20250101040000L,
+                20250101041500L,
+                20250101050000L,
+                20250101051500L,
+                20250101060000L,
+                20250101070000L,
+                20250101080000L};
+        int expectedMergedCount = expectedMergedTimes.length;
+        double[] expectedMergedValues = {10,11,12,13,103.25,UNDEFINED_DOUBLE,UNDEFINED_DOUBLE,UNDEFINED_DOUBLE,105.25,16,17,18};
+
+        TimeSeries.mergeTimeSeries(
+                Constants.IRREGULAR_STORE_RULE.REPLACE_WITH_NON_MISSING,
+                incoming,
+                existing,
+                merged
+        );
+
+        assertEquals(expectedMergedCount, merged.count);
+        if (merged.times.length > merged.count) {
+            merged.times = Arrays.copyOfRange(merged.times, 0, merged.count);
+            merged.values = Arrays.copyOfRange(merged.values, 0, merged.count);
+            merged.qualities = Arrays.copyOfRange(merged.qualities, 0, merged.count);
+        }
+        assertArrayEquals(expectedMergedTimes, merged.times);
+        assertArrayEquals(expectedMergedValues, merged.values);
+    }
+
+    @Test
+    public void testIrregularReplaceWithNonMissingPartialOverlapAligned() throws Exception {
+
+        existing.times = new long[]{
+                20250101000000L,
+                20250101010000L,
+                20250101020000L,
+                20250101030000L,
+                20250101040000L,
+                20250101050000L,
+                20250101060000L,
+                20250101070000L,
+                20250101080000L};
+        existing.values = new double[]{10,11,12,13,UNDEFINED_DOUBLE,UNDEFINED_DOUBLE,16,17,18};
+        existing.count = existing.values.length;
+        incoming.times = new long[]{
+                20250101030000L,
+                20250101040000L,
+                20250101050000L,
+                20250101060000L,
+                20250101070000L,
+                20250101080000L};
+        incoming.values = new double[]{103, UNDEFINED_DOUBLE, 105, 106, 107, 108};
+        incoming.count = incoming.values.length;
+        long[] expectedMergedTimes = new long[]{
+                20250101000000L,
+                20250101010000L,
+                20250101020000L,
+                20250101030000L,
+                20250101040000L,
+                20250101050000L,
+                20250101060000L,
+                20250101070000L,
+                20250101080000L};
+        int expectedMergedCount = expectedMergedTimes.length;
+        double[] expectedMergedValues = {10,11,12,103,UNDEFINED_DOUBLE,105,106,107,108};
+
+        TimeSeries.mergeTimeSeries(
+                Constants.IRREGULAR_STORE_RULE.REPLACE_WITH_NON_MISSING,
+                incoming,
+                existing,
+                merged
+        );
+
+        assertEquals(expectedMergedCount, merged.count);
+        if (merged.times.length > merged.count) {
+            merged.times = Arrays.copyOfRange(merged.times, 0, merged.count);
+            merged.values = Arrays.copyOfRange(merged.values, 0, merged.count);
+            merged.qualities = Arrays.copyOfRange(merged.qualities, 0, merged.count);
+        }
+        assertArrayEquals(expectedMergedTimes, merged.times);
+        assertArrayEquals(expectedMergedValues, merged.values);
+    }
+
+    @Test
+    public void testIrregularReplaceWithNonMissingPartialOverlapNonAligned() throws Exception {
+
+        existing.times = new long[]{
+                20250101000000L,
+                20250101010000L,
+                20250101020000L,
+                20250101030000L,
+                20250101040000L};
+        existing.values = new double[]{10,11,12,13,UNDEFINED_DOUBLE};
+        existing.count = existing.values.length;
+        incoming.times = new long[]{
+                20250101031500L,
+                20250101041500L,
+                20250101051500L,
+                20250101061500L};
+        incoming.values = new double[]{103.25, UNDEFINED_DOUBLE, 105.25, 106.25};
+        incoming.count = incoming.values.length;
+        long[] expectedMergedTimes = new long[]{
+                20250101000000L,
+                20250101010000L,
+                20250101020000L,
+                20250101030000L,
+                20250101031500L,
+                20250101040000L,
+                20250101041500L,
+                20250101051500L,
+                20250101061500L};
+        int expectedMergedCount = expectedMergedTimes.length;
+        double[] expectedMergedValues = {10,11,12,13,103.25,UNDEFINED_DOUBLE,UNDEFINED_DOUBLE,105.25,106.25};
+
+        TimeSeries.mergeTimeSeries(
+                Constants.IRREGULAR_STORE_RULE.REPLACE_MISSING_VALUES_ONLY,
+                incoming,
+                existing,
+                merged
+        );
+
+        assertEquals(expectedMergedCount, merged.count);
+        if (merged.times.length > merged.count) {
+            merged.times = Arrays.copyOfRange(merged.times, 0, merged.count);
+            merged.values = Arrays.copyOfRange(merged.values, 0, merged.count);
+            merged.qualities = Arrays.copyOfRange(merged.qualities, 0, merged.count);
+        }
+        assertArrayEquals(expectedMergedTimes, merged.times);
+        assertArrayEquals(expectedMergedValues, merged.values);
     }
 
     @Test
     public void testIrregularDoNotReplaceNoOverlap() throws Exception {
+
+        existing.times = new long[]{20250101000000L,20250101010000L,20250101020000L};
+        existing.values = new double[]{10, UNDEFINED_DOUBLE, 12};
+        existing.count = existing.values.length;
+        incoming.times = new long[]{20250101060000L,20250101070000L,20250101080000L};
+        incoming.values = new double[]{106, UNDEFINED_DOUBLE, 108};
+        incoming.count = incoming.values.length;
+        long[] expectedMergedTimes = new long[]{
+                20250101000000L,
+                20250101010000L,
+                20250101020000L,
+                20250101060000L,
+                20250101070000L,
+                20250101080000L};
+        int expectedMergedCount = expectedMergedTimes.length;
+        double[] expectedMergedValues = {
+                10,
+                UNDEFINED_DOUBLE,
+                12,
+                106,
+                UNDEFINED_DOUBLE,
+                108};
+
+        TimeSeries.mergeTimeSeries(
+                Constants.IRREGULAR_STORE_RULE.DO_NOT_REPLACE,
+                incoming,
+                existing,
+                merged
+        );
+
+        assertEquals(expectedMergedCount, merged.count);
+        if (merged.times.length > merged.count) {
+            merged.times = Arrays.copyOfRange(merged.times, 0, merged.count);
+            merged.values = Arrays.copyOfRange(merged.values, 0, merged.count);
+            merged.qualities = Arrays.copyOfRange(merged.qualities, 0, merged.count);
+        }
+        assertArrayEquals(expectedMergedTimes, merged.times);
+        assertArrayEquals(expectedMergedValues, merged.values);
     }
 
     @Test
-    public void testIrregularDoNotReplaceOverlap() throws Exception {
+    public void testIrregularDoNotReplaceOverlapAligned() throws Exception {
+
+        existing.times = new long[]{
+                20250101000000L,
+                20250101010000L,
+                20250101020000L,
+                20250101030000L,
+                20250101040000L,
+                20250101050000L,
+                20250101060000L,
+                20250101070000L,
+                20250101080000L};
+        existing.values = new double[]{10,11,12,13,UNDEFINED_DOUBLE,UNDEFINED_DOUBLE,16,17,18};
+        existing.count = existing.values.length;
+        incoming.times = new long[]{
+                20250101030000L,
+                20250101040000L,
+                20250101050000L};
+        incoming.values = new double[]{103, UNDEFINED_DOUBLE, 105};
+        incoming.count = 3;
+        long[] expectedMergedTimes = new long[]{
+                20250101000000L,
+                20250101010000L,
+                20250101020000L,
+                20250101030000L,
+                20250101040000L,
+                20250101050000L,
+                20250101060000L,
+                20250101070000L,
+                20250101080000L};
+        int expectedMergedCount = expectedMergedTimes.length;
+        double[] expectedMergedValues = existing.values;
+
+        TimeSeries.mergeTimeSeries(
+                Constants.IRREGULAR_STORE_RULE.DO_NOT_REPLACE,
+                incoming,
+                existing,
+                merged
+        );
+
+        assertEquals(expectedMergedCount, merged.count);
+        if (merged.times.length > merged.count) {
+            merged.times = Arrays.copyOfRange(merged.times, 0, merged.count);
+            merged.values = Arrays.copyOfRange(merged.values, 0, merged.count);
+            merged.qualities = Arrays.copyOfRange(merged.qualities, 0, merged.count);
+        }
+        assertArrayEquals(expectedMergedTimes, merged.times);
+        assertArrayEquals(expectedMergedValues, merged.values);
     }
 
     @Test
-    public void testIrregularDoNotReplacePartialOverlap() throws Exception {
+    public void testIrregularDoNotReplaceOverlapNonAligned() throws Exception {
+
+        existing.times = new long[]{
+                20250101000000L,
+                20250101010000L,
+                20250101020000L,
+                20250101030000L,
+                20250101040000L,
+                20250101050000L,
+                20250101060000L,
+                20250101070000L,
+                20250101080000L};
+        existing.values = new double[]{10,11,12,13,UNDEFINED_DOUBLE,UNDEFINED_DOUBLE,16,17,18};
+        existing.count = existing.values.length;
+        incoming.times = new long[]{
+                20250101031500L,
+                20250101041500L,
+                20250101051500L};
+        incoming.values = new double[]{103.25, UNDEFINED_DOUBLE, 105.25};
+        incoming.count = incoming.values.length;
+        long[] expectedMergedTimes = new long[]{
+                20250101000000L,
+                20250101010000L,
+                20250101020000L,
+                20250101030000L,
+                20250101031500L,
+                20250101040000L,
+                20250101041500L,
+                20250101050000L,
+                20250101051500L,
+                20250101060000L,
+                20250101070000L,
+                20250101080000L};
+        int expectedMergedCount = expectedMergedTimes.length;
+        double[] expectedMergedValues = {10,11,12,13,103.25,UNDEFINED_DOUBLE,UNDEFINED_DOUBLE,UNDEFINED_DOUBLE,105.25,16,17,18};
+
+        TimeSeries.mergeTimeSeries(
+                Constants.IRREGULAR_STORE_RULE.DO_NOT_REPLACE,
+                incoming,
+                existing,
+                merged
+        );
+
+        assertEquals(expectedMergedCount, merged.count);
+        if (merged.times.length > merged.count) {
+            merged.times = Arrays.copyOfRange(merged.times, 0, merged.count);
+            merged.values = Arrays.copyOfRange(merged.values, 0, merged.count);
+            merged.qualities = Arrays.copyOfRange(merged.qualities, 0, merged.count);
+        }
+        assertArrayEquals(expectedMergedTimes, merged.times);
+        assertArrayEquals(expectedMergedValues, merged.values);
+    }
+
+    @Test
+    public void testIrregularDoNotReplacePartialOverlapAligned() throws Exception {
+
+        existing.times = new long[]{
+                20250101000000L,
+                20250101010000L,
+                20250101020000L,
+                20250101030000L,
+                20250101040000L,
+                20250101050000L};
+        existing.values = new double[]{10,11,12,13,UNDEFINED_DOUBLE,UNDEFINED_DOUBLE};
+        existing.count = existing.values.length;
+        incoming.times = new long[]{
+                20250101030000L,
+                20250101040000L,
+                20250101050000L,
+                20250101060000L,
+                20250101070000L,
+                20250101080000L};
+        incoming.values = new double[]{103,UNDEFINED_DOUBLE,105,106,107,108};
+        incoming.count = incoming.values.length;
+        long[] expectedMergedTimes = new long[]{
+                20250101000000L,
+                20250101010000L,
+                20250101020000L,
+                20250101030000L,
+                20250101040000L,
+                20250101050000L,
+                20250101060000L,
+                20250101070000L,
+                20250101080000L};
+        int expectedMergedCount = expectedMergedTimes.length;
+        double[] expectedMergedValues = {10,11,12,13,UNDEFINED_DOUBLE,UNDEFINED_DOUBLE,106,107,108};
+
+        TimeSeries.mergeTimeSeries(
+                Constants.IRREGULAR_STORE_RULE.DO_NOT_REPLACE,
+                incoming,
+                existing,
+                merged
+        );
+
+        assertEquals(expectedMergedCount, merged.count);
+        if (merged.times.length > merged.count) {
+            merged.times = Arrays.copyOfRange(merged.times, 0, merged.count);
+            merged.values = Arrays.copyOfRange(merged.values, 0, merged.count);
+            merged.qualities = Arrays.copyOfRange(merged.qualities, 0, merged.count);
+        }
+        assertArrayEquals(expectedMergedTimes, merged.times);
+        assertArrayEquals(expectedMergedValues, merged.values);
+    }
+
+    @Test
+    public void testIrregularDoNotReplacePartialOverlapNonAligned() throws Exception {
+
+        existing.times = new long[]{
+                20250101000000L,
+                20250101010000L,
+                20250101020000L,
+                20250101030000L,
+                20250101040000L};
+        existing.values = new double[]{10,11,12,13,UNDEFINED_DOUBLE};
+        existing.count = existing.values.length;
+        incoming.times = new long[]{
+                20250101031500L,
+                20250101041500L,
+                20250101051500L,
+                20250101061500L};
+        incoming.values = new double[]{103.25, UNDEFINED_DOUBLE, 105.25, 106.25};
+        incoming.count = incoming.values.length;
+        long[] expectedMergedTimes = new long[]{
+                20250101000000L,
+                20250101010000L,
+                20250101020000L,
+                20250101030000L,
+                20250101031500L,
+                20250101040000L,
+                20250101041500L,
+                20250101051500L,
+                20250101061500L};
+        int expectedMergedCount = expectedMergedTimes.length;
+        double[] expectedMergedValues = {10,11,12,13,103.25,UNDEFINED_DOUBLE,UNDEFINED_DOUBLE,105.25,106.25};
+
+        TimeSeries.mergeTimeSeries(
+                Constants.IRREGULAR_STORE_RULE.DO_NOT_REPLACE,
+                incoming,
+                existing,
+                merged
+        );
+
+        assertEquals(expectedMergedCount, merged.count);
+        if (merged.times.length > merged.count) {
+            merged.times = Arrays.copyOfRange(merged.times, 0, merged.count);
+            merged.values = Arrays.copyOfRange(merged.values, 0, merged.count);
+            merged.qualities = Arrays.copyOfRange(merged.qualities, 0, merged.count);
+        }
+        assertArrayEquals(expectedMergedTimes, merged.times);
+        assertArrayEquals(expectedMergedValues, merged.values);
     }
 
     @Test
     public void testIrregularDeleteInsertNoOverlap() throws Exception {
+
+        existing.times = new long[]{20250101000000L,20250101010000L,20250101020000L};
+        existing.values = new double[]{10, 11, 12};
+        existing.count = existing.values.length;
+        incoming.times = new long[]{20250101060000L,20250101070000L,20250101080000L};
+        incoming.values = new double[]{106, 107, 108};
+        incoming.count = incoming.values.length;
+        long[] expectedMergedTimes = new long[]{
+                20250101000000L,
+                20250101010000L,
+                20250101020000L,
+                20250101060000L,
+                20250101070000L,
+                20250101080000L};
+        int expectedMergedCount = expectedMergedTimes.length;
+        double[] expectedMergedValues = {10,11,12,106,107,108};
+
+        TimeSeries.mergeTimeSeries(
+                Constants.IRREGULAR_STORE_RULE.DELETE_INSERT,
+                incoming,
+                existing,
+                merged
+        );
+
+        assertEquals(expectedMergedCount, merged.count);
+        if (merged.times.length > merged.count) {
+            merged.times = Arrays.copyOfRange(merged.times, 0, merged.count);
+            merged.values = Arrays.copyOfRange(merged.values, 0, merged.count);
+            merged.qualities = Arrays.copyOfRange(merged.qualities, 0, merged.count);
+        }
+        assertArrayEquals(expectedMergedTimes, merged.times);
+        assertArrayEquals(expectedMergedValues, merged.values);
     }
 
     @Test
-    public void testIrregularDeleteInsertOverlap() throws Exception {
+    public void testIrregularDeleteInsertOverlapAligned() throws Exception {
+
+        existing.times = new long[]{
+                20250101000000L,
+                20250101010000L,
+                20250101020000L,
+                20250101030000L,
+                20250101040000L,
+                20250101050000L,
+                20250101060000L,
+                20250101070000L,
+                20250101080000L};
+        existing.values = new double[]{10,11,12,13,14,15,16,17,18};
+        existing.count = existing.values.length;
+        incoming.times = new long[]{
+                20250101030000L,
+                20250101040000L,
+                20250101050000L};
+        incoming.values = new double[]{103, 104, 105};
+        incoming.count = incoming.values.length;
+        long[] expectedMergedTimes = new long[]{
+                20250101000000L,
+                20250101010000L,
+                20250101020000L,
+                20250101030000L,
+                20250101040000L,
+                20250101050000L,
+                20250101060000L,
+                20250101070000L,
+                20250101080000L};
+        int expectedMergedCount = expectedMergedTimes.length;
+        double[] expectedMergedValues = new double[]{10,11,12,103,104,105,16,17,18};
+
+        TimeSeries.mergeTimeSeries(
+                Constants.IRREGULAR_STORE_RULE.DELETE_INSERT,
+                incoming,
+                existing,
+                merged
+        );
+
+        assertEquals(expectedMergedCount, merged.count);
+        if (merged.times.length > merged.count) {
+            merged.times = Arrays.copyOfRange(merged.times, 0, merged.count);
+            merged.values = Arrays.copyOfRange(merged.values, 0, merged.count);
+            merged.qualities = Arrays.copyOfRange(merged.qualities, 0, merged.count);
+        }
+        assertArrayEquals(expectedMergedTimes, merged.times);
+        assertArrayEquals(expectedMergedValues, merged.values);
     }
 
     @Test
-    public void testIrregularDeleteInsertPartialOverlap() throws Exception {
+    public void testIrregularDeleteInsertOverlapNonAligned() throws Exception {
+
+        existing.times = new long[]{
+                20250101000000L,
+                20250101010000L,
+                20250101020000L,
+                20250101030000L,
+                20250101040000L,
+                20250101050000L,
+                20250101060000L,
+                20250101070000L,
+                20250101080000L};
+        existing.values = new double[]{10,11,12,13,14,15,16,17,18};
+        existing.count = existing.values.length;
+        incoming.times = new long[]{
+                20250101031500L,
+                20250101041500L,
+                20250101051500L};
+        incoming.values = new double[]{103.25, 104.25, 105.25};
+        incoming.count = incoming.values.length;
+        long[] expectedMergedTimes = new long[]{
+                20250101000000L,
+                20250101010000L,
+                20250101020000L,
+                20250101030000L,
+                20250101031500L,
+                20250101041500L,
+                20250101051500L,
+                20250101060000L,
+                20250101070000L,
+                20250101080000L};
+        int expectedMergedCount = expectedMergedTimes.length;
+        double[] expectedMergedValues = new double[]{10,11,12,13,103.25,104.25,105.25,16,17,18};
+
+        TimeSeries.mergeTimeSeries(
+                Constants.IRREGULAR_STORE_RULE.DELETE_INSERT,
+                incoming,
+                existing,
+                merged
+        );
+
+        assertEquals(expectedMergedCount, merged.count);
+        if (merged.times.length > merged.count) {
+            merged.times = Arrays.copyOfRange(merged.times, 0, merged.count);
+            merged.values = Arrays.copyOfRange(merged.values, 0, merged.count);
+            merged.qualities = Arrays.copyOfRange(merged.qualities, 0, merged.count);
+        }
+        assertArrayEquals(expectedMergedTimes, merged.times);
+        assertArrayEquals(expectedMergedValues, merged.values);
+    }
+
+    @Test
+    public void testIrregularDeleteInsertPartialOverlapAligned() throws Exception {
+
+        existing.times = new long[]{
+                20250101000000L,
+                20250101010000L,
+                20250101020000L,
+                20250101030000L,
+                20250101040000L,
+                20250101050000L};
+        existing.values = new double[]{10,11,12,13,14,15};
+        existing.count = existing.values.length;
+        incoming.times = new long[]{
+                20250101030000L,
+                20250101040000L,
+                20250101050000L,
+                20250101060000L,
+                20250101070000L,
+                20250101080000L};
+        incoming.values = new double[]{103,104,105,106,107,108};
+        incoming.count = incoming.values.length;
+        long[] expectedMergedTimes = new long[]{
+                20250101000000L,
+                20250101010000L,
+                20250101020000L,
+                20250101030000L,
+                20250101040000L,
+                20250101050000L,
+                20250101060000L,
+                20250101070000L,
+                20250101080000L};
+        int expectedMergedCount = expectedMergedTimes.length;
+        double[] expectedMergedValues = new double[]{10,11,12,103,104,105,106,107,108};
+
+        TimeSeries.mergeTimeSeries(
+                Constants.IRREGULAR_STORE_RULE.DELETE_INSERT,
+                incoming,
+                existing,
+                merged
+        );
+
+        assertEquals(expectedMergedCount, merged.count);
+        if (merged.times.length > merged.count) {
+            merged.times = Arrays.copyOfRange(merged.times, 0, merged.count);
+            merged.values = Arrays.copyOfRange(merged.values, 0, merged.count);
+            merged.qualities = Arrays.copyOfRange(merged.qualities, 0, merged.count);
+        }
+        assertArrayEquals(expectedMergedTimes, merged.times);
+        assertArrayEquals(expectedMergedValues, merged.values);
+    }
+
+    @Test
+    public void testIrregularDeleteInsertPartialOverlapNonAligned() throws Exception {
+
+        existing.times = new long[]{
+                20250101000000L,
+                20250101010000L,
+                20250101020000L,
+                20250101030000L,
+                20250101040000L,
+                20250101050000L};
+        existing.values = new double[]{10,11,12,13,14,15};
+        existing.count = existing.values.length;
+        incoming.times = new long[]{
+                20250101031500L,
+                20250101041500L,
+                20250101051500L,
+                20250101061500L,
+                20250101071500L,
+                20250101081500L};
+        incoming.values = new double[]{103.25,104.25,105.25,106.25,107.25,108.25};
+        incoming.count = incoming.values.length;
+        long[] expectedMergedTimes = new long[]{
+                20250101000000L,
+                20250101010000L,
+                20250101020000L,
+                20250101030000L,
+                20250101031500L,
+                20250101041500L,
+                20250101051500L,
+                20250101061500L,
+                20250101071500L,
+                20250101081500L};
+        int expectedMergedCount = expectedMergedTimes.length;
+        double[] expectedMergedValues = new double[]{10,11,12,13,103.25,104.25,105.25,106.25,107.25,108.25};
+
+        TimeSeries.mergeTimeSeries(
+                Constants.IRREGULAR_STORE_RULE.DELETE_INSERT,
+                incoming,
+                existing,
+                merged
+        );
+
+        assertEquals(expectedMergedCount, merged.count);
+        if (merged.times.length > merged.count) {
+            merged.times = Arrays.copyOfRange(merged.times, 0, merged.count);
+            merged.values = Arrays.copyOfRange(merged.values, 0, merged.count);
+            merged.qualities = Arrays.copyOfRange(merged.qualities, 0, merged.count);
+        }
+        assertArrayEquals(expectedMergedTimes, merged.times);
+        assertArrayEquals(expectedMergedValues, merged.values);
     }
 }
