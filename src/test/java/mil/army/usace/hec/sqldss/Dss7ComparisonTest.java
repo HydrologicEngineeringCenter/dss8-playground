@@ -133,6 +133,7 @@ public class Dss7ComparisonTest {
         //-----------------------------------//
         Files.deleteIfExists(Path.of(getFileName(target8Resource)));
         startTime = startTimer();
+        logger.atInfo().log(getFileName(target8Resource));
         HecSqlDss targetDss8 = HecSqlDss.open(getFileName(target8Resource));
         targetDss8.setAutoCommit(false);
         elapsedCreateDss8 = endTimer(startTime);

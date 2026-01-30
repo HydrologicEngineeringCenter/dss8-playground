@@ -4,14 +4,12 @@ import com.google.common.flogger.FluentLogger;
 import hec.heclib.util.HecTime;
 import hec.io.TimeSeriesContainer;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
+import java.sql.*;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -22,8 +20,12 @@ import static mil.army.usace.hec.sqldss.core.Constants.DATA_TYPE.ITS;
 import static mil.army.usace.hec.sqldss.core.Constants.DATA_TYPE.RTS;
 
 public final class TimeSeries {
-    public static final String SQL_SELECT_TS_BLOCK = "select data from tsv where time_series = %d and " +
-            "block_start_date =?";
+    public static final String SQL_SELECT_TS_BLOCK = """
+        select deleted,
+               data
+          from tsv
+         where time_series = %d
+           and block_start_date = ?""";
     public static final int QUALITY_MISSING_VALUE = 5;
     public static final int QUALITY_REJECTED_VALUE = 17;
     public static final int QUALITY_SCREENED_VALIDITY_MASK = 31;
@@ -292,11 +294,14 @@ public final class TimeSeries {
         String existingOffsetStr = null;
         int intervalMinutes;
         int existingOffsetMinutes;
-        try (PreparedStatement ps = conn.prepareStatement("select interval, interval_offset from time_series where " +
+        try (PreparedStatement ps = conn.prepareStatement("select deleted, interval, interval_offset from time_series where " +
                 "key = ?")) {
             ps.setLong(1, key);
             try (ResultSet rs = ps.executeQuery()) {
                 rs.next();
+                if (rs.getLong("deleted") == 1) {
+                    throw new CoreException("No such time series: " + name);
+                }
                 intervalName = rs.getString("interval");
                 existingOffsetStr = rs.getString("interval_offset");
             }
@@ -323,7 +328,7 @@ public final class TimeSeries {
                 ps.setLong(1, encodedBlockDates[i]);
                 try (ResultSet rs = ps.executeQuery()) {
                     rs.next();
-                    blob = rs.getBytes("data");
+                    blob = rs.getLong("deleted") == 1 ? null : rs.getBytes("data");
                 }
             }
             if (blob == null) {
@@ -721,6 +726,7 @@ public final class TimeSeries {
             blockCounts[j]++;
         }
         // store the time series values
+        boolean deleted;
         byte[] blob;
         byte format = (byte) RECORD_TYPE.RTD.getCode();
         byte version = 1;
@@ -731,15 +737,16 @@ public final class TimeSeries {
                 ps.setLong(1, encodedBlockDates[i]);
                 try (ResultSet rs = ps.executeQuery()) {
                     rs.next();
+                    deleted = rs.getLong("deleted") == 1;
                     blob = rs.getBytes("data");
                 }
             }
             long firstTime = EncodedDateTime.encodeDateTime(tsc.times[blockStarts[i]]);
             TsvInfo blockInfo = new TsvInfo();
-            if (blob == null) {
-                //----------------------//
-                // record doesn't exist //
-                //----------------------//
+            if (deleted || blob == null) {
+                //------------------------------------//
+                // record is deleted or doesn't exist //
+                //------------------------------------//
                 // create the blob
                 int size = Byte.BYTES                       // data type
                         + Byte.BYTES                            // data type version
@@ -788,45 +795,82 @@ public final class TimeSeries {
                     }
                 }
                 blob = buf.array();
-                // insert the blob
-                try (PreparedStatement ps = conn.prepareStatement(
-                        "insert " +
-                                "into tsv " +
-                                "    (time_series, " +
-                                "     block_start_date, " +
-                                "     data " +
-                                "    ) " +
-                                "values (?, ?, ?) "
-                )) {
-                    ps.setLong(1, key);
-                    ps.setLong(2, encodedBlockDates[i]);
-                    ps.setBytes(3, blob);
-                    ps.executeUpdate();
+                if (deleted) {
+                    // overwrite the existing the blob
+                    try (PreparedStatement ps = conn.prepareStatement(
+                            "update tsv set deleted = 0, data=? where time_series=? and block_start_date=?"
+                    )) {
+                        ps.setBytes(1, blob);
+                        ps.setLong(2, key);
+                        ps.setLong(3, encodedBlockDates[i]);
+                        ps.executeUpdate();
+                    }
+                    // overwrite the existing the block info
+                    try (PreparedStatement ps = conn.prepareStatement(
+                            """
+                                    update tsv_info
+                                       set value_count = ?,
+                                           first_time  = ?,
+                                           last_time   = ?,
+                                           min_value   = ?,
+                                           max_value   = ?,
+                                           last_update = ?
+                                     where time_series = ?
+                                       and block_start_date = ?"""
+                    )) {
+                        ps.setLong(1, blockInfo.valueCount);
+                        ps.setLong(2, blockInfo.firstTime);
+                        ps.setLong(3, blockInfo.lastTime);
+                        ps.setDouble(4, blockInfo.minValue);
+                        ps.setDouble(5, blockInfo.maxValue);
+                        ps.setLong(6, blockInfo.lastUpdate);
+                        ps.setLong(7, key);
+                        ps.setLong(8, encodedBlockDates[i]);
+                        ps.executeUpdate();
+                    }
                 }
-                // insert the block info
-                try (PreparedStatement ps = conn.prepareStatement(
-                        "insert " +
-                                "into tsv_info " +
-                                "    (time_series, " +
-                                "     block_start_date, " +
-                                "     value_count, " +
-                                "     first_time, " +
-                                "     last_time, " +
-                                "     min_value, " +
-                                "     max_value, " +
-                                "     last_update " +
-                                "    ) " +
-                                "values (?, ?, ?, ? , ?, ?, ?, ?)"
-                )) {
-                    ps.setLong(1, key);
-                    ps.setLong(2, encodedBlockDates[i]);
-                    ps.setLong(3, blockInfo.valueCount);
-                    ps.setLong(4, blockInfo.firstTime);
-                    ps.setLong(5, blockInfo.lastTime);
-                    ps.setDouble(6, blockInfo.minValue);
-                    ps.setDouble(7, blockInfo.maxValue);
-                    ps.setLong(8, blockInfo.lastUpdate);
-                    ps.executeUpdate();
+                else {
+                    // insert the blob
+                    try (PreparedStatement ps = conn.prepareStatement("""
+                            insert
+                              into tsv
+                                   (time_series,
+                                    block_start_date,
+                                    deleted,
+                                    data
+                                   )
+                            values (?, ?, 0, ?)""" 
+                    )) {
+                        ps.setLong(1, key);
+                        ps.setLong(2, encodedBlockDates[i]);
+                        ps.setBytes(3, blob);
+                        ps.executeUpdate();
+                    }
+                    // insert the block info
+                    try (PreparedStatement ps = conn.prepareStatement("""
+                            insert
+                             into tsv_info
+                                  (time_series,
+                                   block_start_date,
+                                   value_count,
+                                   first_time,
+                                   last_time,
+                                   min_value,
+                                   max_value,
+                                   last_update
+                                  )
+                           values (?, ?, ?, ? , ?, ?, ?, ?)"""
+                    )) {
+                        ps.setLong(1, key);
+                        ps.setLong(2, encodedBlockDates[i]);
+                        ps.setLong(3, blockInfo.valueCount);
+                        ps.setLong(4, blockInfo.firstTime);
+                        ps.setLong(5, blockInfo.lastTime);
+                        ps.setDouble(6, blockInfo.minValue);
+                        ps.setDouble(7, blockInfo.maxValue);
+                        ps.setLong(8, blockInfo.lastUpdate);
+                        ps.executeUpdate();
+                    }
                 }
             }
             else {
@@ -1026,6 +1070,13 @@ public final class TimeSeries {
                 }
             }
         }
+        if (encodedBlockDates.length > 1) {
+            String sql = "update time_series set deleted = 0 where key = ?";
+            try (PreparedStatement ps = conn.prepareStatement(sql)) {
+                ps.setLong(1, key);
+                ps.executeUpdate();
+            }
+        }
     }
 
     static long getBlockStartDate(long valueTime, String intervalName) throws CoreException, EncodedDateTimeException {
@@ -1108,14 +1159,16 @@ public final class TimeSeries {
         String durName = Duration.getDuration(parts[4], conn);
         boolean nullKey;
         try (PreparedStatement ps = conn.prepareStatement(
-                "select key " +
-                        "from time_series " +
-                        "where location = ? " +
-                        "and parameter = ? " +
-                        "and parameter_type = ? " +
-                        "and interval = ? " +
-                        "and duration = ? " +
-                        "and version = ? "
+                """
+                        select key
+                          from time_series
+                         where deleted = 0
+                           and location = ?
+                           and parameter = ?
+                           and parameter_type = ?
+                           and interval = ?
+                           and duration = ?
+                           and version = ?"""
         )) {
             ps.setLong(1, locKey);
             ps.setLong(2, paramKey);
@@ -1146,17 +1199,18 @@ public final class TimeSeries {
             String intvlName = Interval.getInterval(parts[3]);
             String durName = Duration.getDuration(parts[4], conn);
             boolean nullKey;
-            try (PreparedStatement ps = conn.prepareStatement(
-                    "insert " +
-                            "into time_series " +
-                            "(location, " +
-                            "parameter, " +
-                            "parameter_type, " +
-                            "interval, " +
-                            "duration, " +
-                            "version " +
-                            ") " +
-                            "values (?, ?, ?, ?, ?, ?) "
+            try (PreparedStatement ps = conn.prepareStatement("""
+                    insert
+                      into time_series
+                           (deleted,
+                            location,
+                            parameter,
+                            parameter_type,
+                            interval,
+                            duration,
+                            version
+                           )
+                    values (0, ?, ?, ?, ?, ?, ?)"""
             )) {
                 ps.setLong(1, locKey);
                 ps.setLong(2, paramKey);
@@ -1180,6 +1234,213 @@ public final class TimeSeries {
             }
         }
         return key;
+    }
+
+    public static String[] catalogTimeSeries(String nameRegex, boolean condensed, String flags, Connection conn) throws CoreException, SQLException {
+        flags = flags == null || flags.isEmpty() ? "N" : flags.toUpperCase();
+        if (!flags.matches("[DN]*")) {
+            throw new CoreException("Invalid flags string: "+flags);
+        }
+        String sql = getTsCatalogSql(flags);
+        List<String> names = new ArrayList<>();
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    long key = rs.getLong("key");
+                    String context = rs.getString("context");
+                    String baseLocation = rs.getString("base_location");
+                    String subLocation = rs.getString("sub_location");
+                    String baseParameter = rs.getString("base_parameter");
+                    String subParameter = rs.getString("sub_parameter");
+                    String parameterType = rs.getString("parameter_type");
+                    String interval = rs.getString("interval");
+                    String duration = rs.getString("duration");
+                    String version = rs.getString("version");
+
+                    StringBuilder name = new StringBuilder();
+                    if (context != null && !context.isEmpty()) {
+                        name.append(context).append(':');
+                    }
+                    name.append(baseLocation);
+                    if (subLocation != null && !subLocation.isEmpty()) {
+                        name.append('-').append(subLocation);
+                    }
+                    name.append('|').append(baseParameter);
+                    if (subParameter != null && !subParameter.isEmpty()) {
+                        name.append('-').append(subParameter);
+                    }
+                    name.append('|').append(parameterType);
+                    name.append('|').append(interval);
+                    name.append('|').append(duration);
+                    name.append('|').append(version);
+
+                    if (nameRegex != null && !nameRegex.isEmpty() && !name.toString().matches(nameRegex)) {
+                        continue;
+                    }
+                    if (condensed) {
+                        try (PreparedStatement ps3 = conn.prepareStatement(getTsCondensedCatalogSql(flags))) {
+                            ps3.setLong(1, key);
+                            try (ResultSet rs3 = ps3.executeQuery()) {
+                                rs3.next();
+                                long firstTime = rs3.getLong("first_time");
+                                long lastTime = rs3.getLong("last_time");
+                                names.add(String.format("%s|%d - %d", name.toString(), firstTime, lastTime));
+                            }
+                        }
+                    }
+                    else {
+                        try (PreparedStatement ps2 = conn.prepareStatement(getTsRecordCatalogSql(flags))) {
+                            ps2.setLong(1, key);
+                            try (ResultSet rs2 = ps2.executeQuery()) {
+                                while (rs2.next()) {
+                                    long blockStartDate = rs2.getLong("block_start_date");
+                                    names.add(String.format("%s|%d", name.toString(), blockStartDate));
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        String[] namesArray = names.toArray(new String[0]);
+        Arrays.sort(namesArray);
+        return namesArray;
+    }
+
+    private static @Nullable String getTsCatalogSql(String flags) {
+        boolean matchNormal = flags.indexOf('N') != -1;
+        boolean matchDeleted = flags.indexOf('D') != -1;
+        String sql = null;
+        if (matchNormal) {
+            if (matchDeleted) {
+                sql = """
+                        select ts.key,
+                               bl.context,
+                               bl.name as base_location,
+                               l.sub_location,
+                               p.base_parameter,
+                               p.sub_parameter,
+                               parameter_type,
+                               interval,
+                               duration,
+                               version
+                          from time_series ts,
+                               location l,
+                               base_location bl,
+                               parameter p
+                         where l.key = ts.location
+                           and bl.key = l.base_location
+                           and p.key = ts.parameter""";
+            } else {
+                sql = """
+                        select ts.key,
+                               bl.context,
+                               bl.name as base_location,
+                               l.sub_location,
+                               p.base_parameter,
+                               p.sub_parameter,
+                               parameter_type,
+                               interval,
+                               duration,
+                               version
+                          from time_series ts,
+                               location l,
+                               base_location bl,
+                               parameter p
+                         where l.key = ts.location
+                           and ts.deleted = 0
+                           and bl.key = l.base_location
+                           and p.key = ts.parameter""";
+            }
+        }
+        if (matchDeleted) {
+            sql = """
+                    select ts.key,
+                           bl.context,
+                           bl.name as base_location,
+                           l.sub_location,
+                           p.base_parameter,
+                           p.sub_parameter,
+                           parameter_type,
+                           interval,
+                           duration,
+                           version
+                      from time_series ts,
+                           location l,
+                           base_location bl,
+                           parameter p
+                     where l.key = ts.location
+                       and ts.deleted = 1
+                       and bl.key = l.base_location
+                       and p.key = ts.parameter""";
+        }
+        return sql;
+    }
+
+    private static @Nullable String getTsRecordCatalogSql (String flags){
+        boolean matchNormal = flags.indexOf('N') != -1;
+        boolean matchDeleted = flags.indexOf('D') != -1;
+        String sql = null;
+        if (matchNormal) {
+            if (matchDeleted) {
+                sql = """
+                        select block_start_date
+                          from tsv
+                         where time_series = ?
+                         order by 1""";
+            } else {
+                sql = """
+                        select block_start_date
+                          from tsv
+                         where time_series = ?
+                           and deleted = 0
+                         order by 1""";
+            }
+        }
+        if (matchDeleted) {
+            sql = """
+                        select block_start_date
+                          from tsv
+                         where time_series = ?
+                           and deleted = 1
+                         order by 1""";
+        }
+        return sql;
+    }
+
+    private static @Nullable String getTsCondensedCatalogSql (String flags){
+        boolean matchNormal = flags.indexOf('N') != -1;
+        boolean matchDeleted = flags.indexOf('D') != -1;
+        String sql = null;
+        if (matchNormal) {
+            if (matchDeleted) {
+                sql = """
+                        select min(first_time) as first_time,
+                               max(last_time) as last_time
+                          from tsv_info
+                         where key = ?""";
+            } else {
+                sql = """
+                        select min(i.first_time) as first_time,
+                               max(i.last_time) as last_time
+                          from tsv_info i,
+                               tsv      t
+                         where i.time_series = ?
+                           and t.time_series = i.time_series
+                           and t.deleted = 0""";
+            }
+        }
+        if (matchDeleted) {
+            sql = """
+                        select min(i.first_time as first_time,
+                               min(i.last_time) as last_time
+                          from tsv_info i,
+                               tsv      t
+                         where i.time_series = ?
+                           and t.time_series = i.time_series
+                           and t.deleted = 1""";
+        }
+        return sql;
     }
 
     public static void trimTimeSeriesContainer(@NotNull TimeSeriesContainer tsc) {

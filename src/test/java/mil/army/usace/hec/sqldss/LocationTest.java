@@ -9,6 +9,7 @@ import mil.army.usace.hec.sqldss.core.CoreException;
 import mil.army.usace.hec.sqldss.core.EncodedDateTimeException;
 import mil.army.usace.hec.sqldss.core.Location;
 import mil.army.usace.hec.sqldss.core.SqlDss;
+import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
@@ -26,7 +27,7 @@ public class LocationTest {
     static FluentLogger logger = FluentLogger.forEnclosingClass();
     static SqlDss _db = null;
 
-    static boolean equalJsonValues(JsonNode value1, JsonNode value2) throws CoreException {
+    static boolean equalJsonValues(@NotNull JsonNode value1, @NotNull JsonNode value2) throws CoreException {
         JsonNodeType valType = value1.getNodeType();
         if (valType != value2.getNodeType()) {
             return false;
@@ -108,7 +109,7 @@ public class LocationTest {
 
     SqlDss getDb() throws IOException, CoreException, SQLException, EncodedDateTimeException {
         if (_db == null) {
-            Path dir = Paths.get("build/test-artifacts", "CoreTest");
+            Path dir = Paths.get("build/test-artifacts", "LocationTest");
             Files.createDirectories(dir);
             String dbFileName = dir.resolve("tester.sqldss").toString();
             Files.deleteIfExists(Path.of(dbFileName));

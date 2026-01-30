@@ -273,8 +273,7 @@ public class Init {
     }
 
     public static void createIntervalTable(@NotNull Connection conn) throws SQLException, IOException, CoreException {
-        String sqlTable =
-                """
+        String sqlTable ="""
                         create table interval(
                           name collate nocase primary key,
                           minutes integer not null,
@@ -424,6 +423,7 @@ public class Init {
                 """
                         create table time_series(
                           key integer primary key,
+                          deleted integer not null default (0),
                           location integer not null,
                           parameter integer not null,
                           parameter_type text not null check (parameter_type in (:types:)),
@@ -459,6 +459,7 @@ public class Init {
                         create table tsv(
                           time_series integer,
                           block_start_date integer, -- encoded -?\\d+\\d{2}\\d{2} for extended dates
+                          deleted integer not null default (0),
                           data blob,
                           primary key (time_series, block_start_date),
                           foreign key (time_series) references time_series (key))""";
