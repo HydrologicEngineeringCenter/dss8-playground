@@ -1281,10 +1281,13 @@ public final class TimeSeries {
                         try (PreparedStatement ps3 = conn.prepareStatement(getTsCondensedCatalogSql(flags))) {
                             ps3.setLong(1, key);
                             try (ResultSet rs3 = ps3.executeQuery()) {
-                                rs3.next();
-                                long firstTime = rs3.getLong("first_time");
-                                long lastTime = rs3.getLong("last_time");
-                                names.add(String.format("%s|%d - %d", name.toString(), firstTime, lastTime));
+                                if (rs3.next()) {
+                                    long firstTime = rs3.getLong("first_time");
+                                    if (!rs3.wasNull()) {
+                                        long lastTime = rs3.getLong("last_time");
+                                        names.add(String.format("%s|%d - %d", name.toString(), firstTime, lastTime));
+                                    }
+                                }
                             }
                         }
                     }
@@ -1348,31 +1351,37 @@ public final class TimeSeries {
                                base_location bl,
                                parameter p
                          where l.key = ts.location
-                           and ts.deleted = 0
                            and bl.key = l.base_location
-                           and p.key = ts.parameter""";
+                           and p.key = ts.parameter
+                           and ts.deleted = 0""";
             }
         }
-        if (matchDeleted) {
+        else if (matchDeleted) {
             sql = """
-                    select ts.key,
-                           bl.context,
-                           bl.name as base_location,
-                           l.sub_location,
-                           p.base_parameter,
-                           p.sub_parameter,
-                           parameter_type,
-                           interval,
-                           duration,
-                           version
-                      from time_series ts,
-                           location l,
-                           base_location bl,
-                           parameter p
-                     where l.key = ts.location
-                       and ts.deleted = 1
-                       and bl.key = l.base_location
-                       and p.key = ts.parameter""";
+                        select ts.key,
+                               bl.context,
+                               bl.name as base_location,
+                               l.sub_location,
+                               p.base_parameter,
+                               p.sub_parameter,
+                               parameter_type,
+                               interval,
+                               duration,
+                               version
+                          from time_series ts,
+                               location l,
+                               base_location bl,
+                               parameter p
+                         where l.key = ts.location
+                           and bl.key = l.base_location
+                           and p.key = ts.parameter
+                           and (ts.deleted = 1
+                                or exists (select *
+                                             from tsv
+                                            where time_series = ts.key
+                                              and deleted = 1
+                                          )
+                               )""";
         }
         return sql;
     }
@@ -1397,7 +1406,7 @@ public final class TimeSeries {
                          order by 1""";
             }
         }
-        if (matchDeleted) {
+        else if (matchDeleted) {
             sql = """
                         select block_start_date
                           from tsv
@@ -1418,29 +1427,120 @@ public final class TimeSeries {
                         select min(first_time) as first_time,
                                max(last_time) as last_time
                           from tsv_info
-                         where key = ?""";
+                         where time_series = ?""";
             } else {
                 sql = """
+                        with records as (select *
+                                           from tsv
+                                          where time_series = ?
+                                            and deleted = 0
+                                        )
                         select min(i.first_time) as first_time,
                                max(i.last_time) as last_time
                           from tsv_info i,
-                               tsv      t
-                         where i.time_series = ?
-                           and t.time_series = i.time_series
-                           and t.deleted = 0""";
+                               records r
+                         where i.time_series = r.time_series
+                           and i.block_start_date = r.block_start_date""";
             }
         }
-        if (matchDeleted) {
+        else if (matchDeleted) {
             sql = """
-                        select min(i.first_time as first_time,
-                               min(i.last_time) as last_time
+                        with records as (select *
+                                           from tsv
+                                          where time_series = ?
+                                            and deleted = 1
+                                        )
+                        select min(i.first_time) as first_time,
+                               max(i.last_time) as last_time
                           from tsv_info i,
-                               tsv      t
-                         where i.time_series = ?
-                           and t.time_series = i.time_series
-                           and t.deleted = 1""";
+                               records r
+                         where i.time_series = r.time_series
+                           and i.block_start_date = r.block_start_date""";
         }
         return sql;
+    }
+
+    public static void deleteTimeSeriesRecord(String recordSpec, Connection conn) throws CoreException, SQLException {
+        deleteOrUndeleteTimeSeriesRecord(recordSpec, true, conn);
+    }
+
+    public static void deleteTimeSeriesRecords(String[] recordSpecs, Connection conn)
+            throws CoreException, SQLException {
+        deleteOrUndeleteTimeSeriesRecords(recordSpecs, true, conn);
+    }
+
+    public static void undeleteTimeSeriesRecord(String recordSpec, Connection conn) throws CoreException, SQLException {
+        deleteOrUndeleteTimeSeriesRecord(recordSpec, false, conn);
+    }
+
+    public static void undeleteTimeSeriesRecords(String[] recordSpecs, Connection conn)
+            throws CoreException, SQLException {
+        deleteOrUndeleteTimeSeriesRecords(recordSpecs, false, conn);
+    }
+
+    public static void deleteOrUndeleteTimeSeriesRecords(String[] recordSpecs, boolean deleteRecords, Connection conn)
+            throws SQLException, CoreException {
+        boolean isAutoCommit = conn.getAutoCommit();
+        if (isAutoCommit) {
+            conn.setAutoCommit(false);
+        }
+        try {
+            for (String recordSpec: recordSpecs) {
+                deleteOrUndeleteTimeSeriesRecord(recordSpec, deleteRecords, conn);
+            }
+        }
+        finally {
+            if (isAutoCommit) {
+                conn.commit();
+                conn.setAutoCommit(true);
+            }
+        }
+    }
+
+    public static void deleteOrUndeleteTimeSeriesRecord(String recordSpec, boolean deleteRecord, Connection conn)
+            throws CoreException, SQLException {
+        String[] parts = recordSpec.split("\\|", -1);
+        if (parts.length != 7) {
+            throw new CoreException(String.format("Invalid record specification: %s", recordSpec));
+        }
+        String name = String.join("|", Arrays.copyOfRange(parts, 0, 6));
+        long recordStartDate = Long.parseLong(parts[6]);
+        long key = getTimeSeriesSpecKey(name, conn);
+        if (key < 0) {
+            throw new CoreException(String.format("No such %stime series: %s", deleteRecord ? "" : "deleted ", name));
+        }
+        String sqlSelect = "select deleted from tsv where time_series = ? and block_start_date = ?";
+        String sqlUpdate = String.format(
+                "update tsv set deleted = %d where time_series = ? and block_start_date = ?",
+                deleteRecord ? 1 : 0);
+        long deleted;
+        try (PreparedStatement psSelect = conn.prepareStatement(sqlSelect)) {
+            psSelect.setLong(1, key);
+            psSelect.setLong(2, recordStartDate);
+            try (ResultSet rs = psSelect.executeQuery()) {
+                rs.next();
+                deleted = rs.getLong("deleted");
+                if (rs.wasNull() || deleted == (deleteRecord ? 1 : 0)) {
+                    throw new CoreException(String.format(
+                            "No such %stime series: %s|%d",
+                            deleteRecord ? "" : "deleted ",
+                            name,
+                            recordStartDate));
+                }
+            }
+        }
+        try (PreparedStatement psUpdate = conn.prepareStatement(sqlUpdate)) {
+            psUpdate.setLong(1, key);
+            psUpdate.setLong(2, recordStartDate);
+            int updateCount = psUpdate.executeUpdate();
+            if (updateCount != 1) {
+                throw new CoreException(String.format(
+                        "Failed to update %stime series: %s|%d",
+                        deleteRecord ? "" : "deleted ",
+                        name,
+                        recordStartDate));
+            }
+        }
     }
 
     public static void trimTimeSeriesContainer(@NotNull TimeSeriesContainer tsc) {
