@@ -19,7 +19,6 @@ import mil.army.usace.hec.sqldss.core.EncodedDateTime;
 import mil.army.usace.hec.sqldss.core.EncodedDateTimeException;
 import mil.army.usace.hec.sqldss.core.Interval;
 import mil.army.usace.hec.sqldss.core.TimeSeries;
-import mil.army.usace.hec.sqldss.core.Unit;
 import mil.army.usace.hec.sqldss.core.SqlDss;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -30,11 +29,11 @@ import java.util.List;
 
 import static mil.army.usace.hec.sqldss.core.TimeSeries.*;
 
-public class HecSqlDss implements AutoCloseable {
+public class HecDss implements AutoCloseable {
 
     SqlDss sqldss = null;
 
-    public HecSqlDss(String fileName, String startTime, String endTime, boolean mustExist) throws CoreException,
+    public HecDss(String fileName, String startTime, String endTime, boolean mustExist) throws CoreException,
             SQLException, IOException, EncodedDateTimeException {
         sqldss = new SqlDss(fileName, startTime, endTime, mustExist);
     }
@@ -42,38 +41,38 @@ public class HecSqlDss implements AutoCloseable {
     @NotNull
     @Contract("_ -> new")
     @Scriptable
-    public static HecSqlDss open(String dssFileName) throws CoreException, SQLException, IOException,
+    public static HecDss open(String dssFileName) throws CoreException, SQLException, IOException,
             EncodedDateTimeException {
-        return new HecSqlDss(dssFileName, null, null, false);
+        return new HecDss(dssFileName, null, null, false);
     }
 
     @NotNull
     @Contract("_, _ -> new")
     @Scriptable
-    public static HecSqlDss open(String dssFileName, String timeWindow) throws CoreException, SQLException, IOException,
+    public static HecDss open(String dssFileName, String timeWindow) throws CoreException, SQLException, IOException,
             EncodedDateTimeException, ApiException {
         HecTime startTime = new HecTime();
         HecTime endTime = new HecTime();
         if (0 != HecTime.getTimeWindow(timeWindow, startTime, endTime)) {
             throw new ApiException("Invalid time window: " + timeWindow);
         }
-        return new HecSqlDss(dssFileName, startTime.dateAndTime(-13), endTime.dateAndTime(-13), false);
+        return new HecDss(dssFileName, startTime.dateAndTime(-13), endTime.dateAndTime(-13), false);
     }
 
     @NotNull
     @Contract("_, _, _ -> new")
     @Scriptable
-    public static HecSqlDss open(String dssFileName, String startTime, String endTime) throws CoreException,
+    public static HecDss open(String dssFileName, String startTime, String endTime) throws CoreException,
             SQLException, IOException, EncodedDateTimeException {
-        return new HecSqlDss(dssFileName, startTime, endTime, false);
+        return new HecDss(dssFileName, startTime, endTime, false);
     }
 
     @NotNull
     @Contract("_, _ -> new")
     @Scriptable
-    public static HecSqlDss open(String dssFileName, boolean mustExist) throws CoreException, SQLException, IOException,
+    public static HecDss open(String dssFileName, boolean mustExist) throws CoreException, SQLException, IOException,
             EncodedDateTimeException {
-        return new HecSqlDss(dssFileName, null, null, mustExist);
+        return new HecDss(dssFileName, null, null, mustExist);
     }
 
     @Scriptable

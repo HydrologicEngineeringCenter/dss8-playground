@@ -36,7 +36,6 @@ public class Init {
         createParameterTable(conn);
         createBaseLocationTable(conn);
         createLocationTable(conn);
-        createLocationInfoTable(conn);
         createTimeSeriesTable(conn);
         createTsvTable(conn);
         createTsvInfoTable(conn);
@@ -401,19 +400,6 @@ public class Init {
             ps.executeUpdate();
         }
         try (PreparedStatement ps = conn.prepareStatement(sqlIndex)) {
-            ps.executeUpdate();
-        }
-    }
-
-    public static void createLocationInfoTable(@NotNull Connection conn) throws SQLException {
-        String sqlTable =
-                """
-                        create table location_info(
-                          key integer primary key,
-                          info text not null, -- JSON object
-                          foreign key (key) references location (key))""";
-
-        try (PreparedStatement ps = conn.prepareStatement(sqlTable)) {
             ps.executeUpdate();
         }
     }

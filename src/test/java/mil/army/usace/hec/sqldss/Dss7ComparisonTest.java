@@ -1,12 +1,8 @@
 package mil.army.usace.hec.sqldss;
 
 import com.google.common.flogger.FluentLogger;
-import mil.army.usace.hec.sqldss.api.dss7.HecSqlDss;
-import mil.army.usace.hec.sqldss.core.SqlDss;
-import mil.army.usace.hec.sqldss.core.TimeSeries;
-import org.apache.poi.ss.formula.functions.T;
+import mil.army.usace.hec.sqldss.api.dss7.HecDss;
 import org.jetbrains.annotations.NotNull;
-import org.junit.jupiter.api.Test;
 
 import java.io.File;
 import java.io.IOException;
@@ -16,16 +12,12 @@ import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Arrays;
 import java.util.List;
 
-import hec.heclib.dss.HecDss;
 import hec.heclib.util.Heclib;
 import hec.io.TimeSeriesContainer;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -90,7 +82,7 @@ public class Dss7ComparisonTest {
         // open source DSS7 and read records //
         //-----------------------------------//
         startTime = startTimer();
-        HecDss sourceDss = HecDss.open(getFileName(sourceResource));
+        hec.heclib.dss.HecDss sourceDss = hec.heclib.dss.HecDss.open(getFileName(sourceResource));
         elapsedOpenDss7 = endTimer(startTime);
         List<String> pathnames = sourceDss.getPathnameList();
         TimeSeriesContainer[] tscs = new TimeSeriesContainer[Math.min(pathnames.size(), maxPathnames)];
@@ -106,7 +98,7 @@ public class Dss7ComparisonTest {
         //-----------------------------------//
         Files.deleteIfExists(Path.of(getFileName(target7Resource)));
         startTime = startTimer();
-        HecDss targetDss7 = HecDss.open(getFileName(target7Resource));
+        hec.heclib.dss.HecDss targetDss7 = hec.heclib.dss.HecDss.open(getFileName(target7Resource));
         elapsedCreateDss7 = endTimer(startTime);
         startTime = startTimer();
         for (TimeSeriesContainer tsc: tscs) {
@@ -117,7 +109,7 @@ public class Dss7ComparisonTest {
         //------------------------//
         // overwrite DSS7 records //
         //------------------------//
-        targetDss7 = HecDss.open(getFileName(target7Resource));
+        targetDss7 = hec.heclib.dss.HecDss.open(getFileName(target7Resource));
         startTime = startTimer();
         for (TimeSeriesContainer tsc: tscs) {
             targetDss7.put(tsc);
@@ -134,7 +126,7 @@ public class Dss7ComparisonTest {
         Files.deleteIfExists(Path.of(getFileName(target8Resource)));
         startTime = startTimer();
         logger.atInfo().log(getFileName(target8Resource));
-        HecSqlDss targetDss8 = HecSqlDss.open(getFileName(target8Resource));
+        HecDss targetDss8 = HecDss.open(getFileName(target8Resource));
         targetDss8.setAutoCommit(false);
         elapsedCreateDss8 = endTimer(startTime);
         startTime = startTimer();
@@ -152,7 +144,7 @@ public class Dss7ComparisonTest {
         // open existing DSS8 and read records //
         //-------------------------------------//
         startTime = startTimer();
-        targetDss8 = HecSqlDss.open(getFileName(target8Resource));
+        targetDss8 = HecDss.open(getFileName(target8Resource));
         elapsedOpenDss8 = endTimer(startTime);
         startTime = startTimer();
         targetDss8.setTrimMissing(true);
@@ -166,7 +158,7 @@ public class Dss7ComparisonTest {
         //------------------------//
         // overwrite DSS8 records //
         //------------------------//
-        targetDss8 = HecSqlDss.open(getFileName(target8Resource));
+        targetDss8 = HecDss.open(getFileName(target8Resource));
         targetDss8.setAutoCommit(false);
         startTime = startTimer();
         for (int i = 0; i < tscs.length; ++i) {

@@ -1,0 +1,104 @@
+# SQLDSS (HEC-DSS v8) #
+### INTERVAL ###
+```sql
+create table interval(
+    name collate nocase primary key,
+    minutes integer not null,
+    block_size text not null);
+    
+create index idx_interval_minutes on interval (minutes);
+
+insert into interval (name, minutes, block_size) values ('1Minute', 1, '1Day');
+insert into interval (name, minutes, block_size) values ('2Minutes', 2, '1Day');
+insert into interval (name, minutes, block_size) values ('3Minutes', 3, '1Day');
+insert into interval (name, minutes, block_size) values ('4Minutes', 4, '1Day');
+insert into interval (name, minutes, block_size) values ('5Minutes', 5, '1Day');
+insert into interval (name, minutes, block_size) values ('6Minutes', 6, '1Day');
+insert into interval (name, minutes, block_size) values ('8Minutes', 8, '1Day');
+insert into interval (name, minutes, block_size) values ('10Minutes', 10, '1Day');
+insert into interval (name, minutes, block_size) values ('12Minutes', 12, '1Day');
+insert into interval (name, minutes, block_size) values ('15Minutes', 15, '1Month');
+insert into interval (name, minutes, block_size) values ('20Minutes', 20, '1Month');
+insert into interval (name, minutes, block_size) values ('30Minutes', 30, '1Month');
+insert into interval (name, minutes, block_size) values ('1Hour', 60, '1Month');
+insert into interval (name, minutes, block_size) values ('2Hours', 120, '1Month');
+insert into interval (name, minutes, block_size) values ('3Hours', 180, '1Month');
+insert into interval (name, minutes, block_size) values ('4Hours', 240, '1Month');
+insert into interval (name, minutes, block_size) values ('6Hours', 360, '1Month');
+insert into interval (name, minutes, block_size) values ('8Hours', 480, '1Month');
+insert into interval (name, minutes, block_size) values ('12Hours', 720, '1Month');
+insert into interval (name, minutes, block_size) values ('1Day', 1440, '1Year');
+insert into interval (name, minutes, block_size) values ('2Days', 2880, '1Year');
+insert into interval (name, minutes, block_size) values ('3Days', 4320, '1Year');
+insert into interval (name, minutes, block_size) values ('4Days', 5760, '1Year');
+insert into interval (name, minutes, block_size) values ('5Days', 7200, '1Year');
+insert into interval (name, minutes, block_size) values ('6Days', 8640, '1Year');
+insert into interval (name, minutes, block_size) values ('1Week', 10080, '1Decade');
+insert into interval (name, minutes, block_size) values ('1Month', 43200, '1Decade');
+insert into interval (name, minutes, block_size) values ('1Year', 525600, '1Century');
+insert into interval (name, minutes, block_size) values ('1Decade', 5256000, '1Century');
+insert into interval (name, minutes, block_size) values ('1MinuteLocal', 1, '1Day');
+insert into interval (name, minutes, block_size) values ('2MinutesLocal', 2, '1Day');
+insert into interval (name, minutes, block_size) values ('3MinutesLocal', 3, '1Day');
+insert into interval (name, minutes, block_size) values ('4MinutesLocal', 4, '1Day');
+insert into interval (name, minutes, block_size) values ('5MinutesLocal', 5, '1Day');
+insert into interval (name, minutes, block_size) values ('6MinutesLocal', 6, '1Day');
+insert into interval (name, minutes, block_size) values ('8MinutesLocal', 8, '1Day');
+insert into interval (name, minutes, block_size) values ('10MinutesLocal', 10, '1Day');
+insert into interval (name, minutes, block_size) values ('12MinutesLocal', 12, '1Day');
+insert into interval (name, minutes, block_size) values ('15MinutesLocal', 15, '1Month');
+insert into interval (name, minutes, block_size) values ('20MinutesLocal', 20, '1Month');
+insert into interval (name, minutes, block_size) values ('30MinutesLocal', 30, '1Month');
+insert into interval (name, minutes, block_size) values ('1HourLocal', 60, '1Month');
+insert into interval (name, minutes, block_size) values ('2HoursLocal', 120, '1Month');
+insert into interval (name, minutes, block_size) values ('3HoursLocal', 180, '1Month');
+insert into interval (name, minutes, block_size) values ('4HoursLocal', 240, '1Month');
+insert into interval (name, minutes, block_size) values ('6HoursLocal', 360, '1Month');
+insert into interval (name, minutes, block_size) values ('8HoursLocal', 480, '1Month');
+insert into interval (name, minutes, block_size) values ('12HoursLocal', 720, '1Month');
+insert into interval (name, minutes, block_size) values ('1DayLocal', 1440, '1Year');
+insert into interval (name, minutes, block_size) values ('2DaysLocal', 2880, '1Year');
+insert into interval (name, minutes, block_size) values ('3DaysLocal', 4320, '1Year');
+insert into interval (name, minutes, block_size) values ('4DaysLocal', 5760, '1Year');
+insert into interval (name, minutes, block_size) values ('5DaysLocal', 7200, '1Year');
+insert into interval (name, minutes, block_size) values ('6DaysLocal', 8640, '1Year');
+insert into interval (name, minutes, block_size) values ('1WeekLocal', 10080, '1Decade');
+insert into interval (name, minutes, block_size) values ('1MonthLocal', 43200, '1Decade');
+insert into interval (name, minutes, block_size) values ('1YearLocal', 525600, '1Century');
+insert into interval (name, minutes, block_size) values ('1DecadeLocal', 5256000, '1Century');
+insert into interval (name, minutes, block_size) values ('0', 0, '1Month');
+insert into interval (name, minutes, block_size) values ('~1Minute', 0, '1Day');
+insert into interval (name, minutes, block_size) values ('~2Minutes', 0, '1Day');
+insert into interval (name, minutes, block_size) values ('~3Minutes', 0, '1Day');
+insert into interval (name, minutes, block_size) values ('~4Minutes', 0, '1Day');
+insert into interval (name, minutes, block_size) values ('~5Minutes', 0, '1Day');
+insert into interval (name, minutes, block_size) values ('~6Minutes', 0, '1Day');
+insert into interval (name, minutes, block_size) values ('~8Minutes', 0, '1Day');
+insert into interval (name, minutes, block_size) values ('~10Minutes', 0, '1Day');
+insert into interval (name, minutes, block_size) values ('~12Minutes', 0, '1Day');
+insert into interval (name, minutes, block_size) values ('~15Minutes', 0, '1Month');
+insert into interval (name, minutes, block_size) values ('~20Minutes', 0, '1Month');
+insert into interval (name, minutes, block_size) values ('~30Minutes', 0, '1Month');
+insert into interval (name, minutes, block_size) values ('~1Hour', 0, '1Month');
+insert into interval (name, minutes, block_size) values ('~2Hours', 0, '1Month');
+insert into interval (name, minutes, block_size) values ('~3Hours', 0, '1Month');
+insert into interval (name, minutes, block_size) values ('~4Hours', 0, '1Month');
+insert into interval (name, minutes, block_size) values ('~6Hours', 0, '1Month');
+insert into interval (name, minutes, block_size) values ('~8Hours', 0, '1Month');
+insert into interval (name, minutes, block_size) values ('~12Hours', 0, '1Month');
+insert into interval (name, minutes, block_size) values ('~1Day', 0, '1Year');
+insert into interval (name, minutes, block_size) values ('~2Days', 0, '1Year');
+insert into interval (name, minutes, block_size) values ('~3Days', 0, '1Year');
+insert into interval (name, minutes, block_size) values ('~4Days', 0, '1Year');
+insert into interval (name, minutes, block_size) values ('~5Days', 0, '1Year');
+insert into interval (name, minutes, block_size) values ('~6Days', 0, '1Year');
+insert into interval (name, minutes, block_size) values ('~1Week', 0, '1Decade');
+insert into interval (name, minutes, block_size) values ('~1Month', 0, '1Decade');
+insert into interval (name, minutes, block_size) values ('~1Year', 0, '1Century');
+insert into interval (name, minutes, block_size) values ('~1Decade', 0, '1Century');
+insert into interval (name, minutes, block_size) values ('IR-Day', 0, '1Day');
+insert into interval (name, minutes, block_size) values ('IR-Month', 0, '1Month');
+insert into interval (name, minutes, block_size) values ('IR-Year', 0, '1Year');
+insert into interval (name, minutes, block_size) values ('IR-Decade', 0, '1Decade');
+insert into interval (name, minutes, block_size) values ('IR-Century', 0, '1Century');
+```
