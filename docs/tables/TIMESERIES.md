@@ -6,13 +6,14 @@ create table time_series(
     deleted integer not null default (0),
     location integer not null,
     parameter integer not null,
-    parameter_type text not null check (parameter_type in (:types:)),
+    parameter_type text not null,
     interval text not null,
     duration text not null,
     version text default ('') collate nocase,
     interval_offset text default (''), -- ISO 8601 (e.g., PT15M)
     foreign key (location) references location (key),
     foreign key (parameter) references parameter (key),
+    foreign key (parameter_type) references parameter_type (name),
     foreign key (interval) references interval (name),
     foreign key (duration) references duration (name));
     

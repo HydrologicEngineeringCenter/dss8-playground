@@ -2,6 +2,14 @@ package mil.army.usace.hec.sqldss.core;
 
 import org.jetbrains.annotations.NotNull;
 
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.List;
+
 public class Constants {
     private Constants() {
         throw new AssertionError("Cannot instantiate");
@@ -12,15 +20,34 @@ public class Constants {
     public static final int HOUR_MINUTES = 60;
     public static final String SQL_SELECT_LAST_INSERT_ROWID = "select last_insert_rowid()";
     public static final String LAST_INSERT_ROWID = "last_insert_rowid()";
-    public static final String[] PARAMETER_TYPES = {
-            "CONST",
-            "INST-VAL",
-            "INST-CUM",
-            "PER-AVER",
-            "PER-CUM",
-            "PER-MIN",
-            "PER-MAX"
-    };
+    public static final String[] PARAMETER_TYPES;
+
+    static {
+        //--------------------------------------------------------------------//
+        // populate PARAMETER_TYPES from same resource used to populate table //
+        //--------------------------------------------------------------------//
+        List<String> parameter_types = new ArrayList<>();
+        try (InputStream in = Constants.class.getResourceAsStream("init/parameter_type.tsv")) {
+            if (in == null) {
+                throw new CoreException("Could not open parameter_type resourde");
+            }
+            try (BufferedReader br = new BufferedReader((new InputStreamReader(in, StandardCharsets.UTF_8)))) {
+                String line;
+                while ((line = br.readLine()) != null) {
+                    if (line.isEmpty() || line.startsWith("*")) {
+                        continue;
+                    }
+                    parameter_types.add(line);
+                }
+            }
+        } catch (IOException | CoreException e) {
+            throw new RuntimeException(e);
+        }
+        PARAMETER_TYPES = new String[parameter_types.size()];
+        for (int i = 0; i < parameter_types.size(); ++i) {
+            PARAMETER_TYPES[i] = parameter_types.get(i);
+        }
+    }
 
     public enum UNIT_SYSTEM {
         SI(0, "Système International"),
@@ -50,11 +77,11 @@ public class Constants {
     public enum RECORD_TYPE {
         ARR(90, "Array"),
         RTD(105, "Regular-interval time series doubles"),
-        RTAD( 106, "Regular-interval time series double pattern"),
+        RTTD( 106, "Regular-interval time series double pattern"),
         RTPD(107, "Regular-interval time series double profile"),
         ITD(115, "Irregular-interval time series doubles"),
-        ITAD( 116, "Iregular-interval time series double pattern"),
-        ITPD(117, "Iregular-interval time series double profile"),
+        ITTD( 116, "Irregular-interval time series double pattern"),
+        ITPD(117, "Irregular-interval time series double profile"),
         PDD(205, "Paired Data doubles"),
         TXT(300, "Text Data"),
         TT(310, "Text Table"),

@@ -30,6 +30,7 @@ public class Init {
         createUnitTable(conn);
         createUnitAliasTable(conn);
         createUnitConversionTable(conn);
+        createParameterTypeTable(conn);
         createIntervalTable(conn);
         createDurationTable(conn);
         createBaseParameterTable(conn);
@@ -242,9 +243,10 @@ public class Init {
             ps.executeUpdate();
         }
         String sqlInsert =
-                "insert" +
-                        "  into base_parameter (name, abstract_parameter_key, default_si_unit, default_en_unit, long_name)\n" +
-                        "  values (?, ?, ?, ?, ?)";
+                """
+                          insert
+                            into base_parameter (name, abstract_parameter_key, default_si_unit, default_en_unit, long_name)
+                          values (?, ?, ?, ?, ?)""";
 
         try (PreparedStatement ps = conn.prepareStatement(sqlInsert)) {
             try (InputStream in = Init.class.getResourceAsStream("base_parameter.tsv")) {
@@ -263,6 +265,38 @@ public class Init {
                         ps.setString(3, parts[2]);
                         ps.setString(4, parts[3]);
                         ps.setString(5, parts[4]);
+                        ps.addBatch();
+                    }
+                }
+                ps.executeBatch();
+            }
+        }
+    }
+    
+    public static void createParameterTypeTable(@NotNull Connection conn) throws SQLException, IOException, CoreException {
+        String sqlTable =
+                """
+                        create table parameter_type(
+                            name text collate nocase primary key)""";
+        try (PreparedStatement ps = conn.prepareStatement(sqlTable)) {
+            ps.executeUpdate();
+        }
+        String sqlInsert =
+                """
+                        insert
+                          into parameter_type (name) values (?)""";
+        try (PreparedStatement ps = conn.prepareStatement(sqlInsert)) {
+            try (InputStream in = Init.class.getResourceAsStream("parameter_type.tsv")) {
+                if (in == null) {
+                    throw new CoreException("Could not open parameter_type resourde");
+                }
+                try (BufferedReader br = new BufferedReader((new InputStreamReader(in, StandardCharsets.UTF_8)))) {
+                    String line;
+                    while ((line = br.readLine()) != null) {
+                        if (line.isEmpty() || line.startsWith("*")) {
+                            continue;
+                        }
+                        ps.setString(1, line);
                         ps.addBatch();
                     }
                 }
@@ -412,26 +446,20 @@ public class Init {
                           deleted integer not null default (0),
                           location integer not null,
                           parameter integer not null,
-                          parameter_type text not null check (parameter_type in (:types:)),
+                          parameter_type text not null,
                           interval text not null,
                           duration text not null,
                           version text default ('') collate nocase,
                           interval_offset text default (''), -- ISO 8601 (e.g., PT15M)
                           foreign key (location) references location (key),
                           foreign key (parameter) references parameter (key),
+                          foreign key (parameter_type) references parameter_type (name),
                           foreign key (interval) references interval (name),
                           foreign key (duration) references duration (name))""";
 
-        StringBuilder sb = new StringBuilder();
-        for (int i = 0; i < Constants.PARAMETER_TYPES.length; ++i) {
-            if (i > 0) {
-                sb.append(",");
-            }
-            sb.append("'").append(Constants.PARAMETER_TYPES[i]).append("'");
-        }
         String sqlIndex = "create unique index idx_time_series on time_series (location, parameter, parameter_type, interval, duration, version)";
 
-        try (PreparedStatement ps = conn.prepareStatement(sqlTable.replace(":types:", sb.toString()))) {
+        try (PreparedStatement ps = conn.prepareStatement(sqlTable)) {
             ps.executeUpdate();
         }
         try (PreparedStatement ps = conn.prepareStatement(sqlIndex)) {
