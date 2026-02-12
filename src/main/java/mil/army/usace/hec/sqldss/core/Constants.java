@@ -119,40 +119,6 @@ public class Constants {
         }
     }
 
-    public enum DATA_TYPE {
-        ARRAY(1),
-        FILE(2),
-        GRID(3),
-        IMAGE(4),
-        ITS(5),
-        ITS_PATTERN(6),
-        ITS_PROFILE(7),
-        PD(8),
-        RTS(9),
-        RTS_PATTERN(10),
-        RTS_PROFILE(11),
-        TEXT(12),
-        TEXT_TABLE(13),
-        TIN(14);
-
-        private final int code;
-
-        DATA_TYPE(int code) {
-            this.code = code;
-        }
-
-        public int getCode() {
-            return code;
-        }
-
-        public static @NotNull DATA_TYPE fromCode(int code) {
-            for (DATA_TYPE t : values()) {
-                if (t.code == code) return t;
-            }
-            throw new IllegalArgumentException("Unknown DATA_TYPE code: " + code);
-        }
-    }
-
     public enum REGULAR_STORE_RULE {
         REPLACE_ALL(0),
         REPLACE_MISSING_VALUES_ONLY(1),

@@ -16,8 +16,10 @@ import java.util.List;
 
 import static hec.lang.Const.UNDEFINED_DOUBLE;
 import static mil.army.usace.hec.sqldss.core.Constants.*;
-import static mil.army.usace.hec.sqldss.core.Constants.DATA_TYPE.ITS;
-import static mil.army.usace.hec.sqldss.core.Constants.DATA_TYPE.RTS;
+import static mil.army.usace.hec.sqldss.core.Constants.RECORD_TYPE.ITD;
+import static mil.army.usace.hec.sqldss.core.Constants.RECORD_TYPE.RTD;
+//import static mil.army.usace.hec.sqldss.core.Constants.DATA_TYPE.ITS;
+//import static mil.army.usace.hec.sqldss.core.Constants.DATA_TYPE.RTS;
 
 public final class TimeSeries {
     public static final String SQL_SELECT_TS_BLOCK = """
@@ -42,7 +44,7 @@ public final class TimeSeries {
     static FluentLogger logger = FluentLogger.forEnclosingClass();
 
     static class TsvRecordHeader {
-        DATA_TYPE dataType;
+        RECORD_TYPE redordType;
         int version;
         int valueCount;
         boolean hasQuality;
@@ -70,18 +72,18 @@ public final class TimeSeries {
     @NotNull
     static TsvRecordHeader readHeader(ByteBuffer buf) throws CoreException {
         int bufPosition;
-        byte dataTypeCode;
+        byte recordTypeCode;
         TsvRecordHeader header = new TsvRecordHeader();
         bufPosition = 0;
-        dataTypeCode = buf.get(bufPosition);
+        recordTypeCode = buf.get(bufPosition);
         bufPosition += Byte.BYTES;
         try {
-            header.dataType = DATA_TYPE.fromCode(dataTypeCode);
+            header.redordType = RECORD_TYPE.fromCode(recordTypeCode);
         } catch (IllegalArgumentException e) {
             throw new CoreException(e);
         }
-        switch (header.dataType) {
-            case RTS:
+        switch (header.redordType) {
+            case RTD:
                 header.version = buf.get(bufPosition);
                 bufPosition += Byte.BYTES;
                 if (header.version != 1) {
@@ -95,12 +97,12 @@ public final class TimeSeries {
                 bufPosition += Long.BYTES;
                 buf.position(bufPosition);
                 break;
-            case ITS:
+            case ITD:
                 throw new CoreException("Cannot yet decode ITS records");
             default:
                 throw new CoreException(String.format(
                         "Expected data type of %d (%s) or %d (%s), got %d",
-                        RTS.getCode(), RTS.name(), ITS.getCode(), ITS.name(), dataTypeCode));
+                        RTD.getCode(), RTD.name(), ITD.getCode(), ITD.name(), recordTypeCode));
         }
         return header;
     }
@@ -389,11 +391,11 @@ public final class TimeSeries {
                 int bufPosition = 0;
                 byte dataType = buf.get(bufPosition);
                 bufPosition += Byte.BYTES;
-                if (dataType != RECORD_TYPE.RTD.getCode()) {
+                if (dataType != RTD.getCode()) {
                     throw new CoreException(String.format(
                             "Expected data type of %d (%s), got %d",
-                            RECORD_TYPE.RTD.getCode(),
-                            RECORD_TYPE.RTD.name(),
+                            RTD.getCode(),
+                            RTD.name(),
                             dataType));
                 }
                 byte dataTypeVersion = buf.get(bufPosition);
@@ -728,7 +730,7 @@ public final class TimeSeries {
         // store the time series values
         boolean deleted;
         byte[] blob;
-        byte format = (byte) RECORD_TYPE.RTD.getCode();
+        byte format = (byte) RTD.getCode();
         byte version = 1;
         byte hasQuality = 0;
         for (int i = 0; i < encodedBlockDates.length - 1; ++i) {
@@ -891,11 +893,11 @@ public final class TimeSeries {
                 int bufPosition = 0;
                 byte dataType = buf.get(bufPosition);
                 bufPosition += Byte.BYTES;
-                if (dataType != RECORD_TYPE.RTD.getCode()) {
+                if (dataType != RTD.getCode()) {
                     throw new CoreException(String.format(
                             "Expected data type of %d (%s), got %d",
-                            RECORD_TYPE.RTD.getCode(),
-                            RECORD_TYPE.RTD.name(),
+                            RTD.getCode(),
+                            RTD.name(),
                             dataType));
                 }
                 byte dataTypeVersion = buf.get(bufPosition);
