@@ -18,12 +18,13 @@ requested units (if any) when retrieving. Currently, like CWMS, the storage unit
 [base parameter](tables/BASE_PARAMETER.md) table, although it would be simple to allow users to choose to use the
 `default_en_unit` instead when creating SQLDSS files.
 
-Also like the CWMS database, all time values strored in the database are UTC times. Value times are converted to UTC
+Also like the CWMS database, all time values stored in the database are UTC times. Value times are converted to UTC
 when storing and converted to the requested time zone (if any) when retrieving.
 
 The only data type currently supported is regular time series, although adding irregular time series should
 not be complicated.
 
+## [SQLite File & Connection Settings](SqliteFile+ConnectionSettings.md) ##
 ## [Dates & Times](Dates+Times.md) ##
 ## [Core vs API Layers](CoreVsApiLayers.md) ##
 ## [Data Names](DataNames.md) ##

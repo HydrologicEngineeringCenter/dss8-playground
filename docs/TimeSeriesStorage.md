@@ -66,8 +66,11 @@ must be thrown.
 * If data has no quality codes or if all quality codes are 0, QualityFlag is set to 0 and no quality codes are stored.
 
 When retrieving:
-* If the interval offset computed from the FirstValueTime and the `interval` value in the [timeseries](tables/TIMESERIES.md)
-table does not equal the `interval_offset` value in the [timeseries](tables/TIMESERIES.md) table, an exception must be thrown.
+* An exception must be thrown if:
+  * RecordType != 105
+  * Version != 1
+  * the interval offset computed from the FirstValueTime and the `interval` value in the [timeseries](tables/TIMESERIES.md)
+table does not equal the `interval_offset` value in the [timeseries](tables/TIMESERIES.md) table.
 * Times for each value are computed from FirstValueTime and the `interval` value in the [timeseries](tables/TIMESERIES.md)
 table for the referenced time series
 * If QualityFlag == 0, no quality codes are read and all values are assigned a quality code of 0.
