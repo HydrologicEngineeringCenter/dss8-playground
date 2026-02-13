@@ -10,6 +10,7 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.sql.*;
+import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -18,6 +19,7 @@ import static hec.lang.Const.UNDEFINED_DOUBLE;
 import static mil.army.usace.hec.sqldss.core.Constants.*;
 import static mil.army.usace.hec.sqldss.core.Constants.RECORD_TYPE.ITD;
 import static mil.army.usace.hec.sqldss.core.Constants.RECORD_TYPE.RTD;
+import static mil.army.usace.hec.sqldss.core.EncodedDateTime.changeTimeZone;
 //import static mil.army.usace.hec.sqldss.core.Constants.DATA_TYPE.ITS;
 //import static mil.army.usace.hec.sqldss.core.Constants.DATA_TYPE.RTS;
 
@@ -664,9 +666,12 @@ public final class TimeSeries {
                 }
             }
         }
-        // handle times
+        // get time zones for conversion
+        ZoneId fromZone = null;
+        ZoneId toZone = null;
         if (tsc.timeZoneID != null && !tsc.timeZoneID.equals("UTC")) {
-            throw new CoreException("Cannot yet handle non-UTC times");
+            fromZone = ZoneId.of(tsc.timeZoneID);
+            toZone = ZoneId.of("UTC");
         }
         // get the unit conversion
         double[] unitConvFactor = new double[1];
@@ -707,6 +712,9 @@ public final class TimeSeries {
         long[] encodedTimes = new long[tsc.numberValues];
         for (int i = 0; i < tsc.numberValues; ++i) {
             encodedTimes[i] = EncodedDateTime.encodeDateTime(tsc.times[i]);
+            if (fromZone != null) {
+                encodedTimes[i] = changeTimeZone(encodedTimes[i], fromZone, toZone);
+            }
         }
         double[] values = Arrays.copyOf(tsc.values, tsc.numberValues);
         int[] qualities = null;

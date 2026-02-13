@@ -28,3 +28,5 @@ eight digits for 4-digit year dates.
 * Composition and decomposition involve only integer arithmetic and are thus highly performant and easily implementable 
 in any programming language.
 
+All date or date/time values stored in SQLDSS are interpreted as UTC values.
+

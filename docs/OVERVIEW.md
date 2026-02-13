@@ -13,13 +13,16 @@ SQLDSS version is simplified. See the [TABLE_STRUCTURE](tables/TABLE_STRUCTURE.m
 the relational tables.
 
 Like the CWMS database, SQLDSS defines storage units for each base parameter, which eliminates specifying units for
-data records. Instead, values are converted to the storage unit for their parameter when storing, and converted to
+data records. Instead, values must be converted to the storage unit for their parameter when storing, and converted to
 requested units (if any) when retrieving. Currently, like CWMS, the storage units are the `default_si_unit` from the
 [base parameter](tables/BASE_PARAMETER.md) table, although it would be simple to allow users to choose to use the
 `default_en_unit` instead when creating SQLDSS files.
 
-Also like the CWMS database, all time values stored in the database are UTC times. Value times are converted to UTC
+Also like the CWMS database, all time values stored in the database are UTC times. Value times must be converted to UTC
 when storing and converted to the requested time zone (if any) when retrieving.
+
+The java implementation uses static classes/methods as much as possible to minimize the overhead of class construction
+and destruction.
 
 The only data type currently supported is regular time series, although adding irregular time series should
 not be complicated.

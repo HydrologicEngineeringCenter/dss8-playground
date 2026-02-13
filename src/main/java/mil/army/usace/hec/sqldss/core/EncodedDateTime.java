@@ -3,6 +3,9 @@ package mil.army.usace.hec.sqldss.core;
 import hec.heclib.util.HecTime;
 import org.jetbrains.annotations.NotNull;
 
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
+
 public final class EncodedDateTime {
 
     public static final int DATE_TO_TIME_FACTOR = 1_000_000;
@@ -320,5 +323,26 @@ public final class EncodedDateTime {
         int m = len > 1 ? values[1] : 1;
         int d = len > 2 ? values[2] : 1;
         return ((y * 100L + m) * 100 + d);
+    }
+
+    public static long changeTimeZone(long dateTIme, ZoneId fromZone, ZoneId toZone) throws EncodedDateTimeException {
+        int[] values = toValues(dateTIme);
+        ZonedDateTime fromTime  = ZonedDateTime.of(
+                values[0],
+                values[1],
+                values[2],
+                values[3],
+                values[4],
+                values[5],
+                0,
+                fromZone);
+        ZonedDateTime toTime = fromTime.withZoneSameInstant(toZone);
+        values[0] = toTime.getYear();
+        values[1] = toTime.getMonthValue();
+        values[2] = toTime.getDayOfMonth();
+        values[3] = toTime.getHour();
+        values[4] = toTime.getMinute();
+        values[5] = toTime.getSecond();
+        return encodeDateTime(values);
     }
 }
