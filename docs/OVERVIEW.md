@@ -13,7 +13,7 @@ SQLDSS version is simplified. See the [TABLE_STRUCTURE](tables/TABLE_STRUCTURE.m
 the relational tables.
 
 Like the CWMS database, SQLDSS defines storage units for each base parameter, which eliminates specifying units for
-data records. Instead values are converted to the storage unit for their parameter when storing, and converted to
+data records. Instead, values are converted to the storage unit for their parameter when storing, and converted to
 requested units (if any) when retrieving. Currently, like CWMS, the storage units are the `default_si_unit` from the
 [base parameter](tables/BASE_PARAMETER.md) table, although it would be simple to allow users to choose to use the
 `default_en_unit` instead when creating SQLDSS files.

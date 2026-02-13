@@ -46,7 +46,7 @@ which the SqlDss object has:
         if (i > 0 && i % 100 == 0) {
             sqldss.commit();
         }
-        sqldss.put(tscs[i]);
+        sqldss.putTimeSeriesValues(tscs[i], "REPLACE_ALL");
     }
     sqldss.commit();
     sqldss.close();
