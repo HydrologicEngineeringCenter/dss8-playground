@@ -27,4 +27,4 @@ doesn't support multiple data types for the same record.
 * Neither of the location context (if present) or location name may include the colon `:` character
 * None of the parts may contain the pipe `|` character.
 
-<sup>*</sup> See the [time series storage](TimeSeriesStorage.md) document for details on block storage of time series.
+<sup>*</sup> See the [time series storage](../storage/TimeSeriesStorage.md) document for details on block storage of time series.
