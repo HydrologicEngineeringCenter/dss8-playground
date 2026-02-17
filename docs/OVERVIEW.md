@@ -30,8 +30,24 @@ not be complicated.
 ## [SQLite File & Connection Settings](SqliteFile+ConnectionSettings.md) ##
 ## [Dates & Times](Dates+Times.md) ##
 ## [Core vs API Layers](CoreVsApiLayers.md) ##
-## [Data Names](DataNames.md) ##
-## [Time Series Storage](TimeSeriesStorage.md) ##
+## Data Names ##
+SQLDSS doesn't adhere to the conventional HEC-DSS pathname structure, as in the CWMS database, and different data types
+are free to have different naming conventions. If an API layer is used, it is responsible for translation between the
+API-centric names and the core SQLDSS names.
+
+* [Locations](naming/LocationNames.md)
+* [Parameters](naming/ParameterNames.md)
+* [Parameter Types](naming/ParameterTypeNames.md)
+* [Intervals](naming/IntervalNames.md)
+* [Durations](naming/DurationNames.md)
+* [Time Series](naming/TimeSeriesNames.md)
+* [Time Series Catalogs](naming/TimeSeriesCatalogNames.md)
+
+## Data Storage ##
+* [Locations](storage/LocationStorage.md)
+* [Time Series](storage/TimeSeriesStorage.md)
+
+
 
 
 
