@@ -9,7 +9,7 @@ not store any of the HEC-DSS v7 additions: extended quality codes, integer-based
 ## Format ##
 
 Like HEC-DSS v7, SQLDSS stores time series values in blocks. The block size for each interval is specified in the
-[interval](tables/INTERVAL.md) table. Currently the block sizes are the same as for HEC-DSS v7. To investigate the 
+[interval](../tables/INTERVAL.md) table. Currently the block sizes are the same as for HEC-DSS v7. To investigate the 
 changes with using other block sizes, simply update the data before opening a new SQLDSS file.
 
 Also like HEC-DSS v7 the SQLDSS block start dates are the first day in the block size for a specified value time.
