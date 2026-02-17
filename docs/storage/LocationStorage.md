@@ -1,7 +1,7 @@
 # SQLDSS (HEC-DSS v8) #
 ## Location Storage ##
 
-As indicated in the [LOCATION table](tables/LOCATION.md) document, each location row includes:
+As indicated in the [location](../tables/LOCATION.md) table document, each location row includes:
 * a reference to the base location
 * a (possibly empty) sub-location name
 * a (possibly empty) info column

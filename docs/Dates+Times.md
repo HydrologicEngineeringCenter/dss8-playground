@@ -22,11 +22,12 @@ date ranges, seconds granularity, and human-readable values. In this format:
 Thus, 20260211144700 is 11Feb2026 14:47:00, and -23975640101000000 is 01Jan of the year -2397564 in the proleptic
 Gregorian calendar. In date-only contexts (e.g, block start dates), the right-most six digits are removed, leaving
 eight digits for 4-digit year dates.
-
-* These values are natively comparable
+                                    
+Benefits of this format are:
+* The values are natively comparable
 * Composition and decomposition involve only integer arithmetic and are thus highly performant and easily implementable
 in any programming language.
 
-All date or date/time values stored in SQLDSS are interpreted as UTC values.
+No time zone information is stored in SQLDSS; all date/time values are expected to be in UTC or to be naive of time zone.
 
 
