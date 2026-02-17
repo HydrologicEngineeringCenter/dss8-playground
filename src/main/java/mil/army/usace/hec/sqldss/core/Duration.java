@@ -7,15 +7,31 @@ import java.sql.SQLException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+/**
+ * Utility class to work with time series durations
+ */
 public class Duration {
 
+    /**
+     * Regular expression for valid ISO-8601 duration strings
+     */
     public static final String PATTERN_ISO_8601_DURATION = "P(?:(?:(\\d+)Y)?(?:(\\d+)M)?(?:(\\d+)D)?)?(?:T(?:(\\d+)H)?(?:(\\d+)M)?(?:(\\d+)S)?)?";
 
+    /**
+     * Prevent class instantiation
+     */
     private Duration() {
         throw new AssertionError("Cannot instantiate");
     }
 
-    static String getDuration(String name, Connection conn) throws CoreException, SQLException {
+    /**
+     * Retrieves the case-correct duration name for a specified case-insensitive name
+     * @param name The duration name to match (case insensitive)
+     * @param conn The JDBC connection
+     * @return The matched duration name or null;
+     * @throws SQLException on SQL error
+     */
+    static String getDuration(String name, Connection conn) throws SQLException {
         String actualName;
         try (PreparedStatement ps = conn.prepareStatement(
                 "select name from duration where name = ?"
@@ -29,6 +45,12 @@ public class Duration {
         return actualName;
     }
 
+    /**
+     * Returns the equivalent interval minutes for an ISO-8601 duration string
+     * @param s The ISO-8601 duration string
+     * @return The equivalent interval minutes
+     * @throws CoreException if s is not a valid ISO-8601 duration string
+     */
     static int iso8601ToMinutes(String s) throws CoreException {
         int minutes = 0;
         Pattern pat = Pattern.compile(PATTERN_ISO_8601_DURATION);
@@ -46,6 +68,11 @@ public class Duration {
         return minutes;
     }
 
+    /**
+     * Returns the equivalent ISO-8601 duration string for specified interval minutes
+     * @param minutes The interval minutes
+     * @return The equivalent ISO-8601 duration string
+     */
     static String minutesToIso8601(int minutes) {
         if (minutes == 0) {
             return "PT0S";

@@ -10,18 +10,49 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Utility class for useful pre-defined constant values
+ */
 public class Constants {
+    /**
+     * Prevent class instantiation
+     */
     private Constants() {
         throw new AssertionError("Cannot instantiate");
     }
+
+    /**
+     * The number of minutes that represents a 1Year interval
+     */
     public static final int YEAR_MINUTES = 525600;
+    /**
+     * The number of minutes that represents a 1Month interval
+     */
     public static final int MONTH_MINUTES = 43200;
+    /**
+     * The number of minutes in a day
+     */
     public static final int DAY_MINUTES = 1440;
+    /**
+     * The number of minutes in an hour
+     */
     public static final int HOUR_MINUTES = 60;
+    /**
+     * The SQL to retrieve the retrieve the auto-generated key for the most recent insert operation
+     */
     public static final String SQL_SELECT_LAST_INSERT_ROWID = "select last_insert_rowid()";
+    /**
+     * The column name of the value retrieved by SQL_SELECT_LAST_INSERT_ROWID
+     */
     public static final String LAST_INSERT_ROWID = "last_insert_rowid()";
+    /**
+     * The universe of available parameter types
+     */
     public static final String[] PARAMETER_TYPES;
 
+    /**
+     * Load the parameter types from the same resource used to populate the PARAMETER_TYPE table
+     */
     static {
         //--------------------------------------------------------------------//
         // populate PARAMETER_TYPES from same resource used to populate table //
@@ -48,24 +79,39 @@ public class Constants {
             PARAMETER_TYPES[i] = parameter_types.get(i);
         }
     }
-
+    /**
+     * The universe of unit systems
+     */
     public enum UNIT_SYSTEM {
         SI(0, "Système International"),
         EN(1, "English (Imperial)");
+
         private final int code;
         private final String description;
-
+        /**
+         * Constructor
+         * @param code The numeric code
+         * @param description The text description
+         */
         UNIT_SYSTEM(int code, String description) {
             this.code = code;
             this.description = description;
         }
-
+        /**
+         * @return The numeric code
+         */
         public int getCode() {
             return code;
         }
-
+        /**
+         * @return The text description
+         */
         public String getDescription() { return description; }
-
+        /**
+         * Get a UNIT_SYSTEM from its numeric code
+         * @param code The numeric code
+         * @return the UNIT_SYSTEM
+         */
         public static @NotNull UNIT_SYSTEM fromCode(int code) {
             for (UNIT_SYSTEM t : values()) {
                 if (t.code == code) return t;
@@ -73,7 +119,9 @@ public class Constants {
             throw new IllegalArgumentException("Unknown UNIT_SYSTEM code: " + code);
         }
     }
-
+    /**
+     * The universe of record types
+     */
     public enum RECORD_TYPE {
         ARR(90, "Array"),
         RTD(105, "Regular-interval time series doubles"),
@@ -99,18 +147,30 @@ public class Constants {
 
         private final int code;
         private final String description;
-
+        /**
+         * Constructor
+         * @param code The numeric code
+         * @param description The text description
+         */
         RECORD_TYPE(int code, String description) {
             this.code = code;
             this.description = description;
         }
-
+        /**
+         * @return The numeric code
+         */
         public int getCode() {
             return code;
         }
-
+        /**
+         * @return The text description
+         */
         public String getDescription() { return description; }
-
+        /**
+         * Get a RECORD_TYPE from its numeric code
+         * @param code The numeric code
+         * @return the RECORD_TYPE
+         */
         public static @NotNull RECORD_TYPE fromCode(int code) {
             for (RECORD_TYPE t : values()) {
                 if (t.code == code) return t;
@@ -118,7 +178,9 @@ public class Constants {
             throw new IllegalArgumentException("Unknown RECORD_TYPE code: " + code);
         }
     }
-
+    /**
+     * The universe of regular time series store rules
+     */
     public enum REGULAR_STORE_RULE {
         REPLACE_ALL(0),
         REPLACE_MISSING_VALUES_ONLY(1),
@@ -128,15 +190,24 @@ public class Constants {
         DO_NOT_REPLACE(5);
 
         private final int code;
-
+        /**
+         * Constructor
+         * @param code The numeric code
+         */
         REGULAR_STORE_RULE(int code) {
             this.code = code;
         }
-
+        /**
+         * @return The numeric code
+         */
         public int getCode() {
             return code;
         }
-
+        /**
+         * Get a REGULAR_STORE_RULE from its numeric code
+         * @param code The numeric code
+         * @return the REGULAR_STORE_RULE
+         */
         public static @NotNull REGULAR_STORE_RULE fromCode(int code) {
             for (REGULAR_STORE_RULE t : values()) {
                 if (t.code == code) return t;
@@ -144,7 +215,9 @@ public class Constants {
             throw new IllegalArgumentException("Unknown REGULAR_STORE_RULE code: " + code);
         }
     }
-
+    /**
+     * The universe of irregular time series store rules
+     */
     public enum IRREGULAR_STORE_RULE {
         REPLACE_ALL(0),
         MERGE(0), // alias for REPLACE_ALL for backward compatibility
@@ -154,15 +227,24 @@ public class Constants {
         DO_NOT_REPLACE(4);
 
         private final int code;
-
+        /**
+         * Constructor
+         * @param code The numeric code
+         */
         IRREGULAR_STORE_RULE(int code) {
             this.code = code;
         }
-
+        /**
+         * @return The numeric code
+         */
         public int getCode() {
             return code;
         }
-
+        /**
+         * Get an IRREGULAR_STORE_RULE from its numeric code
+         * @param code The numeric code
+         * @return the IRREGULAR_STORE_RULE
+         */
         public static @NotNull IRREGULAR_STORE_RULE fromCode(int code) {
             for (IRREGULAR_STORE_RULE t : values()) {
                 if (t.code == code) return t;

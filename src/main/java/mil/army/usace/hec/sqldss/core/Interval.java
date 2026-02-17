@@ -1,6 +1,5 @@
 package mil.army.usace.hec.sqldss.core;
 
-import mil.army.usace.hec.sqldss.core.init.Init;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.BufferedReader;
@@ -8,23 +7,37 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * Utility class for working with intervals
+ */
 public class Interval {
 
+    /**
+     * Map of case-insensitive interval names to case-correct interval names
+     */
     static Map<String, String> intervalNames = new HashMap<>();
+    /**
+     * Map of interval names to interval minutes
+     */
     static Map<String, Integer> intervalMinutes = new HashMap<>();
+    /**
+     * Map of interval names to SQLDSS block size interval names
+     */
     static Map<String, String> intervalBlockSizes = new HashMap<>();
 
+    /**
+     * Prevent class instantiation
+     */
     private Interval() {
         throw new AssertionError("Cannot instantiate");
     }
 
+    /**
+     * Populate interval maps from same resource used to populate interval table
+     */
     static {
         try (InputStream in = Interval.class.getResourceAsStream("init/interval.tsv")) {
             if (in == null) {
@@ -49,7 +62,13 @@ public class Interval {
         }
     }
 
-    static @NotNull String getInterval(String name) throws CoreException {
+    /**
+     * Retrieve a case-correct interval name from a case-insensitive interval name
+     * @param name The case-insensitive interval name
+     * @return The case-correct interval name
+     * @throws CoreException If no match is found for <code>name</code>
+     */
+    static @NotNull String getInterval(@NotNull String name) throws CoreException {
         String actualName;
         actualName = intervalNames.get(name.toLowerCase());
         if (actualName == null) {
@@ -58,6 +77,12 @@ public class Interval {
         return actualName;
     }
 
+    /**
+     * Retrieve the interval minutes for a case-insensitive interval name
+     * @param interval The case-insensitive interval name
+     * @return The interval minutes
+     * @throws CoreException If no match is found for <code>interval</code>
+     */
     public static int getIntervalMinutes(String interval) throws CoreException {
         String intervalName = getInterval(interval);
         Integer minutes = intervalMinutes.get(intervalName);
@@ -67,6 +92,12 @@ public class Interval {
         return minutes;
     }
 
+    /**
+     * Retrieve the SQLDSS block size interval name for a case-insensitive interval name
+     * @param interval The case-insensitive interval name
+     * @return The interval name of the block size for <code>interval</code>
+     * @throws CoreException If no match is found for <code>interval</code>
+     */
     public static @NotNull String getBlockSize(String interval) throws CoreException {
         String intervalName = getInterval(interval);
         String blockSize = intervalBlockSizes.get(intervalName);
@@ -76,6 +107,12 @@ public class Interval {
         return blockSize;
     }
 
+    /**
+     * Retrieve the SQLDSS block size interval minutes for a case-insensitive interval name
+     * @param interval The case-insensitive interval name
+     * @return The interval minutes of the block size for <code>interval</code>
+     * @throws CoreException If no match is found for <code>interval</code>
+     */
     public static int getBlockSizeMinutes(String interval) throws CoreException {
         String intervalName = getInterval(interval);
         return intervalMinutes.get(intervalBlockSizes.get(intervalName));

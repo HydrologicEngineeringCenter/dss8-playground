@@ -7,13 +7,28 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
+/**
+ * Utility class for working with parameters
+ */
 public class Parameter {
 
+    /**
+     * Prevent class instantiation
+     */
     private Parameter() {
         throw new AssertionError("Cannot instantiate");
     }
 
-    static long putParameter(String name, Connection conn) throws CoreException, SQLException {
+    /**
+     * Store a parameter to the database and returns its database key. If the parameter already exists, its existing
+     * database key is returned
+     * @param name The name of the parameter to store
+     * @param conn The JDBC connection
+     * @return The database key of the parameter
+     * @throws SQLException If SQL error
+     * @throws CoreException If thrown by {@link #getBaseParameter(String, Connection)}
+     */
+    static long putParameter(String name, Connection conn) throws SQLException, CoreException {
         long key = getParameterKey(name, conn);
         if (key < 0) {
             String baseParameter = name;
@@ -48,7 +63,15 @@ public class Parameter {
         return key;
     }
 
-    static @NotNull String getBaseParameter(String name, Connection conn) throws CoreException, SQLException {
+    /**
+     * Retrieves the case-correct base parameter name for a case-insensitive base parameter name
+     * @param name The case-insensitive base parameter name
+     * @param conn The JDBC connection
+     * @return The case-correct base parameter name
+     * @throws SQLException If SQL error
+     * @throws CoreException If there is no match for the case-insensitive base parameter name
+     */
+    static @NotNull String getBaseParameter(String name, Connection conn) throws SQLException, CoreException {
         try (PreparedStatement ps = conn.prepareStatement(
                 "select name from base_parameter where name = ?"
         )) {
@@ -64,7 +87,15 @@ public class Parameter {
         }
     }
 
-    static long getParameterKey(@NotNull String name, Connection conn) throws CoreException, SQLException {
+    /**
+     * Retrieves the database key for the specified case-insensitive parameter name
+     * @param name The case-insensitive parameter name
+     * @param conn The JDBC connection
+     * @return The database key for the parameter name
+     * @throws SQLException If SQL error
+     * @throws CoreException If thrown by {@link #getBaseParameter(String, Connection)}
+     */
+    static long getParameterKey(@NotNull String name, Connection conn) throws SQLException, CoreException {
         String baseParameter = name;
         String subParameter = "";
         boolean nullKey;
@@ -92,7 +123,15 @@ public class Parameter {
         return key;
     }
 
-    static String getParameter(@NotNull String name, Connection conn) throws CoreException, SQLException {
+    /**
+     * Retrieves the case-correct parameter name for a case-insensitive parameter name
+     * @param name The case-insensitive parameter name
+     * @param conn The JDBC connection
+     * @return The case-correct parameter name
+     * @throws SQLException If SQL error
+     * @throws CoreException If thrown by {@link #getParameterKey(String, Connection)}
+     */
+    static String getParameter(@NotNull String name, Connection conn) throws SQLException, CoreException {
         String sql = """
                 select base_parameter,
                        sub_parameter
@@ -100,6 +139,7 @@ public class Parameter {
                  where p.key = ?""";
         long key = getParameterKey(name, conn);
         try (PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setLong(1, key);
             try (ResultSet rs = ps.executeQuery(sql)) {
                 rs.next();
                 String baseParameter = rs.getString("base_parameter");

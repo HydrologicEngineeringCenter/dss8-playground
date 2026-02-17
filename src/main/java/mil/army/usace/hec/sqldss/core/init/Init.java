@@ -1,7 +1,6 @@
 package mil.army.usace.hec.sqldss.core.init;
 
 import hec.heclib.util.HecTime;
-import mil.army.usace.hec.sqldss.core.Constants;
 import mil.army.usace.hec.sqldss.core.CoreException;
 import org.jetbrains.annotations.NotNull;
 
@@ -16,13 +15,26 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.sql.Types;
 
+/**
+ * Utility class for initializing a SQLDSS file
+ */
 public class Init {
 
+    /**
+     * Prevent class instantiation
+     */
     private Init() {
         throw new AssertionError("Cannot instantiate");
     }
 
-    public static void initializeDb(Connection conn) throws SQLException, CoreException, IOException {
+    /**
+     * Initialize an empty SQLDSS file with reference tables
+     * @param conn The JDBC connection
+     * @throws SQLException from nested call
+     * @throws CoreException from nested call
+     * @throws IOException from nested call
+     */
+    public static void initializeDb(@NotNull Connection conn) throws SQLException, CoreException, IOException {
         boolean isAutoCommit = conn.getAutoCommit();
         if (isAutoCommit) conn.setAutoCommit(false);
         createDssInfoTable(conn);
@@ -43,7 +55,12 @@ public class Init {
         conn.commit();
         if (isAutoCommit) conn.setAutoCommit(true);
     }
-    
+
+    /**
+     * Create/populate the DSS_INFO table
+     * @param conn The JDBC connection
+     * @throws SQLException on SQL error
+     */
     public static void createDssInfoTable(@NotNull Connection conn) throws SQLException {
         String sql =
                 """
@@ -70,6 +87,13 @@ public class Init {
         }
     }
 
+    /**
+     * Create/populate ABSTRACT_PARAMETER table
+     * @param conn The JDBC connection
+     * @throws SQLException on SQL error
+     * @throws IOException on resource IO error
+     * @throws CoreException if resource file not found
+     */
     public static void createAbstractParamTable(@NotNull Connection conn) throws SQLException, IOException, CoreException {
         String sql =
                 """
@@ -100,6 +124,13 @@ public class Init {
         }
     }
 
+    /**
+     * Create/populate UNIT table
+     * @param conn The JDBC connection
+     * @throws SQLException on SQL error
+     * @throws IOException on resource IO error
+     * @throws CoreException if resource file not found
+     */
     public static void createUnitTable(@NotNull Connection conn) throws SQLException, IOException, CoreException {
         String sql =
                 """
@@ -137,6 +168,13 @@ public class Init {
         }
     }
 
+    /**
+     * Create/populate UNIT_ALIAS table
+     * @param conn The JDBC connection
+     * @throws SQLException on SQL error
+     * @throws IOException on resource IO error
+     * @throws CoreException if resource file not found
+     */
     public static void createUnitAliasTable(@NotNull Connection conn) throws SQLException, IOException, CoreException {
         String sql =
                 """
@@ -170,6 +208,13 @@ public class Init {
         }
     }
 
+    /**
+     * Create/populate UNIT_CONVERSION table
+     * @param conn The JDBC connection
+     * @throws SQLException on SQL error
+     * @throws IOException on resource IO error
+     * @throws CoreException if resource file not found
+     */
     public static void createUnitConversionTable(@NotNull Connection conn) throws SQLException, IOException, CoreException {
         String sql =
                 """
@@ -227,6 +272,13 @@ public class Init {
         }
     }
 
+    /**
+     * Create/populate BASE_PARAMETER table
+     * @param conn The JDBC connection
+     * @throws SQLException on SQL error
+     * @throws IOException on resource IO error
+     * @throws CoreException if resource file not found
+     */
     public static void createBaseParameterTable(@NotNull Connection conn) throws SQLException, IOException, CoreException {
         String sqlTable =
                 """
@@ -272,7 +324,14 @@ public class Init {
             }
         }
     }
-    
+
+    /**
+     * Create/populate PARAMETER_TYPE table
+     * @param conn The JDBC connection
+     * @throws SQLException on SQL error
+     * @throws IOException on resource IO error
+     * @throws CoreException if resource file not found
+     */
     public static void createParameterTypeTable(@NotNull Connection conn) throws SQLException, IOException, CoreException {
         String sqlTable =
                 """
@@ -305,6 +364,13 @@ public class Init {
         }
     }
 
+    /**
+     * Create/populate INTERVALtable
+     * @param conn The JDBC connection
+     * @throws SQLException on SQL error
+     * @throws IOException on resource IO error
+     * @throws CoreException if resource file not found
+     */
     public static void createIntervalTable(@NotNull Connection conn) throws SQLException, IOException, CoreException {
         String sqlTable ="""
                         create table interval(
@@ -346,6 +412,13 @@ public class Init {
         }
     }
 
+    /**
+     * Create/populate DURATION table
+     * @param conn The JDBC connection
+     * @throws SQLException on SQL error
+     * @throws IOException on resource IO error
+     * @throws CoreException if resource file not found
+     */
     public static void createDurationTable(@NotNull Connection conn) throws SQLException, IOException, CoreException {
         String sqlTable =
                 """
@@ -381,6 +454,11 @@ public class Init {
         }
     }
 
+    /**
+     * Create/populate PARAMETER table
+     * @param conn The JDBC connection
+     * @throws SQLException on SQL error
+     */
     public static void createParameterTable(@NotNull Connection conn) throws SQLException {
         String sqlTable =
                 """
@@ -400,6 +478,12 @@ public class Init {
         }
     }
 
+
+    /**
+     * Create/populate BASE_LOCATION table
+     * @param conn The JDBC connection
+     * @throws SQLException on SQL error
+     */
     public static void createBaseLocationTable(@NotNull Connection conn) throws SQLException {
         String sqlTable =
                 """
@@ -418,6 +502,11 @@ public class Init {
         }
     }
 
+    /**
+     * Create/populate LOCATION table
+     * @param conn The JDBC connection
+     * @throws SQLException on SQL error
+     */
     public static void createLocationTable(@NotNull Connection conn) throws SQLException {
         String sqlTable =
                 """
@@ -438,6 +527,11 @@ public class Init {
         }
     }
 
+    /**
+     * Create/populate TIME_SERIES (time series specification) table
+     * @param conn The JDBC connection
+     * @throws SQLException on SQL error
+     */
     public static void createTimeSeriesTable(@NotNull Connection conn) throws SQLException {
         String sqlTable =
                 """
@@ -467,6 +561,11 @@ public class Init {
         }
     }
 
+    /**
+     * Create/populate TSV (time series values) table
+     * @param conn The JDBC connection
+     * @throws SQLException on SQL error
+     */
     public static void createTsvTable(@NotNull Connection conn) throws SQLException {
         String sqlTable =
                 """
@@ -483,6 +582,11 @@ public class Init {
         }
     }
 
+    /**
+     * Create/populate TSV_INFO table
+     * @param conn The JDBC connection
+     * @throws SQLException on SQL error
+     */
     public static void createTsvInfoTable(@NotNull Connection conn) throws SQLException {
         String sqlTable =
                 """

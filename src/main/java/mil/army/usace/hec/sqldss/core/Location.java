@@ -1,35 +1,56 @@
 package mil.army.usace.hec.sqldss.core;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 import org.jetbrains.annotations.NotNull;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.Map;
 
+/**
+ * Utility class for working with locations
+ */
 public class Location {
 
+    /**
+     * Prevent class instantiation
+     */
     private Location() {
         throw new AssertionError("Cannot instantiate");
     }
 
+    /**
+     * Retrieve the database location key for a specified location name
+     * @param locationName The location name
+     * @param conn The JDBC connection
+     * @return The location name
+     * @throws SQLException If SQL error
+     */
     public static long getLocationKey(@NotNull String locationName, Connection conn) throws SQLException {
         return getLocationKey(locationName, new String[1], conn);
     }
 
+    /**
+     * Retrieve JSON information for a specified location
+     * @param locationName The location to retrieve the information for
+     * @param conn The JDBC connection
+     * @return The (possibly empty) information in JSON format
+     * @throws SQLException If SQL error
+     */
     public static String getLocationInfo(@NotNull String locationName, Connection conn) throws SQLException {
         String[] info = new String[1];
         getLocationKey(locationName, info, conn);
         return info[0];
     }
 
+
+    /**
+     * Retrieve JSON information for a specified location
+     * @param key The database key for the specified location
+     * @param conn The JDBC connection
+     * @return The (possibly empty) information in JSON format
+     * @throws SQLException If SQL error
+     */
     public static String getLocationInfo(long key, Connection conn) throws SQLException {
         try (PreparedStatement ps = conn.prepareStatement(
                 "select info from location where key = ?"
@@ -42,6 +63,14 @@ public class Location {
         }
     }
 
+    /**
+     * Retrieve the database location key and information for a specified location name
+     * @param locationName The location name
+     * @param info A String array whose first element will receive the (possibly empty) location information in JSON format
+     * @param conn The JDBC connection
+     * @return The location name
+     * @throws SQLException If SQL error
+     */
     public static long getLocationKey(@NotNull String locationName, String @NotNull [] info, Connection conn) throws SQLException {
         String context = "";
         String location;
@@ -105,10 +134,30 @@ public class Location {
         return key;
     }
 
+    /**
+     * Stores a location to the database and returns its database key. If the location already exists, the existing key is returned.
+     * @param locationName The name of the location to store
+     * @param conn The JDBC connection
+     * @return The database key of the location
+     * @throws SQLException If SQL error
+     * @throws CoreException If thrown in {@link #putLocation(String, String, boolean, Connection)}
+     */
     public static long putLocation(String locationName, Connection conn) throws SQLException, CoreException {
         return putLocation(locationName, null, true, conn);
     }
 
+    /**
+     * Stores a location and its information to the database and returns the database key. If the location already exists,
+     * the existing key is returned.
+     * @param locationName The name of the location to store
+     * @param info The location information to store, if any, in JSON format
+     * @param mergeInfo Whether to merge the specified location information with any existing information in the dataabse.
+     *                  If <code>false</code>, the specified location information will overwrite any existing information.
+     * @param conn The JDBC connection
+     * @return The database key of the location
+     * @throws SQLException If SQL error
+     * @throws CoreException If other errors storing location
+     */
     public static long putLocation(String locationName, String info, boolean mergeInfo, Connection conn) throws SQLException, CoreException {
         String context = "";
         String location;
