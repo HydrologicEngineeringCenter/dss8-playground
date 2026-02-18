@@ -22,6 +22,14 @@ public class Constants {
     }
 
     /**
+     * The number of minutes that represents a 1Century interval
+     */
+    public static final int CENTURY_MINUTES = 52560000;
+    /**
+     * The number of minutes that represents a 1Decade interval
+     */
+    public static final int DECADE_MINUTES = 5256000;
+    /**
      * The number of minutes that represents a 1Year interval
      */
     public static final int YEAR_MINUTES = 525600;
@@ -38,6 +46,18 @@ public class Constants {
      */
     public static final int HOUR_MINUTES = 60;
     /**
+     * Value of 5 lowest order bits for a MISSING quality code
+     */
+    public static final int QUALITY_MISSING_VALUE = 5;
+    /**
+     * Value of 5 lowest order bits for a REJECTED quality code
+     */
+    public static final int QUALITY_REJECTED_VALUE = 17;
+    /**
+     * Mask for the SCREENED (lowest order bit) and VALIDITY (4 next lowest order bite) portions of a quality code
+     */
+    public static final int QUALITY_SCREENED_VALIDITY_MASK = 31;
+    /**
      * The SQL to retrieve the retrieve the auto-generated key for the most recent insert operation
      */
     public static final String SQL_SELECT_LAST_INSERT_ROWID = "select last_insert_rowid()";
@@ -45,6 +65,15 @@ public class Constants {
      * The column name of the value retrieved by SQL_SELECT_LAST_INSERT_ROWID
      */
     public static final String LAST_INSERT_ROWID = "last_insert_rowid()";
+    /**
+     * The SQL template for retrieving time series blocks (rows from TSV table)
+     */
+    public static final String SQL_SELECT_TS_BLOCK = """
+        select deleted,
+               data
+          from tsv
+         where time_series = %d
+           and block_start_date = ?""";
     /**
      * The universe of available parameter types
      */

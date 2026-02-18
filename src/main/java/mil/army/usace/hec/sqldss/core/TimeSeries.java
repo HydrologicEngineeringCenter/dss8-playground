@@ -20,31 +20,24 @@ import static mil.army.usace.hec.sqldss.core.Constants.*;
 import static mil.army.usace.hec.sqldss.core.Constants.RECORD_TYPE.ITD;
 import static mil.army.usace.hec.sqldss.core.Constants.RECORD_TYPE.RTD;
 import static mil.army.usace.hec.sqldss.core.EncodedDateTime.changeTimeZone;
-//import static mil.army.usace.hec.sqldss.core.Constants.DATA_TYPE.ITS;
-//import static mil.army.usace.hec.sqldss.core.Constants.DATA_TYPE.RTS;
 
+/**
+ * Utility class to store and retrieve time series in SQLDSS
+ */
 public final class TimeSeries {
-    public static final String SQL_SELECT_TS_BLOCK = """
-        select deleted,
-               data
-          from tsv
-         where time_series = %d
-           and block_start_date = ?""";
-    public static final int QUALITY_MISSING_VALUE = 5;
-    public static final int QUALITY_REJECTED_VALUE = 17;
-    public static final int QUALITY_SCREENED_VALIDITY_MASK = 31;
-    public static final int CENTURY_MINUTES = 52560000;
-    public static final int DECADE_MINUTES = 5256000;
-    public static final int YEAR_MINUTES = 525600;
-    public static final int MONTH_MINUTES = 43200;
-    public static final int DAY_MINUTES = 1440;
 
+    /**
+     * Prevent class instantiation
+     */
     private TimeSeries() {
         throw new AssertionError("Cannot instantiate");
     }
 
     static FluentLogger logger = FluentLogger.forEnclosingClass();
 
+    /**
+     * Class to hold BLOB header information from time series records
+     */
     static class TsvRecordHeader {
         RECORD_TYPE redordType;
         int version;
@@ -54,6 +47,9 @@ public final class TimeSeries {
         long[] times = null; // ITS only
     }
 
+    /**
+     * Class to hold information about time series records
+     */
     static class TsvInfo {
         int valueCount;
         long firstTime;
@@ -63,6 +59,9 @@ public final class TimeSeries {
         long lastUpdate;
     }
 
+    /**
+     * Class to hold time series record information (used for merging data)
+     */
     public static class TsvData {
         public long[] times = null;
         public double[] values = null;
@@ -71,8 +70,19 @@ public final class TimeSeries {
         public int count = -1;
     }
 
+    /**
+     * Read the BLOB header information
+     *
+     * @param buf The buffer wrapping the BLOB in little-endian format
+     * @return The header information
+     * @throws CoreException If:
+     *                       <ul>
+     *                           <li>The record type is unknown or unexpected</li>
+     *                           <li>The record type version is unexpected</li>
+     *                       </ul>
+     */
     @NotNull
-    static TsvRecordHeader readHeader(ByteBuffer buf) throws CoreException {
+    static TsvRecordHeader readHeader(@NotNull ByteBuffer buf) throws CoreException {
         int bufPosition;
         byte recordTypeCode;
         TsvRecordHeader header = new TsvRecordHeader();
@@ -109,26 +119,54 @@ public final class TimeSeries {
         return header;
     }
 
+    /**
+     * Retrieve a specified time series for a time window
+     *
+     * @param name        The time series name
+     * @param startTime   The start of the time window
+     * @param endTime     The end of the time window
+     * @param trimMissing Whether to trim blocks of missing values from the beginning and end of the retrieved data
+     * @param sqldss      The SQLDSS object to use
+     * @return The retrieved time series
+     * @throws CoreException            If thrown by {@link #getTimeSeriesValues(String, long, long, boolean, String, SqlDss)}
+     * @throws SQLException             If thrown by {@link #getTimeSeriesValues(String, long, long, boolean, String, SqlDss)}
+     * @throws EncodedDateTimeException If thrown by {@link #getTimeSeriesValues(String, long, long, boolean, String, SqlDss)}
+     * @throws IOException              If thrown by {@link #getTimeSeriesValues(String, long, long, boolean, String, SqlDss)}
+     */
     @NotNull
-    public static TimeSeriesContainer getTimeSeriesValues(String name, long startTime, long endTime, boolean trimMissing,
-                                                          SqlDss sqldss) throws CoreException, SQLException,
+    public static TimeSeriesContainer getTimeSeriesValues(@NotNull String name, long startTime, long endTime, boolean trimMissing,
+                                                          @NotNull SqlDss sqldss) throws CoreException, SQLException,
             EncodedDateTimeException, IOException {
         TimeSeriesContainer tsc;
         String parameter = name.split("\\|", 3)[1];
         String unit = sqldss.getEffectiveRetrieveUnit(parameter);
-        return getTimeSeriesValues(name, startTime, endTime, trimMissing, unit, sqldss.getConnection());
+        return getTimeSeriesValues(name, startTime, endTime, trimMissing, unit, sqldss);
     }
 
+    /**
+     * Retrieve a specified time series for a time window in a specified unit
+     *
+     * @param name        The time series name
+     * @param startTime   The start of the time window
+     * @param endTime     The end of the time window
+     * @param trimMissing Whether to trim blocks of missing values from the beginning and end of the retrieved data
+     * @param unit        The unit to retrieve the time series in
+     * @param sqldss      The SQLDSS object to use
+     * @return The retrieved time series
+     * @throws CoreException            If thrown by {@link #getRegularTimeSeriesValues(String, long, long, String, SqlDss)} or {@link #getIrregularTimeSeriesValues(String, long, long, String, SqlDss)}
+     * @throws SQLException             If thrown by {@link #getRegularTimeSeriesValues(String, long, long, String, SqlDss)} or {@link #getIrregularTimeSeriesValues(String, long, long, String, SqlDss)}
+     * @throws EncodedDateTimeException If thrown by {@link #getRegularTimeSeriesValues(String, long, long, String, SqlDss)} or {@link #getIrregularTimeSeriesValues(String, long, long, String, SqlDss)}
+     * @throws IOException              If thrown by {@link #getRegularTimeSeriesValues(String, long, long, String, SqlDss)} or {@link #getIrregularTimeSeriesValues(String, long, long, String, SqlDss)}
+     */
     @NotNull
     public static TimeSeriesContainer getTimeSeriesValues(String name, long startTime, long endTime, boolean trimMissing,
-                                                          String unit, Connection conn) throws CoreException, SQLException,
+                                                          String unit, SqlDss sqldss) throws CoreException, SQLException,
             EncodedDateTimeException, IOException {
         TimeSeriesContainer tsc;
         if (isIrregular(name)) {
-            throw new CoreException("Cannot yet retrieve irregular time series");
-        }
-        else {
-            tsc = getRegularTimeSeriesValues(name, startTime, endTime, unit, conn);
+            tsc = getIrregularTimeSeriesValues(name, startTime, endTime, unit, sqldss);
+        } else {
+            tsc = getRegularTimeSeriesValues(name, startTime, endTime, unit, sqldss);
         }
         if (trimMissing) {
             trimTimeSeriesContainer(tsc);
@@ -136,26 +174,61 @@ public final class TimeSeries {
         return tsc;
     }
 
-    public static TimeSeriesContainer getAllTimeSeriesValues(String name, boolean trimMissing, SqlDss sqldss) throws CoreException,
+    /**
+     * Retrieve a specified time series for its full time extents
+     *
+     * @param name        The time series name
+     * @param trimMissing Whether to trim blocks of missing values from the beginning and end of the retrieved data
+     * @param sqldss      The SQLDSS object to use
+     * @return The retrieved time series
+     * @throws CoreException            If thrown by {@link #getAllTimeSeriesValues(String, boolean, String, SqlDss)}
+     * @throws SQLException             If thrown by {@link #getAllTimeSeriesValues(String, boolean, String, SqlDss)}
+     * @throws EncodedDateTimeException If thrown by {@link #getAllTimeSeriesValues(String, boolean, String, SqlDss)}
+     * @throws IOException              If thrown by {@link #getAllTimeSeriesValues(String, boolean, String, SqlDss)}
+     */
+    public static @NotNull TimeSeriesContainer getAllTimeSeriesValues(@NotNull String name, boolean trimMissing, @NotNull SqlDss sqldss) throws CoreException,
             SQLException, EncodedDateTimeException, IOException {
         TimeSeriesContainer tsc;
         String parameter = name.split("\\|", 3)[1];
         String unit = sqldss.getEffectiveRetrieveUnit(parameter);
-        return getAllTimeSeriesValues(name, trimMissing, unit, sqldss.getConnection());
+        return getAllTimeSeriesValues(name, trimMissing, unit, sqldss);
     }
 
+    /**
+     * Retrieve a specified time series for its full time extents in a specified unit
+     *
+     * @param name        The time series name
+     * @param trimMissing Whether to trim blocks of missing values from the beginning and end of the retrieved data
+     * @param unit        The unit to retrieve the time series in
+     * @param sqldss      The SQLDSS object to use
+     * @return The retrieved time series
+     * @throws CoreException            If time series has no data or thrown by {@link #getTimeSeriesExtents(String, Long[], Connection)} or {@link #getTimeSeriesValues(String, long, long, boolean, String, SqlDss)}
+     * @throws SQLException             If thrown by {@link #getTimeSeriesExtents(String, Long[], Connection)} or {@link #getTimeSeriesValues(String, long, long, boolean, String, SqlDss)}
+     * @throws EncodedDateTimeException If thrown by {@link #getTimeSeriesExtents(String, Long[], Connection)} or {@link #getTimeSeriesValues(String, long, long, boolean, String, SqlDss)}
+     * @throws IOException              If thrown by {@link #getTimeSeriesExtents(String, Long[], Connection)} or {@link #getTimeSeriesValues(String, long, long, boolean, String, SqlDss)}
+     */
     @NotNull
-    public static TimeSeriesContainer getAllTimeSeriesValues(String name, boolean trimMissing, String unit, Connection conn) throws CoreException,
+    public static TimeSeriesContainer getAllTimeSeriesValues(String name, boolean trimMissing, String unit, @NotNull SqlDss sqldss) throws CoreException,
             SQLException, EncodedDateTimeException, IOException {
         TimeSeriesContainer tsc;
         Long[] extents = new Long[2];
-        getTimeSeriesExtents(name, extents, conn);
+        getTimeSeriesExtents(name, extents, sqldss.getConnection());
         if (extents[0] == null) {
             throw new CoreException("No data for time series");
         }
-        return getTimeSeriesValues(name, extents[0], extents[1], true, unit, conn);
+        return getTimeSeriesValues(name, extents[0], extents[1], true, unit, sqldss);
     }
 
+    /**
+     * Retrieve the first and last block start dates and the interval name for a time series
+     *
+     * @param key          The database key for the time series
+     * @param blockExtents An array of at least two to hold the block start dates
+     * @param intervalName An arrya of at least one to hold the interval name
+     * @param conn         The JDBC connection
+     * @throws SQLException  If SQL error
+     * @throws CoreException If arrays are null or too small, or unexpected error getting last block start
+     */
     static void getFirstLastBlockAndInterval(long key, Long[] blockExtents, String[] intervalName, Connection conn) throws SQLException, CoreException {
         if (blockExtents == null || blockExtents.length < 2) {
             throw new CoreException("Parameter 'blockExtents' must be of length 2");
@@ -181,6 +254,14 @@ public final class TimeSeries {
         }
     }
 
+    /**
+     * Retrieve the last value time from a record header
+     *
+     * @param header          The (regular or irregular) time series record header
+     * @param intervalMinutes The interval minutes of the time series interval (necessary for regular time series)
+     * @return The last value time in the header
+     * @throws EncodedDateTimeException If thrown by {@link EncodedDateTime#incrementEncodedDateTime(long, int, int)}
+     */
     static long getLastTimeFromHeader(@NotNull TsvRecordHeader header, int intervalMinutes) throws EncodedDateTimeException {
         if (header.times == null) {
             // RTS
@@ -188,20 +269,33 @@ public final class TimeSeries {
                     header.firstTime,
                     header.valueCount * intervalMinutes - 1,
                     1);
-        }
-        else {
+        } else {
             // ITS
             if (header.times.length > 1) {
                 return header.times[header.times.length - 1] - 1;
-            }
-            else {
+            } else {
                 return header.firstTime;
             }
         }
     }
 
+    /**
+     * Retrieve the time extents for a time series
+     *
+     * @param name    The time series name to retrieve the extents for
+     * @param extents An array of length at least two to hold the extents
+     * @param conn    The JDBC connection
+     * @throws CoreException            If:
+     *                                  <ul>
+     *                                      <li><code>extents</code> is null or too small</li>
+     *                                      <li>time series <code>name</code> is not found</li>
+     *                                      <li>thrown by {@link #getTimeSeriesSpecKey(String, Connection)} or {@link #getFirstLastBlockAndInterval(long, Long[], String[], Connection)}</li>
+     *                                  </ul>
+     * @throws SQLException             If SQL error
+     * @throws EncodedDateTimeException If thrown by {@link #getLastTimeFromHeader(TsvRecordHeader, int)}
+     */
     public static void getTimeSeriesExtents(String name, Long[] extents, Connection conn) throws CoreException,
-            SQLException, EncodedDateTimeException, IOException {
+            SQLException, EncodedDateTimeException {
         if (extents == null || extents.length < 2) {
             throw new CoreException("Parameter 'extents' must be of length 2 or more");
         }
@@ -229,18 +323,67 @@ public final class TimeSeries {
                 int intervalMinutes = Interval.getIntervalMinutes(intervalNameArr[0]);
                 if (i == 0) {
                     extents[0] = header.firstTime;
-                }
-                else {
+                } else {
                     extents[1] = getLastTimeFromHeader(header, intervalMinutes);
                 }
             }
         }
     }
 
+
+    /**
+     * Retrieves an irregular time series for a time window and in a specified unit
+     *
+     * @param name      The time series to retrieve
+     * @param startTime The start of the time window
+     * @param endTime   The end of the time window
+     * @param unit      The unit to retrieve the values in
+     * @param sqldss    The SQLDSS object
+     * @return The irregular time series
+     * @throws CoreException            If:
+     *                                  <ul>
+     *                                      <li>time series <code>name</code> is not found</li>
+     *                                      <li>time series <code>name</code> is deleted</li>
+     *                                  </ul>
+     * @throws SQLException             If SQL error
+     * @throws EncodedDateTimeException In thrown by EncodedDateTime method
+     */
+    @NotNull
+    static TimeSeriesContainer getIrregularTimeSeriesValues(@NotNull String name, long startTime, long endTime,
+                                                            String unit, @NotNull SqlDss sqldss) throws CoreException, SQLException,
+            EncodedDateTimeException, IOException {
+        throw new CoreException("Cannot yet retrieve irregular time series");
+    }
+
+    /**
+     * Retrieves a regular time series for a time window and in a specified unit
+     *
+     * @param name      The time series to retrieve
+     * @param startTime The start of the time window
+     * @param endTime   The end of the time window
+     * @param unit      The unit to retrieve the values in
+     * @param sqldss    The SQLDSS object
+     * @return The regular time series
+     * @throws CoreException            If:
+     *                                  <ul>
+     *                                      <li>time series <code>name</code> is not found</li>
+     *                                      <li>time series <code>name</code> is deleted</li>
+     *                                      <li>there is a problem with the interval offset for time series <code>name</code>
+     *                                      <ul>
+     *                                          <li>the time series interval offset is not set or is invalid</li>
+     *                                          <li>time computed interval offset in one or more records differs from the time series interval offset</li>
+     *                                      </ul>
+     *                                      </li>
+     *                                      <li>the record type or record type version of one or more records is unexpected</li>
+     *                                  </ul>
+     * @throws SQLException             If SQL error
+     * @throws EncodedDateTimeException In thrown by EncodedDateTime method
+     */
     @NotNull
     static TimeSeriesContainer getRegularTimeSeriesValues(@NotNull String name, long startTime, long endTime,
-                                                          String unit, Connection conn) throws CoreException, SQLException,
-            EncodedDateTimeException, IOException {
+                                                          String unit, @NotNull SqlDss sqldss) throws CoreException, SQLException,
+            EncodedDateTimeException {
+        Connection conn = sqldss.getConnection();
         HecTime startHecTime = EncodedDateTime.toHecTime(startTime);
         HecTime endHecTime = EncodedDateTime.toHecTime(endTime);
         TimeSeriesContainer tsc = new TimeSeriesContainer();
@@ -350,8 +493,7 @@ public final class TimeSeries {
                 int lastValueOffset = -1;
                 if (startTime <= encodedFirstTime) {
                     firstValueOffset = 0;
-                }
-                else {
+                } else {
                     firstValueOffset = EncodedDateTime.intervalsBetween(
                             encodedFirstTime,
                             startTime,
@@ -359,8 +501,7 @@ public final class TimeSeries {
                 }
                 if (endTime >= encodedLastTime) {
                     lastValueOffset = blockValueCount - 1;
-                }
-                else {
+                } else {
                     lastValueOffset = blockValueCount - EncodedDateTime.intervalsBetween(
                             endTime,
                             encodedLastTime,
@@ -377,16 +518,14 @@ public final class TimeSeries {
                         timeArrays[i][j] = minutes;
                         minutes += intervalMinutes;
                     }
-                }
-                else {
+                } else {
                     for (int j = 0; j < valueCount; ++j) {
                         timeArrays[i][j] = t.value();
                         t.increment(1, intervalMinutes);
                     }
                 }
                 Arrays.fill(valueArrays[i], UNDEFINED_DOUBLE);
-            }
-            else {
+            } else {
                 // read the record
                 ByteBuffer buf = ByteBuffer.wrap(blob);
                 buf.order(ByteOrder.LITTLE_ENDIAN);
@@ -419,8 +558,7 @@ public final class TimeSeries {
                 int lastValueOffset = -1;
                 if (startTime <= encodedFirstTime) {
                     firstValueOffset = 0;
-                }
-                else {
+                } else {
                     firstValueOffset = EncodedDateTime.intervalsBetween(
                             encodedFirstTime,
                             startTime,
@@ -428,8 +566,7 @@ public final class TimeSeries {
                 }
                 if (endTime >= encodedLastTime) {
                     lastValueOffset = blockValueCount - 1;
-                }
-                else {
+                } else {
                     lastValueOffset = blockValueCount - EncodedDateTime.intervalsBetween(
                             endTime,
                             encodedLastTime,
@@ -476,8 +613,7 @@ public final class TimeSeries {
                         valueArrays[i][j] = values[j];
                         qualityArrays[i][j] = qualities[j];
                     }
-                }
-                else {
+                } else {
                     HecTime t = new HecTime(firstTime);
                     for (int j = 0; j < valueCount; ++j) {
                         timeArrays[i][j] = t.value();
@@ -510,8 +646,7 @@ public final class TimeSeries {
                         values[count] = UNDEFINED_DOUBLE;
                         qualities[count] = 0;
                     }
-                }
-                else {
+                } else {
                     HecTime nextTime = new HecTime();
                     for (nextTime.set(times[count - 1]); nextTime.value() < timeArrays[i][0]; nextTime.increment(1,
                             intervalMinutes), ++count) {
@@ -544,8 +679,7 @@ public final class TimeSeries {
             tsc.times = times;
             tsc.setValues(values);
             tsc.setQuality(qualities);
-        }
-        else {
+        } else {
             tsc.times = Arrays.copyOf(times, count);
             tsc.setValues(Arrays.copyOf(values, count));
             tsc.setQuality(Arrays.copyOf(qualities, count));
@@ -559,38 +693,39 @@ public final class TimeSeries {
         return tsc;
     }
 
-    private static int getIntervalMinutesForIntervalName(Connection conn, long key) throws SQLException {
-        int intervalMinutes;
-        try (PreparedStatement ps = conn.prepareStatement(
-                "select i.minutes         " +
-                        "  from time_series t,    " +
-                        "       interval i        " +
-                        " where t.key = ?         " +
-                        "   and i.key = t.interval"
-        )) {
-            ps.setLong(1, key);
-            try (ResultSet rs = ps.executeQuery()) {
-                rs.next();
-                intervalMinutes = (int) rs.getLong("minutes");
-            }
-        }
-        return intervalMinutes;
-    }
-
-    public static void putTimeSeriesValues(@NotNull TimeSeriesContainer tsc, String storeRule, Connection conn) throws CoreException, SQLException, EncodedDateTimeException, IOException {
+    /**
+     * Store time series to the database using a specified store ruls
+     * @param tsc The time series to store
+     * @param storeRule The store rule to use
+     * @param conn The JDBC connection
+     * @throws CoreException If thrown by {@link Interval#getBlockSizeMinutes },
+     *      {@link #putIrregularTimeSeriesValues(TimeSeriesContainer, IRREGULAR_STORE_RULE, Connection)}, or
+     *      {@link #putRegularTimeSeriesValues(TimeSeriesContainer, REGULAR_STORE_RULE, Connection)}
+     * @throws SQLException If thrown by {@link #putIrregularTimeSeriesValues(TimeSeriesContainer, IRREGULAR_STORE_RULE, Connection)} or
+     *      {@link #putRegularTimeSeriesValues(TimeSeriesContainer, REGULAR_STORE_RULE, Connection)}
+     * @throws EncodedDateTimeException If thrown by {@link #putIrregularTimeSeriesValues(TimeSeriesContainer, IRREGULAR_STORE_RULE, Connection)} or
+     *      {@link #putRegularTimeSeriesValues(TimeSeriesContainer, REGULAR_STORE_RULE, Connection)}
+     */
+    public static void putTimeSeriesValues(@NotNull TimeSeriesContainer tsc, String storeRule, Connection conn) throws CoreException, SQLException, EncodedDateTimeException {
         String name = tsc.fullName;
         String[] parts = name.split("\\|", -1);
         String intervalName = parts[3];
         int intervalMinutes = Interval.getIntervalMinutes(intervalName);
         if (intervalMinutes == 0) {
-            throw new CoreException("Cannot yet store irregular time series");
-        }
-        else {
+            IRREGULAR_STORE_RULE sr = IRREGULAR_STORE_RULE.valueOf(storeRule.toUpperCase());
+            putIrregularTimeSeriesValues(tsc, sr, conn);
+        } else {
             REGULAR_STORE_RULE sr = REGULAR_STORE_RULE.valueOf(storeRule.toUpperCase());
             putRegularTimeSeriesValues(tsc, sr, conn);
         }
     }
 
+    /**
+     * Return whether a time series name represents an irregular time series
+     * @param name The time series name
+     * @return Whether the name represents an irregular time series
+     * @throws CoreException If thrown by {@link Interval#getIntervalMinutes(String)}
+     */
     static boolean isIrregular(@NotNull String name) throws CoreException {
         String[] parts = name.split("\\|", -1);
         String intervalName = parts[3];
@@ -598,6 +733,16 @@ public final class TimeSeries {
         return minutes == 0;
     }
 
+    /**
+     * Populates a {@link TimeSeries.TsvInfo} object
+     * @param blockInfo The TsvInfo object to populate
+     * @param count The value count
+     * @param firstTime The first value time in the record
+     * @param lastTime The last value time in the record
+     * @param values The time series values
+     * @param qualities The time series qualities, if any
+     * @param valueOffset The offset into the values and qualities of the first value for the record
+     */
     static void setBlockInfo(
             @NotNull TsvInfo blockInfo,
             int count,
@@ -623,8 +768,7 @@ public final class TimeSeries {
                     }
                 }
             }
-        }
-        else {
+        } else {
             for (int i = valueOffset; i < valueOffset + count; ++i) {
                 if (values[i] != UNDEFINED_DOUBLE
                         && (qualities[i] & QUALITY_SCREENED_VALIDITY_MASK) != QUALITY_MISSING_VALUE
@@ -641,11 +785,18 @@ public final class TimeSeries {
         blockInfo.lastUpdate = System.currentTimeMillis();
     }
 
+    static void putIrregularTimeSeriesValues(
+            @NotNull TimeSeriesContainer tsc,
+            IRREGULAR_STORE_RULE storeRule,
+            Connection conn
+    ) throws CoreException, SQLException, EncodedDateTimeException {
+        throw new CoreException("Cannot yet store irregular time series");
+    }
     static void putRegularTimeSeriesValues(
             @NotNull TimeSeriesContainer tsc,
             REGULAR_STORE_RULE storeRule,
             Connection conn
-    ) throws CoreException, SQLException, EncodedDateTimeException, IOException {
+    ) throws CoreException, SQLException, EncodedDateTimeException {
         // parse the name
         String[] parts = tsc.fullName.split("\\|", -1);
         String intervalName = parts[3];

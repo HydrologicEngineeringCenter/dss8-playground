@@ -5,6 +5,10 @@ on a foundation of SQLite. In this implementation the internally developed data 
 locations, and access methods) is replaced with the externally maintained and widely used SQLite file format
 and access libraries.
 
+Like its SQLite foundation, SQLDSS enforces no file naming conventions. SQLDSS files are free to - but not required to -
+use the `.dss` file name extension, although this may cause confusion about which files are HEC-DSS v7 and which are
+SQLDSS.
+
 To the extent practical, all data is stored as columns in relational tables and is may be accessed via
 SQL, whether via either programming language-specific library or the `sqlite3` command line utility. However,
 for performance reasons some data is stored in BLOB columns and requires custom packing/unpacking, making

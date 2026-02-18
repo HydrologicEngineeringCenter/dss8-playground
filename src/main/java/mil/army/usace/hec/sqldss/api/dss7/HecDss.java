@@ -136,7 +136,7 @@ public class HecDss implements AutoCloseable {
                     endTime,
                     sqldss.getTrimMissing(),
                     unit,
-                    sqldss.getConnection()
+                    sqldss
             );
             return tsc;
         }
@@ -189,7 +189,7 @@ public class HecDss implements AutoCloseable {
                     EncodedDateTime.encodeDateTime(endHecTime),
                     sqldss.getTrimMissing(),
                     unit,
-                    sqldss.getConnection()
+                    sqldss
             );
             return tsc;
         }
@@ -221,7 +221,7 @@ public class HecDss implements AutoCloseable {
                         ApiUtil.toCoreName(pathname),
                         sqldss.getTrimMissing(),
                         unit,
-                        sqldss.getConnection());
+                        sqldss);
                 ApiUtil.updateTscToApi(tsc);
                 return tsc;
             }
@@ -248,8 +248,8 @@ public class HecDss implements AutoCloseable {
             TimeSeriesContainer tsc2 = (TimeSeriesContainer) (((TimeSeriesContainer) dataContainer).clone());
             ApiUtil.updateTscToCore(tsc2);
             String storeRule = tsc2.getTimeIntervalSeconds() == 0 ?
-                               sqldss.getIrregularStoreRuleValue().name() :
-                               sqldss.getRegularStoreRuleValue().name();
+                               sqldss.getIrregularStoreRule().name() :
+                               sqldss.getRegularStoreRule().name();
 
             putTimeSeriesValues(tsc2, storeRule, sqldss.getConnection());
         }
@@ -296,7 +296,7 @@ public class HecDss implements AutoCloseable {
         // noop
     }
 
-    public void done() throws CoreException {
+    public void done() throws CoreException, SQLException {
         sqldss.close();
     }
 
@@ -323,11 +323,11 @@ public class HecDss implements AutoCloseable {
     }
 
     public int getRegularStoreMethod() {
-        return sqldss.getRegularStoreRule();
+        return sqldss.getRegularStoreRuleValue();
     }
 
     public int getIrregularStoreMethod() {
-        return sqldss.getIrregularStoreRule();
+        return sqldss.getIrregularStoreRuleValue();
     }
 
     public int recordsUpdated(long startTime, List<String> pathnames, List<Long> updateTimes,
@@ -521,7 +521,7 @@ public class HecDss implements AutoCloseable {
     }
 
     @Override
-    public void close() throws CoreException {
+    public void close() throws CoreException, SQLException {
         try {
             sqldss.commit();
         }
