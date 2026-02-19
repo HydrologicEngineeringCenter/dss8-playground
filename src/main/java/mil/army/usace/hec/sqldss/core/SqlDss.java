@@ -1,5 +1,6 @@
 package mil.army.usace.hec.sqldss.core;
 
+import hec.io.TimeSeriesContainer;
 import mil.army.usace.hec.sqldss.core.init.Init;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -490,5 +491,137 @@ public class SqlDss implements AutoCloseable {
                 conn = null;
             }
         }
+    }
+
+    /**
+     * Retrieve a time series from the database
+     * @param name The SQLDSS time series name
+     * @param startTime The start of the time window. If null, the start of the default time window is used
+     * @param endTime The end of the time window. If null, the end of the default time window is used
+     * @param unit The unit to retrieve the values in. If null, the effective retrieval unit for the parameter is used
+     * @param trimMissing Whether to blocks of trim consecutive missing values from the start and end of the retrieved data.
+     *                    If null, the value of {@link #getTrimMissing()} is used
+     * @return The time series
+     * @throws SqlDssException If thrown by {@link TimeSeries#retrieveTimeSeriesValues(String, long, long, boolean, String, SqlDss)}
+     * @throws SQLException If thrown by {@link TimeSeries#retrieveTimeSeriesValues(String, long, long, boolean, String, SqlDss)}
+     * @throws EncodedDateTimeException If thrown by {@link TimeSeries#retrieveTimeSeriesValues(String, long, long, boolean, String, SqlDss)}
+     * @throws IOException If thrown by {@link TimeSeries#retrieveTimeSeriesValues(String, long, long, boolean, String, SqlDss)}
+     */
+    public TimeSeriesContainer retrieveTimeSeries(
+            @NotNull String name,
+            Long startTime,
+            Long endTime,
+            String unit,
+            Boolean trimMissing) throws SqlDssException, SQLException, EncodedDateTimeException, IOException {
+
+        return TimeSeries.retrieveTimeSeriesValues(
+                name,
+                startTime == null ? getStartTime() : startTime,
+                endTime == null ? getEndTime() : endTime,
+                trimMissing == null ? getTrimMissing() : trimMissing,
+                unit == null ? getEffectiveRetrieveUnit(name.split("\\|", -1)[1]) : unit,
+                this);
+    }
+
+    /**
+     * Retrieve all values for a time series from the database
+     * @param name The SQLDSS time series name
+     * @param unit The unit to retrieve the values in. If null, the effective retrieval unit for the parameter is used
+     * @param trimMissing Whether to blocks of trim consecutive missing values from the start and end of the retrieved data.
+     *                    If null, the value of {@link #getTrimMissing()} is used
+     * @return The time series
+     * @throws SqlDssException If thrown by {@link TimeSeries#retrieveTimeSeriesValues(String, long, long, boolean, String, SqlDss)}
+     * @throws SQLException If thrown by {@link TimeSeries#retrieveTimeSeriesValues(String, long, long, boolean, String, SqlDss)}
+     * @throws EncodedDateTimeException If thrown by {@link TimeSeries#retrieveTimeSeriesValues(String, long, long, boolean, String, SqlDss)}
+     * @throws IOException If thrown by {@link TimeSeries#retrieveTimeSeriesValues(String, long, long, boolean, String, SqlDss)}
+     */
+    public TimeSeriesContainer retrieveTimeSeries(
+            @NotNull String name,
+            String unit,
+            Boolean trimMissing) throws SqlDssException, SQLException, EncodedDateTimeException, IOException {
+
+        return TimeSeries.retrieveAllTimeSeriesValues(
+                name,
+                trimMissing == null ? getTrimMissing() : trimMissing,
+                unit == null ? getEffectiveRetrieveUnit(name.split("\\|", -1)[1]) : unit,
+                this);
+    }
+
+    /**
+     * Store a time series to the database
+     * @param tsc The time series to store
+     * @param storeRule The store rule to use
+     * @throws SqlDssException If thrown by {@link TimeSeries#storeTimeSeriesValues(TimeSeriesContainer, String, SqlDss)}
+     * @throws SQLException If thrown by {@link TimeSeries#storeTimeSeriesValues(TimeSeriesContainer, String, SqlDss)}
+     * @throws EncodedDateTimeException If thrown by {@link TimeSeries#storeTimeSeriesValues(TimeSeriesContainer, String, SqlDss)}
+     */
+    public void storeTimeSeries(TimeSeriesContainer tsc, String storeRule) throws SqlDssException, SQLException,
+            EncodedDateTimeException {
+
+        TimeSeries.storeTimeSeriesValues(tsc, storeRule, this);
+    }
+
+    /**
+     * Generates a catalog of time series in the database that have values
+     * @param nameRegex A regular expression of the time series names to match. May be null to match every name
+     * @param condensed Whether to generate a condensed catalog
+     *                  <dl>
+     *                      <dt>Condensed Catalog</dt>
+     *                      <dd>Each time series record whose name matches is included, with the (encoded) block start
+     *                          date of each record appended to the time series name, delimited by a pipe (<code>'|'</code>)
+     *                          character<br>
+     *                          <pre>
+     *                              SWT:Olive|Flow|INST-VAL|1Hour|0|Obs|20250601
+     *                              SWT:Olive|Flow|INST-VAL|1Hour|0|Obs|20250701
+     *                          </pre>
+     *                      </dd>
+     *                      <dt>Non-condensed Catalog</dt>
+     *                      <dd>Each time series name that matches and that has data is included once, with its first
+     *                          and last value time appended to the name, delimited by a pipe (<code>'|'</code>) character
+     *                          <pre>
+     *                              SWT:Olive|Flow|INST-VAL|1Hour|0|Obs|20250612130000 - 20260705080000
+     *                          </pre>
+     *                      </dd>
+     *                  </dl>
+     * @param flags A (possibly null or empty) string containing any permutation of the following:
+     *              <dl>
+     *                  <dt>N</dt>
+     *                  <dd>Include non-deleted records</dd>
+     *                  <dt>D</dt>
+     *                  <dd>Include deleted records</dd>
+     *              </dl>
+     *              If null or empty, the effect is the same as "N" (only non-deleted records are cataloged)
+     * @return An array of time series catalog names
+     * @throws SqlDssException If <code>flags</code> is invalid
+     * @throws SQLException If SQL error
+     */
+    public String @NotNull [] catalogTimeSeries(String nameRegex, boolean condensed, String flags) throws SqlDssException,
+            SQLException {
+
+        return TimeSeries.catalogTimeSeries(nameRegex, condensed, flags, this);
+    }
+
+    /**
+     * Mark an array of time series records as deleted
+     * @param recordSpecs The time series records to delete (uncondensed catalog names for each time series record)
+     * @throws SqlDssException If thrown by {@link TimeSeries#deleteTimeSeriesRecords(String[], SqlDss)}
+     * @throws SQLException If SQL error
+     */
+    public void deleteTimeSeriesRecords(String[] recordSpecs)
+            throws SqlDssException, SQLException {
+
+        TimeSeries.deleteTimeSeriesRecords(recordSpecs, this);
+    }
+
+    /**
+     * Mark an array of time series records as not deleted
+     * @param recordSpecs The time series records to delete (uncondensed catalog names for each time series record)
+     * @throws SqlDssException If thrown by {@link TimeSeries#undeleteTimeSeriesRecords(String[], SqlDss)}
+     * @throws SQLException If SQL error
+     */
+    public void undeleteTimeSeriesRecords(String[] recordSpecs)
+            throws SqlDssException, SQLException {
+
+        TimeSeries.undeleteTimeSeriesRecords(recordSpecs, this);
     }
 }

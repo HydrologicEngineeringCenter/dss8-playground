@@ -128,7 +128,7 @@ public final class TimeSeries {
      * @param trimMissing Whether to trim blocks of missing values from the beginning and end of the retrieved data
      * @param sqldss      The SQLDSS object to use
      * @return The retrieved time series
-     * @throws SqlDssException            If thrown by {@link #retrieveTimeSeriesValues(String, long, long, boolean, String, SqlDss)}
+     * @throws SqlDssException          If thrown by {@link #retrieveTimeSeriesValues(String, long, long, boolean, String, SqlDss)}
      * @throws SQLException             If thrown by {@link #retrieveTimeSeriesValues(String, long, long, boolean, String, SqlDss)}
      * @throws EncodedDateTimeException If thrown by {@link #retrieveTimeSeriesValues(String, long, long, boolean, String, SqlDss)}
      * @throws IOException              If thrown by {@link #retrieveTimeSeriesValues(String, long, long, boolean, String, SqlDss)}
@@ -153,7 +153,7 @@ public final class TimeSeries {
      * @param unit        The unit to retrieve the time series in
      * @param sqldss      The SQLDSS object to use
      * @return The retrieved time series
-     * @throws SqlDssException            If thrown by {@link #retrieveRegularTimeSeriesValues(String, long, long, String, SqlDss)} or {@link #retrieveIrregularTimeSeriesValues(String, long, long, String, SqlDss)}
+     * @throws SqlDssException          If thrown by {@link #retrieveRegularTimeSeriesValues(String, long, long, String, SqlDss)} or {@link #retrieveIrregularTimeSeriesValues(String, long, long, String, SqlDss)}
      * @throws SQLException             If thrown by {@link #retrieveRegularTimeSeriesValues(String, long, long, String, SqlDss)} or {@link #retrieveIrregularTimeSeriesValues(String, long, long, String, SqlDss)}
      * @throws EncodedDateTimeException If thrown by {@link #retrieveRegularTimeSeriesValues(String, long, long, String, SqlDss)} or {@link #retrieveIrregularTimeSeriesValues(String, long, long, String, SqlDss)}
      * @throws IOException              If thrown by {@link #retrieveRegularTimeSeriesValues(String, long, long, String, SqlDss)} or {@link #retrieveIrregularTimeSeriesValues(String, long, long, String, SqlDss)}
@@ -697,7 +697,7 @@ public final class TimeSeries {
      * Store time series to the database using a specified store ruls
      * @param tsc The time series to store
      * @param storeRule The store rule to use
-     * @param conn The JDBC connection
+     * @param sqldss The SqlDss object
      * @throws SqlDssException If thrown by {@link Interval#getBlockSizeMinutes },
      *      {@link #storeIrregularTimeSeriesValues(TimeSeriesContainer, IRREGULAR_STORE_RULE, Connection)}, or
      *      {@link #storeRegularTimeSeriesValues(TimeSeriesContainer, REGULAR_STORE_RULE, Connection)}
@@ -706,17 +706,17 @@ public final class TimeSeries {
      * @throws EncodedDateTimeException If thrown by {@link #storeIrregularTimeSeriesValues(TimeSeriesContainer, IRREGULAR_STORE_RULE, Connection)} or
      *      {@link #storeRegularTimeSeriesValues(TimeSeriesContainer, REGULAR_STORE_RULE, Connection)}
      */
-    public static void storeTimeSeriesValues(@NotNull TimeSeriesContainer tsc, String storeRule, Connection conn) throws SqlDssException, SQLException, EncodedDateTimeException {
+    public static void storeTimeSeriesValues(@NotNull TimeSeriesContainer tsc, String storeRule, SqlDss sqldss) throws SqlDssException, SQLException, EncodedDateTimeException {
         String name = tsc.fullName;
         String[] parts = name.split("\\|", -1);
         String intervalName = parts[3];
         int intervalMinutes = Interval.getIntervalMinutes(intervalName);
         if (intervalMinutes == 0) {
             IRREGULAR_STORE_RULE sr = IRREGULAR_STORE_RULE.valueOf(storeRule.toUpperCase());
-            storeIrregularTimeSeriesValues(tsc, sr, conn);
+            storeIrregularTimeSeriesValues(tsc, sr, sqldss.getConnection());
         } else {
             REGULAR_STORE_RULE sr = REGULAR_STORE_RULE.valueOf(storeRule.toUpperCase());
-            storeRegularTimeSeriesValues(tsc, sr, conn);
+            storeRegularTimeSeriesValues(tsc, sr, sqldss.getConnection());
         }
     }
 
@@ -1468,18 +1468,19 @@ public final class TimeSeries {
      *                  <dd>Include deleted records</dd>
      *              </dl>
      *              If null or empty, the effect is the same as "N" (only non-deleted records are cataloged)
-     * @param conn The JDBC connection
+     * @param sqldss The SqlDss object
      * @return An array of time series catalog names
      * @throws SqlDssException If <code>flags</code> is invalid
      * @throws SQLException If SQL error
      */
-    public static String @NotNull [] catalogTimeSeries(String nameRegex, boolean condensed, String flags, Connection conn) throws SqlDssException, SQLException {
+    public static String @NotNull [] catalogTimeSeries(String nameRegex, boolean condensed, String flags, SqlDss sqldss) throws SqlDssException, SQLException {
         flags = flags == null || flags.isEmpty() ? "N" : flags.toUpperCase();
         if (!flags.matches("[DN]*")) {
             throw new SqlDssException("Invalid flags string: "+flags);
         }
         String sql = getTsCatalogSql(flags);
         List<String> names = new ArrayList<>();
+        Connection conn = sqldss.getConnection();
         try (PreparedStatement ps = conn.prepareStatement(sql)) {
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {
@@ -1736,47 +1737,47 @@ public final class TimeSeries {
     /**
      * Mark a single time series record as deleted
      * @param recordSpec The time series record to delete (uncondensed catalog name for time series record)
-     * @param conn The JDBC connection
+     * @param sqldss The SqlDss object
      * @throws SqlDssException If thrown by {@link #deleteOrUndeleteTimeSeriesRecord(String, boolean, Connection)}
      * @throws SQLException If SQL error
      */
-    public static void deleteTimeSeriesRecord(String recordSpec, Connection conn) throws SqlDssException, SQLException {
-        deleteOrUndeleteTimeSeriesRecord(recordSpec, true, conn);
+    public static void deleteTimeSeriesRecord(String recordSpec, @NotNull SqlDss sqldss) throws SqlDssException, SQLException {
+        deleteOrUndeleteTimeSeriesRecord(recordSpec, true, sqldss.getConnection());
     }
 
     /**
      * Mark a multiple time series records as deleted
      * @param recordSpecs The time series records to delete (uncondensed catalog names for each time series record)
-     * @param conn The JDBC connection
+     * @param sqldss The SqlDss object
      * @throws SqlDssException If thrown by {@link #deleteOrUndeleteTimeSeriesRecords(String[], boolean, Connection)}
      * @throws SQLException If SQL error
      */
-    public static void deleteTimeSeriesRecords(String[] recordSpecs, Connection conn)
+    public static void deleteTimeSeriesRecords(String[] recordSpecs, @NotNull SqlDss sqldss)
             throws SqlDssException, SQLException {
-        deleteOrUndeleteTimeSeriesRecords(recordSpecs, true, conn);
+        deleteOrUndeleteTimeSeriesRecords(recordSpecs, true, sqldss.getConnection());
     }
 
     /**
      * Mark a single time series record as undeleted
      * @param recordSpec The time series record to delete (uncondensed catalog name for time series record)
-     * @param conn The JDBC connection
+     * @param sqldss The SqlDss object
      * @throws SqlDssException If thrown by {@link #deleteOrUndeleteTimeSeriesRecord(String, boolean, Connection)}
      * @throws SQLException If SQL error
      */
-    public static void undeleteTimeSeriesRecord(String recordSpec, Connection conn) throws SqlDssException, SQLException {
-        deleteOrUndeleteTimeSeriesRecord(recordSpec, false, conn);
+    public static void undeleteTimeSeriesRecord(String recordSpec, @NotNull SqlDss sqldss) throws SqlDssException, SQLException {
+        deleteOrUndeleteTimeSeriesRecord(recordSpec, false, sqldss.getConnection());
     }
 
     /**
      * Mark a multiple time series records as undeleted
      * @param recordSpecs The time series records to delete (uncondensed catalog names for each time series record)
-     * @param conn The JDBC connection
+     * @param sqldss The SqlDss object
      * @throws SqlDssException If thrown by {@link #deleteOrUndeleteTimeSeriesRecords(String[], boolean, Connection)}
      * @throws SQLException If SQL error
      */
-    public static void undeleteTimeSeriesRecords(String[] recordSpecs, Connection conn)
+    public static void undeleteTimeSeriesRecords(String[] recordSpecs, @NotNull SqlDss sqldss)
             throws SqlDssException, SQLException {
-        deleteOrUndeleteTimeSeriesRecords(recordSpecs, false, conn);
+        deleteOrUndeleteTimeSeriesRecords(recordSpecs, false, sqldss.getConnection());
     }
 
     /**

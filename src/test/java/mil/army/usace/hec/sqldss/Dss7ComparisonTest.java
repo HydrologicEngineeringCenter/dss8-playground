@@ -149,7 +149,7 @@ public class Dss7ComparisonTest {
         startTime = startTimer();
         targetDss8.setTrimMissing(true);
         for (int i = 0; i < tscs.length; ++i) {
-            TimeSeriesContainer tsc = (TimeSeriesContainer) targetDss8.getInUnit(tscs[i].fullName, tscs[i].units);
+            TimeSeriesContainer tsc = (TimeSeriesContainer) targetDss8.get(tscs[i].fullName, tscs[i].units);
             assertArrayEquals(tscs[i].times, tsc.times);
             assertArrayEquals(tscs[i].values, tsc.values, 1e-5);
         }

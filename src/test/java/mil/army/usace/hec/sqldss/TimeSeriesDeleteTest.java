@@ -77,7 +77,7 @@ public class TimeSeriesDeleteTest {
             // store all records //
             //-------------------//
             for (TimeSeriesContainer tsc : tscs) {
-                TimeSeries.storeTimeSeriesValues(tsc, String.valueOf(Constants.REGULAR_STORE_RULE.REPLACE_ALL), db.getConnection());
+                TimeSeries.storeTimeSeriesValues(tsc, String.valueOf(Constants.REGULAR_STORE_RULE.REPLACE_ALL), db);
             }
             String[] fullCatalog = new String[] {
                     "TestLoc|Code|INST-VAL|1Hour|0|Version 0|20250101",
@@ -129,16 +129,16 @@ public class TimeSeriesDeleteTest {
             // Full catalog tests //
             //====================//
             // normal (non-deleted) catalog
-            String[] catalog = TimeSeries.catalogTimeSeries(null, false, "N", db.getConnection());
+            String[] catalog = db.catalogTimeSeries(null, false, "N");
             assertEquals(fullCatalog.length, catalog.length);
             for (int i = 0; i < fullCatalog.length; ++i) {
                 assertTrue(fullCatalog[i].equals(catalog[i]));
             }
             // catalog deleted records
-            catalog = TimeSeries.catalogTimeSeries(null, false, "D", db.getConnection());
+            catalog = db.catalogTimeSeries(null, false, "D");
             assertEquals(0, catalog.length);
             // catalog all records
-            catalog = TimeSeries.catalogTimeSeries(null, false, "ND", db.getConnection());
+            catalog = db.catalogTimeSeries(null, false, "ND");
             assertEquals(fullCatalog.length, catalog.length);
             for (int i = 0; i < fullCatalog.length; ++i) {
                 assertTrue(fullCatalog[i].equals(catalog[i]));
@@ -146,21 +146,21 @@ public class TimeSeriesDeleteTest {
             //---------------------//
             // delete some records //
             //---------------------//
-            TimeSeries.deleteTimeSeriesRecords(deletedCatalog, db.getConnection());
+            db.deleteTimeSeriesRecords(deletedCatalog);
             // normal (non-deleted) catalog
-            catalog = TimeSeries.catalogTimeSeries(null, false, "N", db.getConnection());
+            catalog = db.catalogTimeSeries(null, false, "N");
             assertEquals(nonDeletedCatalog.length, catalog.length);
             for (int i = 0; i < nonDeletedCatalog.length; ++i) {
                 assertTrue(nonDeletedCatalog[i].equals(catalog[i]));
             }
             // catalog deleted records
-            catalog = TimeSeries.catalogTimeSeries(null, false, "D", db.getConnection());
+            catalog = db.catalogTimeSeries(null, false, "D");
             assertEquals(deletedCatalog.length, catalog.length);
             for (int i = 0; i < deletedCatalog.length; ++i) {
                 assertTrue(deletedCatalog[i].equals(catalog[i]));
             }
             // catalog all records
-            catalog = TimeSeries.catalogTimeSeries(null, false, "ND", db.getConnection());
+            catalog = db.catalogTimeSeries(null, false, "ND");
             assertEquals(fullCatalog.length, catalog.length);
             for (int i = 0; i < fullCatalog.length; ++i) {
                 assertTrue(fullCatalog[i].equals(catalog[i]));
@@ -168,18 +168,18 @@ public class TimeSeriesDeleteTest {
             //-----------------------//
             // undelete the records //
             //-----------------------//
-            TimeSeries.undeleteTimeSeriesRecords(deletedCatalog, db.getConnection());
+            db.undeleteTimeSeriesRecords(deletedCatalog);
             // normal (non-deleted) catalog
-            catalog = TimeSeries.catalogTimeSeries(null, false, "N", db.getConnection());
+            catalog = db.catalogTimeSeries(null, false, "N");
             assertEquals(fullCatalog.length, catalog.length);
             for (int i = 0; i < fullCatalog.length; ++i) {
                 assertTrue(fullCatalog[i].equals(catalog[i]));
             }
             // catalog deleted records
-            catalog = TimeSeries.catalogTimeSeries(null, false, "D", db.getConnection());
+            catalog = db.catalogTimeSeries(null, false, "D");
             assertEquals(0, catalog.length);
             // catalog all records
-            catalog = TimeSeries.catalogTimeSeries(null, false, "ND", db.getConnection());
+            catalog = db.catalogTimeSeries(null, false, "ND");
             assertEquals(fullCatalog.length, catalog.length);
             for (int i = 0; i < fullCatalog.length; ++i) {
                 assertTrue(fullCatalog[i].equals(catalog[i]));
@@ -187,7 +187,7 @@ public class TimeSeriesDeleteTest {
             //---------------------//
             // filter record names //
             //---------------------//
-            catalog = TimeSeries.catalogTimeSeries(".+Version [0-3]", false, "N", db.getConnection());
+            catalog = db.catalogTimeSeries(".+Version [0-3]", false, "N");
             assertEquals(8, catalog.length);
             for (int i = 0; i < 8; ++i) {
                 assertTrue(fullCatalog[i].equals(catalog[i]));
@@ -238,16 +238,16 @@ public class TimeSeriesDeleteTest {
                     "TestLoc|Code|INST-VAL|1Hour|0|Version 9|20251001000000 - 20251031230000"
             };
             // normal (non-deleted) catalog
-            catalog = TimeSeries.catalogTimeSeries(null, true, "N", db.getConnection());
+            catalog = db.catalogTimeSeries(null, true, "N");
             assertEquals(fullCondensedCatalog.length, catalog.length);
             for (int i = 0; i < fullCondensedCatalog.length; ++i) {
                 assertTrue(fullCondensedCatalog[i].equals(catalog[i]));
             }
             // catalog deleted records
-            catalog = TimeSeries.catalogTimeSeries(null, true, "D", db.getConnection());
+            catalog = db.catalogTimeSeries(null, true, "D");
             assertEquals(0, catalog.length);
             // catalog all records
-            catalog = TimeSeries.catalogTimeSeries(null, true, "ND", db.getConnection());
+            catalog = db.catalogTimeSeries(null, true, "ND");
             assertEquals(fullCondensedCatalog.length, catalog.length);
             for (int i = 0; i < fullCondensedCatalog.length; ++i) {
                 assertTrue(fullCondensedCatalog[i].equals(catalog[i]));
@@ -255,21 +255,21 @@ public class TimeSeriesDeleteTest {
             //---------------------//
             // delete some records //
             //---------------------//
-            TimeSeries.deleteTimeSeriesRecords(deletedRecords, db.getConnection());
+            db.deleteTimeSeriesRecords(deletedRecords);
             // normal (non-deleted) catalog
-            catalog = TimeSeries.catalogTimeSeries(null, true, "N", db.getConnection());
+            catalog = db.catalogTimeSeries(null, true, "N");
             assertEquals(nonDeletedCondensedCatalog.length, catalog.length);
             for (int i = 0; i < nonDeletedCondensedCatalog.length; ++i) {
                 assertTrue(nonDeletedCondensedCatalog[i].equals(catalog[i]));
             }
             // catalog deleted records
-            catalog = TimeSeries.catalogTimeSeries(null, true, "D", db.getConnection());
+            catalog = db.catalogTimeSeries(null, true, "D");
             assertEquals(deletedCondensedCatalog.length, catalog.length);
             for (int i = 0; i < deletedCondensedCatalog.length; ++i) {
                 assertTrue(deletedCondensedCatalog[i].equals(catalog[i]));
             }
             // catalog all records
-            catalog = TimeSeries.catalogTimeSeries(null, true, "ND", db.getConnection());
+            catalog = db.catalogTimeSeries(null, true, "ND");
             assertEquals(fullCondensedCatalog.length, catalog.length);
             for (int i = 0; i < fullCondensedCatalog.length; ++i) {
                 assertTrue(fullCondensedCatalog[i].equals(catalog[i]));
@@ -277,18 +277,18 @@ public class TimeSeriesDeleteTest {
             //-----------------------//
             // undelete the records //
             //-----------------------//
-            TimeSeries.undeleteTimeSeriesRecords(deletedRecords, db.getConnection());
+            db.undeleteTimeSeriesRecords(deletedRecords);
             // normal (non-deleted) catalog
-            catalog = TimeSeries.catalogTimeSeries(null, true, "N", db.getConnection());
+            catalog = db.catalogTimeSeries(null, true, "N");
             assertEquals(fullCondensedCatalog.length, catalog.length);
             for (int i = 0; i < fullCondensedCatalog.length; ++i) {
                 assertTrue(fullCondensedCatalog[i].equals(catalog[i]));
             }
             // catalog deleted records
-            catalog = TimeSeries.catalogTimeSeries(null, true, "D", db.getConnection());
+            catalog = db.catalogTimeSeries(null, true, "D");
             assertEquals(0, catalog.length);
             // catalog all records
-            catalog = TimeSeries.catalogTimeSeries(null, true, "ND", db.getConnection());
+            catalog = db.catalogTimeSeries(null, true, "ND");
             assertEquals(fullCondensedCatalog.length, catalog.length);
             for (int i = 0; i < fullCondensedCatalog.length; ++i) {
                 assertTrue(fullCondensedCatalog[i].equals(catalog[i]));
@@ -296,7 +296,7 @@ public class TimeSeriesDeleteTest {
             //---------------------//
             // filter record names //
             //---------------------//
-            catalog = TimeSeries.catalogTimeSeries(".+Version [0-3]", true, "N", db.getConnection());
+            catalog = db.catalogTimeSeries(".+Version [0-3]", true, "N");
             assertEquals(4, catalog.length);
             for (int i = 0; i < 4; ++i) {
                 assertTrue(fullCondensedCatalog[i].equals(catalog[i]));

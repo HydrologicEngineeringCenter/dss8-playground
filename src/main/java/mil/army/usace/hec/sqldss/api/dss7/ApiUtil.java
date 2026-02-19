@@ -9,15 +9,30 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.regex.Pattern;
 
+/**
+ * Utility class for HEC-DSS v7 API for SQLDSS
+ */
 public final class ApiUtil {
 
+    /**
+     * Regular expression for interval names
+     */
     static Pattern intervalPattern = Pattern.compile("^(\\d)+(Minute|Hour|Day|Week|Month|Year|Decade)s?(Local)?$",
             Pattern.CASE_INSENSITIVE);
 
+    /**
+     * Prevent class instantiation
+     */
     private ApiUtil() {
         throw new AssertionError("Cannot instantiate");
     }
 
+    /**
+     * Determine whether  a string is a valid HEC-DSS v7 time series pathname
+     * @param apiName The string to test
+     * @return Whether the string is a valid HEC-DSS v7 time series pathname
+     * @throws ApiException
+     */
     public static boolean isTimeSeriesApiName(@NotNull String apiName) throws ApiException {
         String[] parts = apiName.split("/", -1);
         if (parts.length != 8) {
@@ -33,13 +48,26 @@ public final class ApiUtil {
                 && intervalPattern.matcher(interval).matches());
     }
 
+    /**
+     * Generate an SQLDSS name from a TimeSeriesContainer that has an HEC-DSS v7 pathname
+     * @param tsc The TimeSeriesContainer
+     * @return The SQLDSS name
+     * @throws ApiException If <code>tsc.fullName</code> is invalid or not recognized as a specific HEC-DSS v7 record type
+     */
     @NotNull
-    public static String toCoreName(@NotNull TimeSeriesContainer tsc) throws ApiException {
-        return toCoreName(tsc.fullName, tsc.type);
+    public static String toSqlDssName(@NotNull TimeSeriesContainer tsc) throws ApiException {
+        return toSqlDssName(tsc.fullName, tsc.type);
     }
 
+    /**
+     * Generate an SQLDSS name from an HEC-DSS v7 pathname and a parameter type
+     * @param apiName The HEC-DSS v7 pathname
+     * @param parameterType The parameter type
+     * @return The SQLDSS name
+     * @throws ApiException If <code>apiName</code> is invalid or not recognized as a specific HEC-DSS v7 record type
+     */
     @NotNull
-    public static String toCoreName(@NotNull String apiName, String dataType) throws ApiException {
+    public static String toSqlDssName(@NotNull String apiName, String parameterType) throws ApiException {
         String[] parts = apiName.split("/", -1);
         if (parts.length != 8) {
             throw new ApiException("Invalid pathname: " + apiName);
@@ -49,12 +77,12 @@ public final class ApiUtil {
             String location = parts[2];
             String parameter = parts[3];
             String interval = parts[5];
-            String duration = dataType.startsWith("INST-") ? "0" : interval;
+            String duration = parameterType.startsWith("INST-") ? "0" : interval;
             String version = parts[6];
             return context.replace('|', '/') + (context.isEmpty() ? "" : ":") +
                     location.replace('|', '/') + "|" +
                     parameter + "|" +
-                    dataType + "|" +
+                    parameterType + "|" +
                     interval + "|" +
                     duration + "|" +
                     version.replace('|', '/');
@@ -64,16 +92,28 @@ public final class ApiUtil {
         }
     }
 
+    /**
+     * Generate an SQLDSS name from an HEC-DSS v7 pathname, assuming INST-VAL for the parameter type
+     * @param apiName The HEC-DSS v7 pathname
+     * @return The SQLDSS name
+     * @throws ApiException If <code>apiName</code> is invalid or not recognized as a specific HEC-DSS v7 record type
+     */
     @NotNull
-    public static String toCoreName(@NotNull String apiName) throws ApiException {
-        return toCoreName(apiName, "INST-VAL");
+    public static String toSqlDssName(@NotNull String apiName) throws ApiException {
+        return toSqlDssName(apiName, "INST-VAL");
     }
 
+    /**
+     * Generate an HEC-DSS v7 pathname from an SQLDSS name
+     * @param sqlDssName The SQLDSS name
+     * @return The HEC-DSS v7 pathname
+     * @throws ApiException If <code>sqlDssName</code> is not of a recognized record type
+     */
     @NotNull
-    static String toApiName(@NotNull String coreName) throws ApiException {
-        String[] parts = coreName.split("\\|", -1);
+    static String toApiName(@NotNull String sqlDssName) throws ApiException {
+        String[] parts = sqlDssName.split("\\|", -1);
         if (parts.length != 6) {
-            throw new ApiException("Invalid core name: " + coreName);
+            throw new ApiException("Invalid core name: " + sqlDssName);
         }
         String apiName;
         String context = "";
@@ -95,6 +135,12 @@ public final class ApiUtil {
         return apiName;
     }
 
+    /**
+     * Converts a TimeSeriesContainer in-place from SQLDSS to HEC-DSS v7
+     * @param tsc The TimeSeriesContainer
+     * @throws ApiException If <code>tsc.fullName</code> is not a of a valid SQLDSS record type
+     * @throws SqlDssException If thrown by {@link Interval#getIntervalMinutes(String)}
+     */
     static void updateTscToApi(@NotNull TimeSeriesContainer tsc) throws ApiException, SqlDssException {
         String[] parts = tsc.fullName.split("\\|", -1);
         if (parts.length != 6) {
@@ -139,7 +185,13 @@ public final class ApiUtil {
         tsc.interval = Interval.getIntervalMinutes(interval);
     }
 
-    static void updateTscToCore(@NotNull TimeSeriesContainer tsc) throws ApiException, SqlDssException {
+    /**
+     * Converts a TimeSeriesContainer in-place from HEC-DSS v7 to SQLDSS
+     * @param tsc The TimeSeriesContainer
+     * @throws ApiException If <code>tsc.fullName</code> is not a of a valid HEC-DSS v7 record type
+     * @throws SqlDssException If thrown by {@link Interval#getIntervalMinutes(String)}
+     */
+    static void updateTscToSqlDss(@NotNull TimeSeriesContainer tsc) throws ApiException, SqlDssException {
         String[] parts = tsc.fullName.split("/", -1);
         if (parts.length != 8) {
             throw new ApiException("Invalid pathname: " + tsc.fullName);

@@ -96,9 +96,9 @@ public class Unit {
      * Retrieves the unit conversion necessary to convert values for a specified parameter in a specified unit to the
      * database storage unit for the parameter.
      * <dl>
-     *     <dt>><code>function[0]</code> is null or return</dt>
+     *     <dt>><code>function[0]</code> is null on return</dt>
      *     <dd>The conversion to the database storage unit is <code>dbVal = val * factor[0] + offset[0]</code></dd>
-     *     <dt>><code>function[0]</code> is non-null or return</dt>
+     *     <dt>><code>function[0]</code> is non-null on return</dt>
      *     <dd>The conversion is the application of the <code>function[0]</code> with the current value represented by
      *     the token <code>ARG1</code></dd>
      * </dl>
@@ -135,9 +135,9 @@ public class Unit {
      * Retrieves the unit conversion necessary to convert database values for a specified parameter to a specified retrieval
      * unit.
      * <dl>
-     *     <dt>><code>function[0]</code> is null or return</dt>
+     *     <dt>><code>function[0]</code> is null on return</dt>
      *     <dd>The conversion to the database storage unit is <code>val = dbVal * factor[0] + offset[0]</code></dd>
-     *     <dt>><code>function[0]</code> is non-null or return</dt>
+     *     <dt>><code>function[0]</code> is non-null on return</dt>
      *     <dd>The conversion is the application of the <code>function[0]</code> with the database value represented by
      *     the token <code>ARG1</code></dd>
      * </dl>
@@ -173,9 +173,9 @@ public class Unit {
     /**
      * Retrieves a generic unit conversion from the database
      * <dl>
-     *     <dt>><code>function[0]</code> is null or return</dt>
+     *     <dt>><code>function[0]</code> is null on return</dt>
      *     <dd>The conversion to the database storage unit is <code>toUnitVal = fromUnitVal * factor[0] + offset[0]</code></dd>
-     *     <dt>><code>function[0]</code> is non-null or return</dt>
+     *     <dt>><code>function[0]</code> is non-null on return</dt>
      *     <dd>The conversion is the application of the <code>function[0]</code> with the <code>fromUnit</code> value represented by
      *     the token <code>ARG1</code></dd>
      * </dl>
@@ -278,7 +278,7 @@ public class Unit {
      * <dl>
      *     <dt>><code>function</code> is null</dt>
      *     <dd>The conversion to the database storage unit is <code>toUnitVal = value * factor + offset</code></dd>
-     *     <dt>><code>function</code> is non-null or return</dt>
+     *     <dt>><code>function</code> is non-null on return</dt>
      *     <dd>The conversion is the application of the <code>function</code> with the <code>value</code> represented by
      *     the token <code>ARG1</code></dd>
      * </dl>
