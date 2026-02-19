@@ -416,7 +416,7 @@ public final class EncodedDateTime {
     /**
      * Creates an encoded date/time that is a specified number of years after a specified encoded date/time
      * @param encoded The encoded date/time to start with
-     * @param count The number of years after the encoded date/time to compute (before if count < 0)
+     * @param count The number of years after the encoded date/time to compute (before if count &lt; 0)
      * @return The resulting encoded date/time
      * @throws EncodedDateTimeException If thrown by {@link #toValues(long)}
      */
@@ -429,7 +429,7 @@ public final class EncodedDateTime {
     /**
      * Creates an encoded date/time that is a specified number of months after a specified encoded date/time
      * @param encoded The encoded date/time to start with
-     * @param count The number of months after the encoded date/time to compute (before if count < 0)
+     * @param count The number of months after the encoded date/time to compute (before if count &lt; 0)
      * @return The resulting encoded date/time
      * @throws EncodedDateTimeException If thrown by {@link #toValues(long)}
      */
@@ -442,7 +442,7 @@ public final class EncodedDateTime {
     /**
      * Creates an encoded date/time that is a specified number of days after a specified encoded date/time
      * @param encoded The encoded date/time to start with
-     * @param count The number of days after the encoded date/time to compute (before if count < 0)
+     * @param count The number of days after the encoded date/time to compute (before if count &lt; 0)
      * @return The resulting encoded date/time
      * @throws EncodedDateTimeException If thrown by {@link #toValues(long)}
      */
@@ -455,7 +455,7 @@ public final class EncodedDateTime {
     /**
      * Creates an encoded date/time that is a specified number of hours after a specified encoded date/time
      * @param encoded The encoded date/time to start with
-     * @param count The number of hours after the encoded date/time to compute (before if count < 0)
+     * @param count The number of hours after the encoded date/time to compute (before if count &lt; 0)
      * @return The resulting encoded date/time
      * @throws EncodedDateTimeException If thrown by {@link #toValues(long)}
      */
@@ -468,7 +468,7 @@ public final class EncodedDateTime {
     /**
      * Creates an encoded date/time that is a specified number of minutes after a specified encoded date/time
      * @param encoded The encoded date/time to start with
-     * @param count The number of minutes after the encoded date/time to compute (before if count < 0)
+     * @param count The number of minutes after the encoded date/time to compute (before if count &lt; 0)
      * @return The resulting encoded date/time
      * @throws EncodedDateTimeException If thrown by {@link #toValues(long)}
      */
@@ -481,7 +481,7 @@ public final class EncodedDateTime {
     /**
      * Creates an encoded date/time that is a specified number of seconds after a specified encoded date/time
      * @param encoded The encoded date/time to start with
-     * @param count The number of seconds after the encoded date/time to compute (before if count < 0)
+     * @param count The number of seconds after the encoded date/time to compute (before if count &lt; 0)
      * @return The resulting encoded date/time
      * @throws EncodedDateTimeException If thrown by {@link #toValues(long)}
      */

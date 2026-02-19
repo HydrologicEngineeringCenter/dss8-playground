@@ -1463,9 +1463,9 @@ public final class TimeSeries {
      * @param flags A (possibly null or empty) string containing any permutation of the following:
      *              <dl>
      *                  <dt>N</dt>
-     *                  <dl>Include non-deleted records</dl>
+     *                  <dd>Include non-deleted records</dd>
      *                  <dt>D</dt>
-     *                  <dl>Include deleted records</dl>
+     *                  <dd>Include deleted records</dd>
      *              </dl>
      *              If null or empty, the effect is the same as "N" (only non-deleted records are cataloged)
      * @param conn The JDBC connection
