@@ -26,9 +26,9 @@ public class Parameter {
      * @param conn The JDBC connection
      * @return The database key of the parameter
      * @throws SQLException If SQL error
-     * @throws CoreException If thrown by {@link #getBaseParameter(String, Connection)}
+     * @throws SqlDssException If thrown by {@link #getBaseParameter(String, Connection)}
      */
-    static long putParameter(String name, Connection conn) throws SQLException, CoreException {
+    static long putParameter(String name, Connection conn) throws SQLException, SqlDssException {
         long key = getParameterKey(name, conn);
         if (key < 0) {
             String baseParameter = name;
@@ -69,9 +69,9 @@ public class Parameter {
      * @param conn The JDBC connection
      * @return The case-correct base parameter name
      * @throws SQLException If SQL error
-     * @throws CoreException If there is no match for the case-insensitive base parameter name
+     * @throws SqlDssException If there is no match for the case-insensitive base parameter name
      */
-    static @NotNull String getBaseParameter(String name, Connection conn) throws SQLException, CoreException {
+    static @NotNull String getBaseParameter(String name, Connection conn) throws SQLException, SqlDssException {
         try (PreparedStatement ps = conn.prepareStatement(
                 "select name from base_parameter where name = ?"
         )) {
@@ -80,7 +80,7 @@ public class Parameter {
                 rs.next();
                 String actualName = rs.getString("name");
                 if (actualName == null || actualName.isEmpty()) {
-                    throw new CoreException("No such base parameter: " + name);
+                    throw new SqlDssException("No such base parameter: " + name);
                 }
                 return actualName;
             }
@@ -93,9 +93,9 @@ public class Parameter {
      * @param conn The JDBC connection
      * @return The database key for the parameter name
      * @throws SQLException If SQL error
-     * @throws CoreException If thrown by {@link #getBaseParameter(String, Connection)}
+     * @throws SqlDssException If thrown by {@link #getBaseParameter(String, Connection)}
      */
-    static long getParameterKey(@NotNull String name, Connection conn) throws SQLException, CoreException {
+    static long getParameterKey(@NotNull String name, Connection conn) throws SQLException, SqlDssException {
         String baseParameter = name;
         String subParameter = "";
         boolean nullKey;
@@ -129,9 +129,9 @@ public class Parameter {
      * @param conn The JDBC connection
      * @return The case-correct parameter name
      * @throws SQLException If SQL error
-     * @throws CoreException If thrown by {@link #getParameterKey(String, Connection)}
+     * @throws SqlDssException If thrown by {@link #getParameterKey(String, Connection)}
      */
-    static String getParameter(@NotNull String name, Connection conn) throws SQLException, CoreException {
+    static String getParameter(@NotNull String name, Connection conn) throws SQLException, SqlDssException {
         String sql = """
                 select base_parameter,
                        sub_parameter

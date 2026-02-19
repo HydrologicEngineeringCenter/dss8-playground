@@ -140,9 +140,9 @@ public class Location {
      * @param conn The JDBC connection
      * @return The database key of the location
      * @throws SQLException If SQL error
-     * @throws CoreException If thrown in {@link #putLocation(String, String, boolean, Connection)}
+     * @throws SqlDssException If thrown in {@link #putLocation(String, String, boolean, Connection)}
      */
-    public static long putLocation(String locationName, Connection conn) throws SQLException, CoreException {
+    public static long putLocation(String locationName, Connection conn) throws SQLException, SqlDssException {
         return putLocation(locationName, null, true, conn);
     }
 
@@ -156,9 +156,9 @@ public class Location {
      * @param conn The JDBC connection
      * @return The database key of the location
      * @throws SQLException If SQL error
-     * @throws CoreException If other errors storing location
+     * @throws SqlDssException If other errors storing location
      */
-    public static long putLocation(String locationName, String info, boolean mergeInfo, Connection conn) throws SQLException, CoreException {
+    public static long putLocation(String locationName, String info, boolean mergeInfo, Connection conn) throws SQLException, SqlDssException {
         String context = "";
         String location;
         String baseLocation;
@@ -254,7 +254,7 @@ public class Location {
             }
         }
         if (nullKey) {
-            throw new CoreException("Error storing base location " + locationName);
+            throw new SqlDssException("Error storing base location " + locationName);
         }
         //-----------------//
         // insert location //
@@ -278,10 +278,10 @@ public class Location {
         }
         if (nullKey) {
             if (context.isEmpty()) {
-                throw new CoreException("Error retrieving location " + location);
+                throw new SqlDssException("Error retrieving location " + location);
             }
             else {
-                throw new CoreException("Error retrieving location " + context + ":" + baseLocation);
+                throw new SqlDssException("Error retrieving location " + context + ":" + baseLocation);
 
             }
         }

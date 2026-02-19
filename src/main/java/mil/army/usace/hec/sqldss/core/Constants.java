@@ -89,7 +89,7 @@ public class Constants {
         List<String> parameter_types = new ArrayList<>();
         try (InputStream in = Constants.class.getResourceAsStream("init/parameter_type.tsv")) {
             if (in == null) {
-                throw new CoreException("Could not open parameter_type resourde");
+                throw new SqlDssException("Could not open parameter_type resourde");
             }
             try (BufferedReader br = new BufferedReader((new InputStreamReader(in, StandardCharsets.UTF_8)))) {
                 String line;
@@ -100,7 +100,7 @@ public class Constants {
                     parameter_types.add(line);
                 }
             }
-        } catch (IOException | CoreException e) {
+        } catch (IOException | SqlDssException e) {
             throw new RuntimeException(e);
         }
         PARAMETER_TYPES = new String[parameter_types.size()];

@@ -66,13 +66,13 @@ public class Interval {
      * Retrieve a case-correct interval name from a case-insensitive interval name
      * @param name The case-insensitive interval name
      * @return The case-correct interval name
-     * @throws CoreException If no match is found for <code>name</code>
+     * @throws SqlDssException If no match is found for <code>name</code>
      */
-    static @NotNull String getInterval(@NotNull String name) throws CoreException {
+    static @NotNull String getInterval(@NotNull String name) throws SqlDssException {
         String actualName;
         actualName = intervalNames.get(name.toLowerCase());
         if (actualName == null) {
-            throw new CoreException("No such interval: "+name);
+            throw new SqlDssException("No such interval: "+name);
         }
         return actualName;
     }
@@ -81,13 +81,13 @@ public class Interval {
      * Retrieve the interval minutes for a case-insensitive interval name
      * @param interval The case-insensitive interval name
      * @return The interval minutes
-     * @throws CoreException If no match is found for <code>interval</code>
+     * @throws SqlDssException If no match is found for <code>interval</code>
      */
-    public static int getIntervalMinutes(String interval) throws CoreException {
+    public static int getIntervalMinutes(String interval) throws SqlDssException {
         String intervalName = getInterval(interval);
         Integer minutes = intervalMinutes.get(intervalName);
         if (minutes == null) {
-            throw new CoreException("No such interval: "+interval);
+            throw new SqlDssException("No such interval: "+interval);
         }
         return minutes;
     }
@@ -96,13 +96,13 @@ public class Interval {
      * Retrieve the SQLDSS block size interval name for a case-insensitive interval name
      * @param interval The case-insensitive interval name
      * @return The interval name of the block size for <code>interval</code>
-     * @throws CoreException If no match is found for <code>interval</code>
+     * @throws SqlDssException If no match is found for <code>interval</code>
      */
-    public static @NotNull String getBlockSize(String interval) throws CoreException {
+    public static @NotNull String getBlockSize(String interval) throws SqlDssException {
         String intervalName = getInterval(interval);
         String blockSize = intervalBlockSizes.get(intervalName);
         if (blockSize == null) {
-            throw new CoreException("No such interval: "+interval);
+            throw new SqlDssException("No such interval: "+interval);
         }
         return blockSize;
     }
@@ -111,9 +111,9 @@ public class Interval {
      * Retrieve the SQLDSS block size interval minutes for a case-insensitive interval name
      * @param interval The case-insensitive interval name
      * @return The interval minutes of the block size for <code>interval</code>
-     * @throws CoreException If no match is found for <code>interval</code>
+     * @throws SqlDssException If no match is found for <code>interval</code>
      */
-    public static int getBlockSizeMinutes(String interval) throws CoreException {
+    public static int getBlockSizeMinutes(String interval) throws SqlDssException {
         String intervalName = getInterval(interval);
         return intervalMinutes.get(intervalBlockSizes.get(intervalName));
     }

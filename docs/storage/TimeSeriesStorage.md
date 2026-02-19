@@ -8,7 +8,7 @@ not store any of the HEC-DSS v7 additions: extended quality codes, integer-based
 
 ## Format ##
 
-Like HEC-DSS v7, SQLDSS stores time series values in blocks. The block size for each interval is specified in the
+Like HEC-DSS v7, SQLDSS stores time series values in blocks<sup>1</sup>. The block size for each interval is specified in the
 [interval](../tables/INTERVAL.md) table. Currently the block sizes are the same as for HEC-DSS v7. To investigate the 
 changes with using other block sizes, simply update the data before opening a new SQLDSS file.
 
@@ -23,7 +23,7 @@ Also like HEC-DSS v7 the SQLDSS block start dates are the first day in the block
 Although SQLDSS and HEC-DSS v7 use the same block sizes, they differ in the first and last value times that can be
 stored to each block. HEC-DSS v7 always allows a value at 24:00 on the last day of the block to be stored as the last
 value of the block, requiring the first possible value to be the _first value after 00:00_ on the first day of the block.
-Conversely, SQLDSS always allows a value at 00:00 on the first day of the block to be stored in the block, requring
+Conversely, SQLDSS always allows a value at 00:00 on the first day of the block to be stored in the block, requiring
 the last possible value to be the _last value before 24:00_ on the last day of the block.
 
 | System     | Interval | Block Size | Block Start Date | First Possible Time | Last Possible Time |
@@ -43,9 +43,14 @@ As seen in the [tsv table](../tables/TSV.md) document, each block contains:
 * a reference to the time series
 * a block start date (see [dates & times](../Dates+Times.md) document for details)
 * a deleted flag
-* a BLOB<sup>*</sup> that contains the block information
+* a BLOB<sup>2</sup> that contains the block information
 
-<sup>*</sup> See the [Handling BLOB Columns](../BlobColumns.md) document for details
+<sup>1</sup> Like in previous versions of HEC-DSS, the terms `block` and `record` are used somewhat in the context of time
+series. The term `record` is used more in context of time series catalogs. The term `block` is used more in the context of
+time series storage, where data for a single time series name ("pathname" in previous versions of HEC-DSS) is stored in
+multiple blocks, each of which holds a specific time window of the entire data set.
+
+<sup>2</sup> See the [Handling BLOB Columns](../BlobColumns.md) document for details
 
 ### Time Series Block Formats ###
 **Regular Time Series**

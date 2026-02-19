@@ -13,13 +13,8 @@ import hec.io.DataContainerTransformer;
 import hec.io.TimeSeriesContainer;
 import hec.lang.annotation.Scriptable;
 import mil.army.usace.hec.sqldss.api.ApiException;
-import mil.army.usace.hec.sqldss.core.Constants;
-import mil.army.usace.hec.sqldss.core.CoreException;
-import mil.army.usace.hec.sqldss.core.EncodedDateTime;
-import mil.army.usace.hec.sqldss.core.EncodedDateTimeException;
-import mil.army.usace.hec.sqldss.core.Interval;
-import mil.army.usace.hec.sqldss.core.TimeSeries;
-import mil.army.usace.hec.sqldss.core.SqlDss;
+import mil.army.usace.hec.sqldss.core.*;
+import mil.army.usace.hec.sqldss.core.SqlDssException;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
@@ -33,7 +28,7 @@ public class HecDss implements AutoCloseable {
 
     SqlDss sqldss = null;
 
-    public HecDss(String fileName, String startTime, String endTime, boolean mustExist) throws CoreException,
+    public HecDss(String fileName, String startTime, String endTime, boolean mustExist) throws SqlDssException,
             SQLException, IOException, EncodedDateTimeException {
         sqldss = new SqlDss(fileName, startTime, endTime, mustExist);
     }
@@ -41,7 +36,7 @@ public class HecDss implements AutoCloseable {
     @NotNull
     @Contract("_ -> new")
     @Scriptable
-    public static HecDss open(String dssFileName) throws CoreException, SQLException, IOException,
+    public static HecDss open(String dssFileName) throws SqlDssException, SQLException, IOException,
             EncodedDateTimeException {
         return new HecDss(dssFileName, null, null, false);
     }
@@ -49,7 +44,7 @@ public class HecDss implements AutoCloseable {
     @NotNull
     @Contract("_, _ -> new")
     @Scriptable
-    public static HecDss open(String dssFileName, String timeWindow) throws CoreException, SQLException, IOException,
+    public static HecDss open(String dssFileName, String timeWindow) throws SqlDssException, SQLException, IOException,
             EncodedDateTimeException, ApiException {
         HecTime startTime = new HecTime();
         HecTime endTime = new HecTime();
@@ -62,7 +57,7 @@ public class HecDss implements AutoCloseable {
     @NotNull
     @Contract("_, _, _ -> new")
     @Scriptable
-    public static HecDss open(String dssFileName, String startTime, String endTime) throws CoreException,
+    public static HecDss open(String dssFileName, String startTime, String endTime) throws SqlDssException,
             SQLException, IOException, EncodedDateTimeException {
         return new HecDss(dssFileName, startTime, endTime, false);
     }
@@ -70,7 +65,7 @@ public class HecDss implements AutoCloseable {
     @NotNull
     @Contract("_, _ -> new")
     @Scriptable
-    public static HecDss open(String dssFileName, boolean mustExist) throws CoreException, SQLException, IOException,
+    public static HecDss open(String dssFileName, boolean mustExist) throws SqlDssException, SQLException, IOException,
             EncodedDateTimeException {
         return new HecDss(dssFileName, null, null, mustExist);
     }
@@ -85,7 +80,7 @@ public class HecDss implements AutoCloseable {
         return sqldss.isOpen();
     }
 
-    public DataContainer get(String pathname) throws ApiException, EncodedDateTimeException, CoreException,
+    public DataContainer get(String pathname) throws ApiException, EncodedDateTimeException, SqlDssException,
             SQLException, IOException {
         if (ApiUtil.isTimeSeriesApiName(pathname)) {
             String parameter = pathname.split("/", -1)[3];
@@ -97,7 +92,7 @@ public class HecDss implements AutoCloseable {
         }
     }
 
-    public DataContainer getInUnit(String pathname, String unit) throws ApiException, EncodedDateTimeException, CoreException,
+    public DataContainer getInUnit(String pathname, String unit) throws ApiException, EncodedDateTimeException, SqlDssException,
             SQLException, IOException {
         if (!sqldss.isOpen()) {
             throw new ApiException("File has been closed: " + sqldss.getFileName());
@@ -130,7 +125,7 @@ public class HecDss implements AutoCloseable {
             if (!exists) {
                 throw new ApiException("No such time series: " + pathname);
             }
-            tsc = getTimeSeriesValues(
+            tsc = retrieveTimeSeriesValues(
                     coreName,
                     startTime,
                     endTime,
@@ -183,7 +178,7 @@ public class HecDss implements AutoCloseable {
                 startHecTime.set(startTime);
                 endHecTime.set(endTime);
             }
-            tsc = getTimeSeriesValues(
+            tsc = retrieveTimeSeriesValues(
                     ApiUtil.toApiName(pathname),
                     EncodedDateTime.encodeDateTime(startHecTime),
                     EncodedDateTime.encodeDateTime(endHecTime),
@@ -198,7 +193,7 @@ public class HecDss implements AutoCloseable {
         }
     }
 
-    public DataContainer get(String pathname, boolean readEntireSet) throws ApiException, CoreException, SQLException
+    public DataContainer get(String pathname, boolean readEntireSet) throws ApiException, SqlDssException, SQLException
             , EncodedDateTimeException, IOException {
         if (ApiUtil.isTimeSeriesApiName(pathname)) {
             String parameter = pathname.split("/", -1)[3];
@@ -210,14 +205,14 @@ public class HecDss implements AutoCloseable {
         }
     }
 
-    public DataContainer getInUnit(String pathname, String unit, boolean readEntireSet) throws ApiException, CoreException, SQLException
+    public DataContainer getInUnit(String pathname, String unit, boolean readEntireSet) throws ApiException, SqlDssException, SQLException
             , EncodedDateTimeException, IOException {
         if (!sqldss.isOpen()) {
             throw new ApiException("File has been closed: " + sqldss.getFileName());
         }
         if (ApiUtil.isTimeSeriesApiName(pathname)) {
             if (readEntireSet) {
-                TimeSeriesContainer tsc = getAllTimeSeriesValues(
+                TimeSeriesContainer tsc = retrieveAllTimeSeriesValues(
                         ApiUtil.toCoreName(pathname),
                         sqldss.getTrimMissing(),
                         unit,
@@ -242,7 +237,7 @@ public class HecDss implements AutoCloseable {
         throw new ApiException("Not Implemented");
     }
 
-    public void put(DataContainer dataContainer) throws ApiException, CoreException, SQLException,
+    public void put(DataContainer dataContainer) throws ApiException, SqlDssException, SQLException,
             EncodedDateTimeException, IOException {
         if (dataContainer instanceof TimeSeriesContainer) {
             TimeSeriesContainer tsc2 = (TimeSeriesContainer) (((TimeSeriesContainer) dataContainer).clone());
@@ -251,7 +246,7 @@ public class HecDss implements AutoCloseable {
                                sqldss.getIrregularStoreRule().name() :
                                sqldss.getRegularStoreRule().name();
 
-            putTimeSeriesValues(tsc2, storeRule, sqldss.getConnection());
+            storeTimeSeriesValues(tsc2, storeRule, sqldss.getConnection());
         }
        else {
             throw new ApiException("Cannot store " + dataContainer.getClass().getName() + " objects");
@@ -263,7 +258,7 @@ public class HecDss implements AutoCloseable {
     }
 
     public boolean getTimeSeriesExtents(String pathname, HecTime start, HecTime end) throws ApiException,
-            EncodedDateTimeException, CoreException, SQLException, IOException {
+            EncodedDateTimeException, SqlDssException, SQLException, IOException {
         if (!recordExists(pathname)) {
             return false;
         }
@@ -274,7 +269,7 @@ public class HecDss implements AutoCloseable {
         return true;
     }
 
-    public boolean recordExists(String pathname) throws ApiException, CoreException, SQLException {
+    public boolean recordExists(String pathname) throws ApiException, SqlDssException, SQLException {
         String coreName = ApiUtil.toCoreName(pathname);
         long key = TimeSeries.getTimeSeriesSpecKey(coreName, sqldss.getConnection());
         return key > 0;
@@ -296,7 +291,7 @@ public class HecDss implements AutoCloseable {
         // noop
     }
 
-    public void done() throws CoreException, SQLException {
+    public void done() throws SqlDssException, SQLException {
         sqldss.close();
     }
 
@@ -422,7 +417,7 @@ public class HecDss implements AutoCloseable {
         throw new ApiException("Not Implemented");
     }
 
-    public HecMath read(String pathname) throws HecMathException, ApiException, CoreException, SQLException,
+    public HecMath read(String pathname) throws HecMathException, ApiException, SqlDssException, SQLException,
             EncodedDateTimeException, IOException {
         TimeSeriesContainer tsc = (TimeSeriesContainer) get(pathname);
         return new TimeSeriesMath(tsc);
@@ -455,7 +450,7 @@ public class HecDss implements AutoCloseable {
             put(mathGuy.getData());
             return 0;
         }
-        catch (ApiException | CoreException | SQLException | EncodedDateTimeException | HecMathException | IOException e) {
+        catch (ApiException | SqlDssException | SQLException | EncodedDateTimeException | HecMathException | IOException e) {
             return -1;
         }
     }
@@ -521,7 +516,7 @@ public class HecDss implements AutoCloseable {
     }
 
     @Override
-    public void close() throws CoreException, SQLException {
+    public void close() throws SqlDssException, SQLException {
         try {
             sqldss.commit();
         }

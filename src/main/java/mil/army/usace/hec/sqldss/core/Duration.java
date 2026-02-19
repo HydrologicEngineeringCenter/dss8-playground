@@ -49,14 +49,14 @@ public class Duration {
      * Returns the equivalent interval minutes for an ISO-8601 duration string
      * @param s The ISO-8601 duration string
      * @return The equivalent interval minutes
-     * @throws CoreException if s is not a valid ISO-8601 duration string
+     * @throws SqlDssException if s is not a valid ISO-8601 duration string
      */
-    static int iso8601ToMinutes(String s) throws CoreException {
+    static int iso8601ToMinutes(String s) throws SqlDssException {
         int minutes = 0;
         Pattern pat = Pattern.compile(PATTERN_ISO_8601_DURATION);
         Matcher m = pat.matcher(s);
         if (!m.matches()) {
-            throw new CoreException("String is not an ISO-8601 duration string: " + s);
+            throw new SqlDssException("String is not an ISO-8601 duration string: " + s);
         }
         int[] minutesByGroup = new int[]{0, 525600, 43200, 1440, 60, 1, 0};
         for (int group = 1; group < m.groupCount(); ++group) {

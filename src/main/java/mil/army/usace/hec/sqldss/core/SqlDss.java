@@ -71,13 +71,13 @@ public class SqlDss implements AutoCloseable {
      * @param fileName The name of the SQLDSS file
      * @return The SqlDss object
      * @throws SQLException If thrown by underlying constructor
-     * @throws CoreException If thrown by underlying constructor
+     * @throws SqlDssException If thrown by underlying constructor
      * @throws IOException If thrown by underlying constructor
      * @throws EncodedDateTimeException If thrown by underlying constructor
      */
     @NotNull
     @Contract("_ -> new")
-    public static SqlDss open(String fileName) throws SQLException, CoreException, IOException, EncodedDateTimeException {
+    public static SqlDss open(String fileName) throws SQLException, SqlDssException, IOException, EncodedDateTimeException {
         return new SqlDss(fileName);
     }
 
@@ -87,13 +87,13 @@ public class SqlDss implements AutoCloseable {
      * @param mustExist Whether the SQLDSS file must already exist
      * @return The SqlDss object
      * @throws SQLException If thrown by underlying constructor
-     * @throws CoreException If thrown by underlying constructor
+     * @throws SqlDssException If thrown by underlying constructor
      * @throws IOException If thrown by underlying constructor
      * @throws EncodedDateTimeException If thrown by underlying constructor
      */
     @NotNull
     @Contract("_, _ -> new")
-    public static SqlDss open(String fileName, boolean mustExist) throws SQLException, CoreException, IOException, EncodedDateTimeException {
+    public static SqlDss open(String fileName, boolean mustExist) throws SQLException, SqlDssException, IOException, EncodedDateTimeException {
         return new SqlDss(fileName, mustExist);
     }
 
@@ -104,13 +104,13 @@ public class SqlDss implements AutoCloseable {
      * @param endTime The end time of the default time window (UTC or time zone naive)
      * @return The SqlDss object
      * @throws SQLException If thrown by underlying constructor
-     * @throws CoreException If thrown by underlying constructor
+     * @throws SqlDssException If thrown by underlying constructor
      * @throws IOException If thrown by underlying constructor
      * @throws EncodedDateTimeException If thrown by underlying constructor
      */
     @NotNull
     @Contract("_, _, _ -> new")
-    public static SqlDss open(String fileName, String startTime, String endTime) throws SQLException, CoreException, IOException, EncodedDateTimeException {
+    public static SqlDss open(String fileName, String startTime, String endTime) throws SQLException, SqlDssException, IOException, EncodedDateTimeException {
         return new SqlDss(fileName, startTime, endTime);
     }
 
@@ -122,13 +122,13 @@ public class SqlDss implements AutoCloseable {
      * @param mustExist Whether the SQLDSS file must already exist
      * @return The SqlDss object
      * @throws SQLException If thrown by underlying constructor
-     * @throws CoreException If thrown by underlying constructor
+     * @throws SqlDssException If thrown by underlying constructor
      * @throws IOException If thrown by underlying constructor
      * @throws EncodedDateTimeException If thrown by underlying constructor
      */
     @NotNull
     @Contract("_, _, _, _ -> new")
-    public static SqlDss open(String fileName, String startTime, String endTime, boolean mustExist) throws SQLException, CoreException, IOException, EncodedDateTimeException {
+    public static SqlDss open(String fileName, String startTime, String endTime, boolean mustExist) throws SQLException, SqlDssException, IOException, EncodedDateTimeException {
         return new SqlDss(fileName, startTime, endTime, mustExist);
     }
 
@@ -136,11 +136,11 @@ public class SqlDss implements AutoCloseable {
      * Constructor with file name only
      * @param fileName The name of the SQLDSS file
      * @throws SQLException If thrown by {@link #SqlDss(String, String, String, boolean)}
-     * @throws CoreException  If thrown by {@link #SqlDss(String, String, String, boolean)}
+     * @throws SqlDssException  If thrown by {@link #SqlDss(String, String, String, boolean)}
      * @throws IOException  If thrown by {@link #SqlDss(String, String, String, boolean)}
      * @throws EncodedDateTimeException  If thrown by {@link #SqlDss(String, String, String, boolean)}
      */
-    public SqlDss(String fileName) throws SQLException, CoreException, IOException, EncodedDateTimeException {
+    public SqlDss(String fileName) throws SQLException, SqlDssException, IOException, EncodedDateTimeException {
         this(fileName, null, null, false);
     }
 
@@ -149,11 +149,11 @@ public class SqlDss implements AutoCloseable {
      * @param fileName The name of the SQLDSS file
      * @param mustExist Whether the SQLDSS file must already exist
      * @throws SQLException If thrown by {@link #SqlDss(String, String, String, boolean)}
-     * @throws CoreException  If thrown by {@link #SqlDss(String, String, String, boolean)}
+     * @throws SqlDssException  If thrown by {@link #SqlDss(String, String, String, boolean)}
      * @throws IOException  If thrown by {@link #SqlDss(String, String, String, boolean)}
      * @throws EncodedDateTimeException  If thrown by {@link #SqlDss(String, String, String, boolean)}
      */
-    public SqlDss(String fileName, boolean mustExist) throws SQLException, CoreException, IOException, EncodedDateTimeException {
+    public SqlDss(String fileName, boolean mustExist) throws SQLException, SqlDssException, IOException, EncodedDateTimeException {
         this(fileName, null, null, mustExist);
     }
 
@@ -163,11 +163,11 @@ public class SqlDss implements AutoCloseable {
      * @param startTime The start time of the default time window (UTC or time zone naive)
      * @param endTime The end time of the default time window (UTC or time zone naive)
      * @throws SQLException If thrown by {@link #SqlDss(String, String, String, boolean)}
-     * @throws CoreException  If thrown by {@link #SqlDss(String, String, String, boolean)}
+     * @throws SqlDssException  If thrown by {@link #SqlDss(String, String, String, boolean)}
      * @throws IOException  If thrown by {@link #SqlDss(String, String, String, boolean)}
      * @throws EncodedDateTimeException  If thrown by {@link #SqlDss(String, String, String, boolean)}
      */
-    public SqlDss(String fileName, String startTime, String endTime) throws SQLException, CoreException, IOException, EncodedDateTimeException {
+    public SqlDss(String fileName, String startTime, String endTime) throws SQLException, SqlDssException, IOException, EncodedDateTimeException {
         this(fileName, startTime, endTime, false);
     }
 
@@ -178,7 +178,7 @@ public class SqlDss implements AutoCloseable {
      * @param endTime The end time of the default time window (UTC or time zone naive)
      * @param mustExist Whether the SQLDSS file must already exist
      * @throws SQLException If SQL error
-     * @throws CoreException If:
+     * @throws SqlDssException If:
      * <ul>
      *     <li>only one of <code>startTime</code> and <code>endTime</code> is not null</li>
      *     <li>if <code>fileName</code> doesn't exist when <code>mustExist</code> is <code>true</code></li>
@@ -186,24 +186,24 @@ public class SqlDss implements AutoCloseable {
      * @throws IOException If thrown by {@link Init#initializeDb(Connection)}
      * @throws EncodedDateTimeException If thrown by {@link EncodedDateTime#encodeDateTime(String)}
      */
-    public SqlDss(String fileName, String startTime, String endTime, boolean mustExist) throws SQLException, CoreException, IOException, EncodedDateTimeException {
+    public SqlDss(String fileName, String startTime, String endTime, boolean mustExist) throws SQLException, SqlDssException, IOException, EncodedDateTimeException {
         Path filePath = Path.of(fileName);
         boolean exists = Files.exists(filePath);
         this.fileName = filePath.toString();
         if (startTime == null) {
             if (endTime != null) {
-                throw new CoreException("End time may not be specified without start time");
+                throw new SqlDssException("End time may not be specified without start time");
             }
         }
         else {
             if (endTime == null) {
-                throw new CoreException("Start time may not be specified without end time");
+                throw new SqlDssException("Start time may not be specified without end time");
             }
         }
         this.startTime = startTime == null ? null : EncodedDateTime.encodeDateTime(startTime);
         this.endTime = endTime == null ? null : EncodedDateTime.encodeDateTime(endTime);
         if (mustExist && !exists) {
-            throw new CoreException(String.format("File %s does not exist", fileName));
+            throw new SqlDssException(String.format("File %s does not exist", fileName));
         }
         conn = DriverManager.getConnection("jdbc:sqlite:"+this.fileName);
         try (Statement st = conn.createStatement()) {
@@ -408,10 +408,10 @@ public class SqlDss implements AutoCloseable {
     /**
      * Remove the retrieval unit specification, if any, for the specified parameter
      * @param parameter The parameter to remove the retrival unit specification for
-     * @throws CoreException If thrown by {@link Parameter#getParameter(String, Connection)}
+     * @throws SqlDssException If thrown by {@link Parameter#getParameter(String, Connection)}
      * @throws SQLException If thrown by {@link Parameter#getParameter(String, Connection)}
      */
-    public void clearRetrieveUnits(String parameter) throws CoreException, SQLException {
+    public void clearRetrieveUnits(String parameter) throws SqlDssException, SQLException {
         retrieveUnits.remove(Parameter.getParameter(parameter, getConnection()));
     }
 
@@ -419,10 +419,10 @@ public class SqlDss implements AutoCloseable {
      * Specifies the unit to use for retrieving data for the specified parameter
      * @param parameter The parameter the unit is used for
      * @param unit The unit to retrieve the parameter in
-     * @throws CoreException If thrown by {@link Parameter#getParameter(String, Connection)}
+     * @throws SqlDssException If thrown by {@link Parameter#getParameter(String, Connection)}
      * @throws SQLException If thrown by {@link Parameter#getParameter(String, Connection)}
      */
-    public void setRetrieveUnit(String parameter, String unit) throws CoreException, SQLException {
+    public void setRetrieveUnit(String parameter, String unit) throws SqlDssException, SQLException {
         retrieveUnits.put(
                 Parameter.getParameter(parameter, getConnection()),
                 Unit.getUnit(unit, getConnection())
@@ -474,13 +474,13 @@ public class SqlDss implements AutoCloseable {
 
     /**
      * Closes the database connection
-     * @throws CoreException If already closed
+     * @throws SqlDssException If already closed
      * @throws SQLException If SQL error
      */
     @Override
-    public void close() throws CoreException, SQLException {
+    public void close() throws SqlDssException, SQLException {
         if (conn == null) {
-            throw new CoreException("Already closed");
+            throw new SqlDssException("Already closed");
         }
         else {
             try {

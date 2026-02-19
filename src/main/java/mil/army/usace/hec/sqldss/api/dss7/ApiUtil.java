@@ -3,7 +3,7 @@ package mil.army.usace.hec.sqldss.api.dss7;
 import hec.io.TimeSeriesContainer;
 import mil.army.usace.hec.sqldss.api.ApiException;
 import mil.army.usace.hec.sqldss.core.BaseParameter;
-import mil.army.usace.hec.sqldss.core.CoreException;
+import mil.army.usace.hec.sqldss.core.SqlDssException;
 import mil.army.usace.hec.sqldss.core.Interval;
 import org.jetbrains.annotations.NotNull;
 
@@ -95,7 +95,7 @@ public final class ApiUtil {
         return apiName;
     }
 
-    static void updateTscToApi(@NotNull TimeSeriesContainer tsc) throws ApiException, CoreException {
+    static void updateTscToApi(@NotNull TimeSeriesContainer tsc) throws ApiException, SqlDssException {
         String[] parts = tsc.fullName.split("\\|", -1);
         if (parts.length != 6) {
             throw new ApiException("Invalid core name: " + tsc.fullName);
@@ -139,7 +139,7 @@ public final class ApiUtil {
         tsc.interval = Interval.getIntervalMinutes(interval);
     }
 
-    static void updateTscToCore(@NotNull TimeSeriesContainer tsc) throws ApiException, CoreException {
+    static void updateTscToCore(@NotNull TimeSeriesContainer tsc) throws ApiException, SqlDssException {
         String[] parts = tsc.fullName.split("/", -1);
         if (parts.length != 8) {
             throw new ApiException("Invalid pathname: " + tsc.fullName);

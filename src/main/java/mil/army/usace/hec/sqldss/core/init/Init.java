@@ -1,7 +1,7 @@
 package mil.army.usace.hec.sqldss.core.init;
 
 import hec.heclib.util.HecTime;
-import mil.army.usace.hec.sqldss.core.CoreException;
+import mil.army.usace.hec.sqldss.core.SqlDssException;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.BufferedReader;
@@ -31,10 +31,10 @@ public class Init {
      * Initialize an empty SQLDSS file with reference tables
      * @param conn The JDBC connection
      * @throws SQLException from nested call
-     * @throws CoreException from nested call
+     * @throws SqlDssException from nested call
      * @throws IOException from nested call
      */
-    public static void initializeDb(@NotNull Connection conn) throws SQLException, CoreException, IOException {
+    public static void initializeDb(@NotNull Connection conn) throws SQLException, SqlDssException, IOException {
         boolean isAutoCommit = conn.getAutoCommit();
         if (isAutoCommit) conn.setAutoCommit(false);
         createDssInfoTable(conn);
@@ -92,9 +92,9 @@ public class Init {
      * @param conn The JDBC connection
      * @throws SQLException on SQL error
      * @throws IOException on resource IO error
-     * @throws CoreException if resource file not found
+     * @throws SqlDssException if resource file not found
      */
-    public static void createAbstractParamTable(@NotNull Connection conn) throws SQLException, IOException, CoreException {
+    public static void createAbstractParamTable(@NotNull Connection conn) throws SQLException, IOException, SqlDssException {
         String sql =
                 """
                         create table abstract_parameter(
@@ -107,7 +107,7 @@ public class Init {
         try (PreparedStatement ps = conn.prepareStatement(sql)) {
             try (InputStream in = Init.class.getResourceAsStream("abstract_parameter.tsv")) {
                 if (in == null) {
-                    throw new CoreException("Could not open abstract_parameter resource");
+                    throw new SqlDssException("Could not open abstract_parameter resource");
                 }
                 try (BufferedReader br = new BufferedReader(new InputStreamReader(in, StandardCharsets.UTF_8))) {
                     String line;
@@ -129,9 +129,9 @@ public class Init {
      * @param conn The JDBC connection
      * @throws SQLException on SQL error
      * @throws IOException on resource IO error
-     * @throws CoreException if resource file not found
+     * @throws SqlDssException if resource file not found
      */
-    public static void createUnitTable(@NotNull Connection conn) throws SQLException, IOException, CoreException {
+    public static void createUnitTable(@NotNull Connection conn) throws SQLException, IOException, SqlDssException {
         String sql =
                 """
                         create table unit(
@@ -147,7 +147,7 @@ public class Init {
         try (PreparedStatement ps = conn.prepareStatement(sql)) {
             try (InputStream in = Init.class.getResourceAsStream("unit.tsv")) {
                 if (in == null) {
-                    throw new CoreException("Could not open unit resource");
+                    throw new SqlDssException("Could not open unit resource");
                 }
                 try (BufferedReader br = new BufferedReader(new InputStreamReader(in, StandardCharsets.UTF_8))) {
                     String line;
@@ -173,9 +173,9 @@ public class Init {
      * @param conn The JDBC connection
      * @throws SQLException on SQL error
      * @throws IOException on resource IO error
-     * @throws CoreException if resource file not found
+     * @throws SqlDssException if resource file not found
      */
-    public static void createUnitAliasTable(@NotNull Connection conn) throws SQLException, IOException, CoreException {
+    public static void createUnitAliasTable(@NotNull Connection conn) throws SQLException, IOException, SqlDssException {
         String sql =
                 """
                         create table unit_alias(
@@ -189,7 +189,7 @@ public class Init {
         try (PreparedStatement ps = conn.prepareStatement(sql)) {
             try (InputStream in = Init.class.getResourceAsStream("unit_alias.tsv")) {
                 if (in == null) {
-                    throw new CoreException("Could not open unit_alias resource");
+                    throw new SqlDssException("Could not open unit_alias resource");
                 }
                 try (BufferedReader br = new BufferedReader(new InputStreamReader(in, StandardCharsets.UTF_8))) {
                     String line;
@@ -213,9 +213,9 @@ public class Init {
      * @param conn The JDBC connection
      * @throws SQLException on SQL error
      * @throws IOException on resource IO error
-     * @throws CoreException if resource file not found
+     * @throws SqlDssException if resource file not found
      */
-    public static void createUnitConversionTable(@NotNull Connection conn) throws SQLException, IOException, CoreException {
+    public static void createUnitConversionTable(@NotNull Connection conn) throws SQLException, IOException, SqlDssException {
         String sql =
                 """
                         create table unit_conversion(
@@ -240,7 +240,7 @@ public class Init {
         try (PreparedStatement ps = conn.prepareStatement(sql)) {
             try (InputStream in = Init.class.getResourceAsStream("unit_conversion.tsv")) {
                 if (in == null) {
-                    throw new CoreException("Could not open unit_conversion resource");
+                    throw new SqlDssException("Could not open unit_conversion resource");
                 }
                 try (BufferedReader br = new BufferedReader(new InputStreamReader(in, StandardCharsets.UTF_8))) {
                     String line;
@@ -277,9 +277,9 @@ public class Init {
      * @param conn The JDBC connection
      * @throws SQLException on SQL error
      * @throws IOException on resource IO error
-     * @throws CoreException if resource file not found
+     * @throws SqlDssException if resource file not found
      */
-    public static void createBaseParameterTable(@NotNull Connection conn) throws SQLException, IOException, CoreException {
+    public static void createBaseParameterTable(@NotNull Connection conn) throws SQLException, IOException, SqlDssException {
         String sqlTable =
                 """
                         create table base_parameter(
@@ -303,7 +303,7 @@ public class Init {
         try (PreparedStatement ps = conn.prepareStatement(sqlInsert)) {
             try (InputStream in = Init.class.getResourceAsStream("base_parameter.tsv")) {
                 if (in == null) {
-                    throw new CoreException("Could not open base_parameter resource");
+                    throw new SqlDssException("Could not open base_parameter resource");
                 }
                 try (BufferedReader br = new BufferedReader(new InputStreamReader(in, StandardCharsets.UTF_8))) {
                     String line;
@@ -330,9 +330,9 @@ public class Init {
      * @param conn The JDBC connection
      * @throws SQLException on SQL error
      * @throws IOException on resource IO error
-     * @throws CoreException if resource file not found
+     * @throws SqlDssException if resource file not found
      */
-    public static void createParameterTypeTable(@NotNull Connection conn) throws SQLException, IOException, CoreException {
+    public static void createParameterTypeTable(@NotNull Connection conn) throws SQLException, IOException, SqlDssException {
         String sqlTable =
                 """
                         create table parameter_type(
@@ -347,7 +347,7 @@ public class Init {
         try (PreparedStatement ps = conn.prepareStatement(sqlInsert)) {
             try (InputStream in = Init.class.getResourceAsStream("parameter_type.tsv")) {
                 if (in == null) {
-                    throw new CoreException("Could not open parameter_type resourde");
+                    throw new SqlDssException("Could not open parameter_type resourde");
                 }
                 try (BufferedReader br = new BufferedReader((new InputStreamReader(in, StandardCharsets.UTF_8)))) {
                     String line;
@@ -369,9 +369,9 @@ public class Init {
      * @param conn The JDBC connection
      * @throws SQLException on SQL error
      * @throws IOException on resource IO error
-     * @throws CoreException if resource file not found
+     * @throws SqlDssException if resource file not found
      */
-    public static void createIntervalTable(@NotNull Connection conn) throws SQLException, IOException, CoreException {
+    public static void createIntervalTable(@NotNull Connection conn) throws SQLException, IOException, SqlDssException {
         String sqlTable ="""
                         create table interval(
                           name collate nocase primary key,
@@ -392,7 +392,7 @@ public class Init {
         try (PreparedStatement ps = conn.prepareStatement(sqlInsert)) {
             try (InputStream in = Init.class.getResourceAsStream("interval.tsv")) {
                 if (in == null) {
-                    throw new CoreException("Could not open interval resource");
+                    throw new SqlDssException("Could not open interval resource");
                 }
                 try (BufferedReader br = new BufferedReader(new InputStreamReader(in, StandardCharsets.UTF_8))) {
                     String line;
@@ -417,9 +417,9 @@ public class Init {
      * @param conn The JDBC connection
      * @throws SQLException on SQL error
      * @throws IOException on resource IO error
-     * @throws CoreException if resource file not found
+     * @throws SqlDssException if resource file not found
      */
-    public static void createDurationTable(@NotNull Connection conn) throws SQLException, IOException, CoreException {
+    public static void createDurationTable(@NotNull Connection conn) throws SQLException, IOException, SqlDssException {
         String sqlTable =
                 """
                         create table duration(
@@ -435,7 +435,7 @@ public class Init {
         try (PreparedStatement ps = conn.prepareStatement(sqlInsert)) {
             try (InputStream in = Init.class.getResourceAsStream("duration.tsv")) {
                 if (in == null) {
-                    throw new CoreException("Could not open duration resource");
+                    throw new SqlDssException("Could not open duration resource");
                 }
                 try (BufferedReader br = new BufferedReader(new InputStreamReader(in, StandardCharsets.UTF_8))) {
                     String line;

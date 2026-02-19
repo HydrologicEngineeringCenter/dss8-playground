@@ -3,6 +3,7 @@ package mil.army.usace.hec.sqldss.core;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -13,13 +14,25 @@ import java.util.Map;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
 
+/**
+ * Generic utility class for SQLDSS
+ */
 public class Util {
 
+    /**
+     * Prevent class instantiation
+     */
     private Util() {
         throw new AssertionError("Cannot instantiate");
     }
 
-    public static byte[] gzipBytes(byte[] data) throws IOException {
+    /**
+     * Gzip a byte array
+     * @param data The data to gzip
+     * @return The gzipped data
+     * @throws IOException If thrown by Gzip code
+     */
+    public static byte @NotNull [] gzipBytes(byte[] data) throws IOException {
         ByteArrayOutputStream bos = new ByteArrayOutputStream();
         try (GZIPOutputStream gzip = new GZIPOutputStream(bos)) {
             gzip.write(data);
@@ -28,7 +41,13 @@ public class Util {
         return bos.toByteArray();
     }
 
-    public static byte[] gunzipBytes(byte[] gzData) throws IOException {
+    /**
+     * Gunzip a byte array
+     * @param gzData The data to gunzip
+     * @return The gzipped data
+     * @throws IOException If thrown by Gzip code
+     */
+    public static byte @NotNull [] gunzipBytes(byte[] gzData) throws IOException {
         try (GZIPInputStream gzip = new GZIPInputStream(new ByteArrayInputStream(gzData));
              ByteArrayOutputStream out = new ByteArrayOutputStream()) {
 
@@ -41,16 +60,28 @@ public class Util {
         }
     }
 
-    public static void validateJsonString(String jsonStr) throws CoreException {
+    /**
+     * Verifies that a string is valid JSON
+     * @param jsonStr The string to validate
+     * @throws SqlDssException If <code>jsonStr</code> is not valid JSON
+     */
+    public static void validateJsonString(String jsonStr) throws SqlDssException {
         ObjectMapper mapper = new ObjectMapper();
         try {
             JsonNode existingRoot = mapper.readTree(jsonStr);
         } catch (JsonProcessingException e) {
-            throw new CoreException(String.format("Invalid JSON info: %s", jsonStr));
+            throw new SqlDssException(String.format("Invalid JSON info: %s", jsonStr));
         }
     }
 
-    public static String mergeJsonStrings(String incoming, String existing) throws CoreException {
+    /**
+     * Merges two JSON strings, replacing items in the existing string if they exist in the incoming string
+     * @param incoming The "new" or "incoming" JSON string
+     * @param existing The "old" or "existing" JSON string
+     * @return The merged JSON string
+     * @throws SqlDssException If one of the strings is not valid JSON
+     */
+    public static String mergeJsonStrings(String incoming, String existing) throws SqlDssException {
         try {
             ObjectMapper mapper = new ObjectMapper();
             JsonNode existingRoot = mapper.readTree(existing);
@@ -68,7 +99,7 @@ public class Util {
             return mapper.writeValueAsString(mergedItems);
         }
         catch (JsonProcessingException e) {
-            throw new CoreException(e);
+            throw new SqlDssException(e);
         }
     }
 }

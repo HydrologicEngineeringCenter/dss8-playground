@@ -5,7 +5,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.JsonNodeType;
 import com.google.common.flogger.FluentLogger;
-import mil.army.usace.hec.sqldss.core.CoreException;
+import mil.army.usace.hec.sqldss.core.SqlDssException;
 import mil.army.usace.hec.sqldss.core.EncodedDateTimeException;
 import mil.army.usace.hec.sqldss.core.Location;
 import mil.army.usace.hec.sqldss.core.SqlDss;
@@ -27,7 +27,7 @@ public class LocationTest {
     static FluentLogger logger = FluentLogger.forEnclosingClass();
     static SqlDss _db = null;
 
-    static boolean equalJsonValues(@NotNull JsonNode value1, @NotNull JsonNode value2) throws CoreException {
+    static boolean equalJsonValues(@NotNull JsonNode value1, @NotNull JsonNode value2) throws SqlDssException {
         JsonNodeType valType = value1.getNodeType();
         if (valType != value2.getNodeType()) {
             return false;
@@ -52,7 +52,7 @@ public class LocationTest {
                     break;
                 }
                 else {
-                    throw new CoreException(String.format("Unexpected numeric type: %s", valType.name()));
+                    throw new SqlDssException(String.format("Unexpected numeric type: %s", valType.name()));
                 }
             case BOOLEAN:
                 if (value1.asBoolean() != value2.asBoolean()) {
@@ -60,12 +60,12 @@ public class LocationTest {
                 }
                 break;
             default:
-                throw new CoreException(String.format("Don't know how to compare objects of type %s", valType.name()));
+                throw new SqlDssException(String.format("Don't know how to compare objects of type %s", valType.name()));
         }
         return true;
     }
 
-    static boolean equalJsonStrings(String info1, String info2) throws JsonProcessingException, CoreException {
+    static boolean equalJsonStrings(String info1, String info2) throws JsonProcessingException, SqlDssException {
         ObjectMapper mapper = new ObjectMapper();
         JsonNode root1 = mapper.readTree(info1);
         JsonNode root2 = mapper.readTree(info2);
@@ -107,7 +107,7 @@ public class LocationTest {
         return true;
     }
 
-    SqlDss getDb() throws IOException, CoreException, SQLException, EncodedDateTimeException {
+    SqlDss getDb() throws IOException, SqlDssException, SQLException, EncodedDateTimeException {
         if (_db == null) {
             Path dir = Paths.get("build/test-artifacts", "LocationTest");
             Files.createDirectories(dir);
@@ -148,7 +148,7 @@ public class LocationTest {
             Location.getLocationKey(locationName, info, conn);
             assertTrue(equalJsonStrings(info2, info[0]));
             assertThrows(
-                    CoreException.class,
+                    SqlDssException.class,
                     () -> Location.putLocation(
                             locationName,
                             "{\"elevation\": 500, \"active: true}",

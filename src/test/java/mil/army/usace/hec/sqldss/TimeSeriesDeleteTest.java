@@ -22,7 +22,7 @@ public class TimeSeriesDeleteTest {
     static FluentLogger logger = FluentLogger.forEnclosingClass();
     SqlDss _db = null;
 
-    SqlDss getDb() throws IOException, CoreException, SQLException, EncodedDateTimeException {
+    SqlDss getDb() throws IOException, SqlDssException, SQLException, EncodedDateTimeException {
         Path dir = Paths.get("build/test-artifacts", getClass().getSimpleName());
         Files.createDirectories(dir);
         String dbFileName = dir.resolve("tester.sqldss").toString();
@@ -77,7 +77,7 @@ public class TimeSeriesDeleteTest {
             // store all records //
             //-------------------//
             for (TimeSeriesContainer tsc : tscs) {
-                TimeSeries.putTimeSeriesValues(tsc, String.valueOf(Constants.REGULAR_STORE_RULE.REPLACE_ALL), db.getConnection());
+                TimeSeries.storeTimeSeriesValues(tsc, String.valueOf(Constants.REGULAR_STORE_RULE.REPLACE_ALL), db.getConnection());
             }
             String[] fullCatalog = new String[] {
                     "TestLoc|Code|INST-VAL|1Hour|0|Version 0|20250101",
