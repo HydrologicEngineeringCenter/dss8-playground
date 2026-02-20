@@ -75,6 +75,7 @@ the FirstValueTime and the `interval` value in the [timeseries](../tables/TIMESE
 * If the `interval_offset` value in the [timeseries](../tables/TIMESERIES.md) table _is set_ and does not equal the one 
 computed from the FirstValueTime and the `interval` value in the [timeseries](../tables/TIMESERIES.md) table, an exception
 must be thrown.
+* If value times are not all exactly one interval apart, an exception must be thrown.
 * If data has no quality codes or if all quality codes are 0, QualityFlag is set to 0 and no quality codes are stored.
 
 When retrieving:
