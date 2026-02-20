@@ -12,11 +12,11 @@ while allowing minute or second granularity on the other. Issues with `HecTime` 
 
 For SQLDSS I decided to use 64-bit integers to store date/time values in an encoded format which provides vast
 date ranges, seconds granularity, and human-readable values. In this format:
-* <span style="color: red;">The rightmost two digits are the second of the minute.</span>
-* <span style="color: yellow;">The next rightmost two digits are the minute of the hour.</span>
-* <span style="color: green;">The next rightmost two digits are the hour of the day.</span>
-* <span style="color: blue;">The next rightmost two digits are the day of the month.</span>
-* <span style="color: violet;">The next rightmost two digits are the month of the year.</span>
+* The rightmost two digits are the second of the minute.
+* The next rightmost two digits are the minute of the hour.
+* The next rightmost two digits are the hour of the day.
+* The next rightmost two digits are the day of the month.
+* The next rightmost two digits are the month of the year.
 * All digits left of the rightmost 10 are the year.
 
 Thus, 20260211144700 is 11Feb2026 14:47:00, and -23975640101000000 is 01Jan of the year -2397564 in the proleptic
