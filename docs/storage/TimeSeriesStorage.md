@@ -45,7 +45,7 @@ As seen in the [tsv table](../tables/TSV.md) document, each block contains:
 * a deleted flag
 * a BLOB<sup>2</sup> that contains the block information
 
-<sup>1</sup> Like in previous versions of HEC-DSS, the terms `block` and `record` are used somewhat in the context of time
+<sup>1</sup> Like in previous versions of HEC-DSS, the terms `block` and `record` are somewhat interchangeable in the context of time
 series. The term `record` is used more in context of time series catalogs. The term `block` is used more in the context of
 time series storage, where data for a single time series name ("pathname" in previous versions of HEC-DSS) is stored in
 multiple blocks, each of which holds a specific time window of the entire data set.
