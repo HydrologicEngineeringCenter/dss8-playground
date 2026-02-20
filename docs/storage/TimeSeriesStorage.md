@@ -30,9 +30,9 @@ the last possible value to be the _last value before 24:00_ on the last day of t
 |------------|----------|------------|------------------|---------------------|--------------------|
 | HEC-DSS v7 | 1Minute  | 1Day       | 12Aug2025        | 12Aug2025 00:01     | 12Aug2025 24:00    |  
 | SQLDSS     | 1Minute  | 1Day       | 12Aug2025        | 12Aug2025 00:00     | 12Aug2025 23:59    |  
-| HEC-DSS v7 | 1Hour    | 1Month     | 01Aug2025        | 01Aug2025 01:00     | 30Aug2025 24:00    | 
-| SQLDSS     | 1Hour    | 1Month     | 01Aug2025        | 01Aug2025 00:00     | 30Aug2025 23:59    | 
-| HEC-DSS v7 | 1Day     | 1Year      | 01Jan2025        | 02Jan2025 00:00     | 31Dec2025 24:00    |
+| HEC-DSS v7 | 1Hour    | 1Month     | 01Aug2025        | 01Aug2025 00:01     | 30Aug2025 24:00    |
+| SQLDSS     | 1Hour    | 1Month     | 01Aug2025        | 01Aug2025 00:00     | 30Aug2025 23:59    |
+| HEC-DSS v7 | 1Day     | 1Year      | 01Jan2025        | 01Jan2025 00:01     | 31Dec2025 24:00    |
 | SQLDSS     | 1Day     | 1Year      | 01Jan2025        | 01Jan2025 00:00     | 31Dec2025 23:59    |
 
 When using the HEC-DSS v7 API layer to retrieve data using a pathname that includes a D part, and without a time window,
