@@ -26,5 +26,3 @@ support multiple data types for the same record.
 * The base parameter, parameter type, interval, and duration must all exist in the database
 * Neither of the location context (if present) or location name may include the colon `:` character
 * None of the parts may contain the pipe `|` character.
-
-<sup>*</sup> See the [time series storage](../storage/TimeSeriesStorage.md) document for details on block storage of time series.
