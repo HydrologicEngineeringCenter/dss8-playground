@@ -31,6 +31,7 @@ and destruction.
 The only data type currently supported is regular time series, although adding irregular time series should
 not be complicated.
 
+## [Performance Comparisons](PerformanceComparison.md) ##
 ## [SQLite File & Connection Settings](SqliteFile+ConnectionSettings.md) ##
 ## [Dates & Times](Dates+Times.md) ##
 ## [Core vs API Layers](CoreVsApiLayers.md) ##
