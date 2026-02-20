@@ -52,6 +52,10 @@ tasks.register("UnpackJavaHeclib", Copy) {
     duplicatesStrategy = DuplicatesStrategy.EXCLUDE
 }
 
+tasks.named('javadoc', Javadoc) {
+    def o = options as org.gradle.external.javadoc.StandardJavadocDocletOptions
+    o.addBooleanOption('private', true)
+}
 tasks.named("test") {
     dependsOn("UnpackJavaHeclib")
     systemProperty "java.library.path", layout.buildDirectory.dir("native").get().asFile.absolutePath

@@ -68,7 +68,7 @@ public class Interval {
      * @return The case-correct interval name
      * @throws SqlDssException If no match is found for <code>name</code>
      */
-    static @NotNull String getInterval(@NotNull String name) throws SqlDssException {
+    public static @NotNull String getInterval(@NotNull String name) throws SqlDssException {
         String actualName;
         actualName = intervalNames.get(name.toLowerCase());
         if (actualName == null) {

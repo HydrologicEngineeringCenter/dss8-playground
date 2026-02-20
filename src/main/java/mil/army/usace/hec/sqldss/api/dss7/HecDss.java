@@ -22,6 +22,9 @@ import java.sql.SQLException;
  */
 public class HecDss implements AutoCloseable {
 
+    /**
+     * The SqlDss object wrapped by this object
+     */
     SqlDss sqldss = null;
 
     /**

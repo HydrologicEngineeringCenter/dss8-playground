@@ -121,7 +121,13 @@ public class Constants {
          */
         EN(1, "English (Imperial)");
 
+        /**
+         * The numeric code
+         */
         private final int code;
+        /**
+         * The description
+         */
         private final String description;
         /**
          * Constructor
@@ -243,7 +249,13 @@ public class Constants {
          */
         IMAGE(610, "Image");
 
+        /**
+         * The numeric code
+         */
         private final int code;
+        /**
+         * The description
+         */
         private final String description;
         /**
          * Constructor
@@ -305,6 +317,9 @@ public class Constants {
          */
         DO_NOT_REPLACE(5);
 
+        /**
+         * The numeric code
+         */
         private final int code;
         /**
          * Constructor
@@ -336,7 +351,7 @@ public class Constants {
      */
     public enum IRREGULAR_STORE_RULE {
         /**
-         * <code><b>0:</b> Replace all existing values</code>
+         * <code><b>0:</b></code> Replace all existing values
          */
         REPLACE_ALL(0),
         /**
@@ -360,6 +375,9 @@ public class Constants {
          */
         DO_NOT_REPLACE(4);
 
+        /**
+         * The numeric code
+         */
         private final int code;
         /**
          * Constructor

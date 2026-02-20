@@ -36,34 +36,73 @@ public final class TimeSeries {
         throw new AssertionError("Cannot instantiate");
     }
 
+    /**
+     * The logger for this class
+     */
     static FluentLogger logger = FluentLogger.forEnclosingClass();
 
     /**
      * Class to hold BLOB header information from time series records
      */
     static class TsvRecordHeader {
+        /**
+         * The record type
+         */
         RECORD_TYPE redordType;
+        /**
+         * The version of the record type
+         */
         int version;
+        /**
+         * The number of values in the block
+         */
         int valueCount;
+        /**
+         * Whether quality codes are stored in the block
+         */
         boolean hasQuality;
+        /**
+         * The time of the first value in the block
+         */
         long firstTime;
-        long[] times = null; // ITS only
+        /**
+         * The array of times for values in the block (irregular time series only)
+         */
+        long[] times = null;
     }
 
     /**
      * Class to hold information about time series records
      */
     static class TsvInfo {
+        /**
+         * The number of values in the block
+         */
         int valueCount;
+        /**
+         * The time of the first value in the block
+         */
         long firstTime;
+        /**
+         * The time of the last value in the block
+         */
         long lastTime;
+        /**
+         * The minimum non-missing value in the block
+         */
         double minValue = Double.MAX_VALUE;
+        /**
+         * The maximum non-missing value in the block
+         */
         double maxValue = Double.MIN_VALUE;
+        /**
+         * The time the block was lasts updated
+         */
         long lastUpdate;
     }
 
     /**
-     * Class to hold time series record information (used for merging data)
+     * Class to hold time series data for merge operations
      */
     public static class TsvData {
         /**
@@ -363,13 +402,10 @@ public final class TimeSeries {
      *                                      <li>time series <code>name</code> is not found</li>
      *                                      <li>time series <code>name</code> is deleted</li>
      *                                  </ul>
-     * @throws SQLException             If SQL error
-     * @throws EncodedDateTimeException In thrown by EncodedDateTime method
      */
     @NotNull
     static TimeSeriesContainer retrieveIrregularTimeSeriesValues(@NotNull String name, long startTime, long endTime,
-                                                                 String unit, @NotNull SqlDss sqldss) throws SqlDssException, SQLException,
-            EncodedDateTimeException, IOException {
+                                                                 String unit, @NotNull SqlDss sqldss) throws SqlDssException {
         throw new SqlDssException("Cannot yet retrieve irregular time series");
     }
 
@@ -1571,9 +1607,9 @@ public final class TimeSeries {
      * @param flags A string containing any permutation of the following:
      *              <dl>
      *                  <dt>N</dt>
-     *                  <dl>Include non-deleted records</dl>
+     *                  <dd>Include non-deleted records</dd>
      *                  <dt>D</dt>
-     *                  <dl>Include deleted records</dl>
+     *                  <dd>Include deleted records</dd>
      *              </dl>
      *              If null or empty, the effect is the same as "N" (only non-deleted records are cataloged)
      * @return The SQL statement
@@ -1659,9 +1695,9 @@ public final class TimeSeries {
      * @param flags A string containing any permutation of the following:
      *              <dl>
      *                  <dt>N</dt>
-     *                  <dl>Include non-deleted records</dl>
+     *                  <dd>Include non-deleted records</dd>
      *                  <dt>D</dt>
-     *                  <dl>Include deleted records</dl>
+     *                  <dd>Include deleted records</dd>
      *              </dl>
      *              If null or empty, the effect is the same as "N" (only non-deleted records are cataloged)
      * @return The SQL statement
@@ -1702,9 +1738,9 @@ public final class TimeSeries {
      * @param flags A string containing any permutation of the following:
      *              <dl>
      *                  <dt>N</dt>
-     *                  <dl>Include non-deleted records</dl>
+     *                  <dd>Include non-deleted records</dd>
      *                  <dt>D</dt>
-     *                  <dl>Include deleted records</dl>
+     *                  <dd>Include deleted records</dd>
      *              </dl>
      *              If null or empty, the effect is the same as "N" (only non-deleted records are cataloged)
      * @return The SQL statement

@@ -344,7 +344,7 @@ public final class EncodedDateTime {
     }
 
     /**
-     * Computes the number of <b>complete</b>intervals between two encoded date/times
+     * Computes the number of <b>complete</b> intervals between two encoded date/times
      * @param encodedStartTime The start date/time
      * @param encodedEndTime The end date/time
      * @param intervalMinutes The interval minutes of the intervals to count
@@ -546,14 +546,14 @@ public final class EncodedDateTime {
 
     /**
      * Creates an encoded date/time at a specified target time zone from and encoded date/time in a specified source time zone
-     * @param dateTIme The encoded date/time in the source time zone
+     * @param dateTime The encoded date/time in the source time zone
      * @param fromZone The source timme zone
      * @param toZone The target time zone
      * @return The encoded date/time in the target time zone
      * @throws EncodedDateTimeException If thrown by {@link #encodeDateTime(int[])}
      */
-    public static long changeTimeZone(long dateTIme, ZoneId fromZone, ZoneId toZone) throws EncodedDateTimeException {
-        int[] values = toValues(dateTIme);
+    public static long changeTimeZone(long dateTime, ZoneId fromZone, ZoneId toZone) throws EncodedDateTimeException {
+        int[] values = toValues(dateTime);
         ZonedDateTime fromTime  = ZonedDateTime.of(
                 values[0],
                 values[1],

@@ -49,15 +49,45 @@ import static mil.army.usace.hec.sqldss.core.Constants.UNIT_SYSTEM.EN;
  * </dl>
  */
 public class SqlDss implements AutoCloseable {
+    /**
+     * The JDBC connection
+     */
     private Connection conn = null;
+    /**
+     * The name of the SQLDSS file
+     */
     private String fileName = null;
+    /**
+     * The start of the default time window
+     */
     private Long startTime = null;
+    /**
+     * The end of the default time window
+     */
     private Long endTime = null;
+    /**
+     * Whether to trim blocks of consecutive missing values from the beginning and end of retrieved time series
+     */
     private boolean trimMissing = false;
+    /**
+     * The auto-commit state
+     */
     private boolean autoCommit = true;
+    /**
+     * The retrieval unit system
+     */
     private Constants.UNIT_SYSTEM unitSystem = EN;
+    /**
+     * The default regular time series store rule
+     */
     private Constants.REGULAR_STORE_RULE regularStoreRule = Constants.REGULAR_STORE_RULE.REPLACE_ALL;
+    /**
+     * The default irregular time series store rule
+     */
     private Constants.IRREGULAR_STORE_RULE irregularStoreRule = Constants.IRREGULAR_STORE_RULE.REPLACE_ALL;
+    /**
+     * The specified per-parameter retrieval units
+     */
     private final Map<String, String> retrieveUnits = new HashMap<>();
 
 
