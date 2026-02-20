@@ -1,6 +1,6 @@
 # SQLDSS (HEC-DSS v8) #
 ## Time Series Catalog Names ##
-Like HEC-DSS v7, SQLDSS can generate condensed and uncondensed catalogs of time series <sup>*</sup>.
+Like HEC-DSS v7, SQLDSS can generate condensed and uncondensed catalogs of time series.<sup>*</sup>
 Where HEC-DSS v7 puts the block start date or the time series extents in the D pathname parts, SQLDSS appends this
 information after the time series name, delimited by a pipe `|` character.
 
