@@ -3,8 +3,8 @@ package mil.army.usace.hec.sqldss.api.dss7;
 import hec.io.TimeSeriesContainer;
 import mil.army.usace.hec.sqldss.api.ApiException;
 import mil.army.usace.hec.sqldss.core.BaseParameter;
-import mil.army.usace.hec.sqldss.core.SqlDssException;
 import mil.army.usace.hec.sqldss.core.Interval;
+import mil.army.usace.hec.sqldss.core.SqlDssException;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.regex.Pattern;
@@ -31,7 +31,7 @@ public final class ApiUtil {
      * Determine whether  a string is a valid HEC-DSS v7 time series pathname
      * @param apiName The string to test
      * @return Whether the string is a valid HEC-DSS v7 time series pathname
-     * @throws ApiException
+     * @throws ApiException If <code>apiName</code> is not a valid HEC-DSS v7 pathname
      */
     public static boolean isTimeSeriesApiName(@NotNull String apiName) throws ApiException {
         String[] parts = apiName.split("/", -1);

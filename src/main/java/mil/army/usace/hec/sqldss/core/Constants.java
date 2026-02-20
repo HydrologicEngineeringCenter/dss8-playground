@@ -22,19 +22,19 @@ public class Constants {
     }
 
     /**
-     * The number of minutes that represents a 1Century interval
+     * The number of minutes that represents a <code>1Century</code> interval
      */
     public static final int CENTURY_MINUTES = 52560000;
     /**
-     * The number of minutes that represents a 1Decade interval
+     * The number of minutes that represents a <code>1Decade</code> interval
      */
     public static final int DECADE_MINUTES = 5256000;
     /**
-     * The number of minutes that represents a 1Year interval
+     * The number of minutes that represents a <code>1Year</code> interval
      */
     public static final int YEAR_MINUTES = 525600;
     /**
-     * The number of minutes that represents a 1Month interval
+     * The number of minutes that represents a <code>1Month</code> interval
      */
     public static final int MONTH_MINUTES = 43200;
     /**
@@ -112,7 +112,13 @@ public class Constants {
      * The universe of unit systems
      */
     public enum UNIT_SYSTEM {
+        /**
+         * <code><b>0:</b></code> Syst&egrave;me International
+         */
         SI(0, "Système International"),
+        /**
+         * <code><b>1:</b></code> English (Imperial)
+         */
         EN(1, "English (Imperial)");
 
         private final int code;
@@ -152,26 +158,89 @@ public class Constants {
      * The universe of record types
      */
     public enum RECORD_TYPE {
+        /**
+         * <code><b>90:</b></code> Array
+         */
         ARR(90, "Array"),
+        /**
+         * <code><b>105:</b></code> Regular-interval time series doubles
+         */
         RTD(105, "Regular-interval time series doubles"),
+        /**
+         * <code><b>106:</b></code> Regular-interval time series double pattern
+         */
         RTTD( 106, "Regular-interval time series double pattern"),
+        /**
+         * <code><b>107:</b></code> Regular-interval time series double profile
+         */
         RTPD(107, "Regular-interval time series double profile"),
+        /**
+         * <code><b>115:</b></code> Irregular-interval time series doubles
+         */
         ITD(115, "Irregular-interval time series doubles"),
+        /**
+         * <code><b>116:</b></code> Irregular-interval time series double pattern
+         */
         ITTD( 116, "Irregular-interval time series double pattern"),
+        /**
+         * <code><b>117:</b></code> Irregular-interval time series double profile
+         */
         ITPD(117, "Irregular-interval time series double profile"),
+        /**
+         * <code><b>205:</b></code> Paired Data doubles
+         */
         PDD(205, "Paired Data doubles"),
+        /**
+         * <code><b>300:</b></code> Text Data
+         */
         TXT(300, "Text Data"),
+        /**
+         * <code><b>310:</b></code> Text Table
+         */
         TT(310, "Text Table"),
+        /**
+         * <code><b>400:</b></code> Gridded - Undefined grib with time
+         */
         GUT(400, "Gridded - Undefined grib with time"),
+        /**
+         * <code><b>401:</b></code> Gridded - Undefined grid
+         */
         GU(401, "Gridded - Undefined grid"),
+        /**
+         * <code><b>410:</b></code> Gridded - HRAP grid with time reference
+         */
         GHT(410, "Gridded - HRAP grid with time reference"),
+        /**
+         * <code><b>411:</b></code> Gridded - HRAP grid
+         */
         GH(411, "Gridded - HRAP grid"),
+        /**
+         * <code><b>420:</b></code> Gridded - Albers with time reference
+         */
         GAT(420, "Gridded - Albers with time reference"),
+        /**
+         * <code><b>421:</b></code> Gridded - Albers
+         */
         GA(421, "Gridded - Albers"),
+        /**
+         * <code><b>430:</b></code> Gridded - Specified Grid with time reference
+         */
         GST(430, "Gridded - Specified Grid with time reference"),
+        /**
+         * <code><b>431:</b></code> Gridded - Specified Grid
+         */
         GS(431, "Gridded - Specified Grid"),
+        /**
+         * <code><b>450:</b></code> Spatial - TIN
+         */
         TIN(450, "Spatial - TIN"),
+        /**
+         * <code><b>600:</b></code> Generic File
+         */
         FILE(600, "Generic File"),
+        /**
+         * <code><b>610:</b></code> Image
+         */
         IMAGE(610, "Image");
 
         private final int code;
@@ -211,11 +280,29 @@ public class Constants {
      * The universe of regular time series store rules
      */
     public enum REGULAR_STORE_RULE {
+        /**
+         * <code><b>0:</b> Replace all existing values</code>
+         */
         REPLACE_ALL(0),
+        /**
+         * <code><b>1:</b></code> Only replace existing values that are missing or rejected
+         */
         REPLACE_MISSING_VALUES_ONLY(1),
-        REPLACE_ALL_CREATE(2), // alias for REPLACE_ALL for backward compatibility
-        REPLACE_ALL_DELETE(3), // alias for REPLACE_ALL for backward compatibility
+        /**
+         * <code><b>2:</b></code> alias for REPLACE_ALL for backward compatibility
+         */
+        REPLACE_ALL_CREATE(2),
+        /**
+         * <code><b>3:</b></code> alias for REPLACE_ALL for backward compatibility
+         */
+        REPLACE_ALL_DELETE(3),
+        /**
+         * <code><b>4:</b></code> Only replace existing values with non-missing replacements
+         */
         REPLACE_WITH_NON_MISSING(4),
+        /**
+         * <code><b>5:</b></code> Do not replace any existing values
+         */
         DO_NOT_REPLACE(5);
 
         private final int code;
@@ -248,11 +335,29 @@ public class Constants {
      * The universe of irregular time series store rules
      */
     public enum IRREGULAR_STORE_RULE {
+        /**
+         * <code><b>0:</b> Replace all existing values</code>
+         */
         REPLACE_ALL(0),
-        MERGE(0), // alias for REPLACE_ALL for backward compatibility
+        /**
+         * <code><b>0:</b></code> Alias for REPLACE_ALL for backward compatibility
+         */
+        MERGE(0),
+        /**
+         * <code><b>1:</b></code> Delete all existing values in time window of replacement values and store replacements
+         */
         DELETE_INSERT(1),
+        /**
+         * <code><b>2:</b></code> Only replace existing values that are missing or rejected
+         */
         REPLACE_MISSING_VALUES_ONLY(2),
+        /**
+         * <code><b>3:</b></code> Only replace existing values with non-missing replacements
+         */
         REPLACE_WITH_NON_MISSING(3),
+        /**
+         * <code><b>4:</b></code> Do not replace any existing values
+         */
         DO_NOT_REPLACE(4);
 
         private final int code;

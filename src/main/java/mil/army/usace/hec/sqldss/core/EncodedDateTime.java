@@ -240,6 +240,7 @@ public final class EncodedDateTime {
     /**
      * Creates a string representation of an encoded date/time in the specified HecTime style
      * @param encoded The encoded date/time
+     * @param hecTimeStyle The HecTime date style. See <b>HecTime Date Format</b> in <a href="https://www.hec.usace.army.mil/confluence/dssdocs/dssvueum/scripting/hectime-class">this page</a>
      * @return The equivalent string representation
      * @throws EncodedDateTimeException If thrown by {@link #toHecTime(long)}
      */

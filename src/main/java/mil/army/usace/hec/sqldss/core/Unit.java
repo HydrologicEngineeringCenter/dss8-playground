@@ -7,14 +7,11 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.ArrayDeque;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.List;
+import java.util.*;
 
 import static hec.lang.Const.UNDEFINED_DOUBLE;
-import static mil.army.usace.hec.sqldss.core.Constants.*;
+import static mil.army.usace.hec.sqldss.core.Constants.QUALITY_MISSING_VALUE;
+import static mil.army.usace.hec.sqldss.core.Constants.QUALITY_SCREENED_VALIDITY_MASK;
 
 /**
  * Utility class for working with units

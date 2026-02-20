@@ -15,7 +15,8 @@ import java.util.Map;
 import static mil.army.usace.hec.sqldss.core.Constants.UNIT_SYSTEM.EN;
 
 /**
- * The main class for SQLDSS access<br>
+ * The main class for SQLDSS access.
+ *
  * Several default may be set for these objects that affect storing and retrieving of data:
  * <dl>
  *     <dt>Storing</dt>

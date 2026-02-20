@@ -1,30 +1,24 @@
 package mil.army.usace.hec.sqldss.api.dss7;
 
-import hec.heclib.dss.CondensedReference;
-import hec.heclib.dss.DataReference;
 import hec.heclib.util.HecTime;
 import hec.heclib.util.stringContainer;
 import hec.hecmath.HecMath;
 import hec.hecmath.HecMathException;
 import hec.hecmath.TimeSeriesMath;
-import hec.io.DSSIdentifier;
 import hec.io.DataContainer;
-import hec.io.DataContainerTransformer;
 import hec.io.TimeSeriesContainer;
 import hec.lang.annotation.Scriptable;
 import mil.army.usace.hec.sqldss.api.ApiException;
 import mil.army.usace.hec.sqldss.core.*;
-import mil.army.usace.hec.sqldss.core.SqlDssException;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.sql.Connection;
 import java.sql.SQLException;
-import java.util.List;
 
 /**
- * Class to implement hec.heclib.dss.HecDss API on SQLDSS
+ * Class to implement <code>hec.heclib.dss.HecDss</code> API on <code>SQLDSS</code>
  */
 public class HecDss implements AutoCloseable {
 
@@ -72,6 +66,7 @@ public class HecDss implements AutoCloseable {
      * @throws SQLException If thrown by {@link #HecDss(String, String, String, boolean)}
      * @throws IOException If thrown by {@link #HecDss(String, String, String, boolean)}
      * @throws EncodedDateTimeException If thrown by {@link #HecDss(String, String, String, boolean)}
+     * @throws ApiException If time window is invalid
      */
     @NotNull
     @Contract("_, _ -> new")
@@ -123,14 +118,15 @@ public class HecDss implements AutoCloseable {
         return new HecDss(dssFileName, null, null, mustExist);
     }
 
-    /**@Scriptable
+    /**
      * Generate a normalized file name ending with ".dss"
      * @param inputFilename The relative or absolute path of a DSS file, with or without the extension
      * @param outputFilename The (possibly absolute) path of the DSS file with the extension
      * @param alwaysGetCanonical Specifies whether to retrieve the absolute path for the DSS file even if the file doesn't exist
      * @return Whether the DSS file exists
-     * @throws IOException
+     * @throws IOException on Error
      */
+    @Scriptable
     public static boolean getDssFilename(String inputFilename, stringContainer outputFilename,
                                          boolean alwaysGetCanonical) throws IOException {
         return hec.heclib.dss.HecDss.getDssFilename(inputFilename, outputFilename, alwaysGetCanonical);
@@ -259,7 +255,7 @@ public class HecDss implements AutoCloseable {
     }
 
     /**
-     * Retrieves data for a specified time window in a specfied unit
+     * Retrieves data for a specified time window in a specified unit
      * @param pathname The pathname of the data to retrieve
      * @param unit The unit to retrieve the data in
      * @param startTime The start of the time window (overrides any default time window)
@@ -317,6 +313,22 @@ public class HecDss implements AutoCloseable {
         }
     }
 
+    /**
+     * Retrieves data from a single record or entire data set
+     * @param pathname The pathname to retrieve data for
+     * @param readEntireSet Whether to retrieve the entire data set
+     * @return The retrieved data
+     * @throws ApiException If <ul>
+     *     <li>the underlying SqlDss object has been closed</li>
+     *     <li>thrown by {@link ApiUtil#isTimeSeriesApiName(String)}</li>
+     *     <li>thrown by {@link #get(String, String, boolean)}</li>
+     *     <li><code>pathname</code> is not recognized as a valid record type</li>
+     * </ul>
+     * @throws SqlDssException If thrown by thrown by {@link #get(String, String, boolean)}
+     * @throws SQLException On SQL error
+     * @throws EncodedDateTimeException If thrown by thrown by {@link #get(String, String, boolean)}
+     * @throws IOException If thrown by thrown by {@link #get(String, String, boolean)}
+     */
     public DataContainer get(String pathname, boolean readEntireSet) throws ApiException, SqlDssException, SQLException
             , EncodedDateTimeException, IOException {
         if (ApiUtil.isTimeSeriesApiName(pathname)) {
@@ -351,7 +363,7 @@ public class HecDss implements AutoCloseable {
      * @throws EncodedDateTimeException If thrown by <ul>
      *     <li>{@link SqlDss#retrieveTimeSeries(String, String, Boolean)}</li>
      *     <li>thrown by {@link #get(String, String)}</li>
-     *      * </ul>
+     </ul>
      * @throws IOException If thrown by {@link SqlDss#retrieveTimeSeries(String, Long, Long, String, Boolean)}
      */
     public DataContainer get(String pathname, String unit, boolean readEntireSet) throws ApiException, SqlDssException,
@@ -377,13 +389,13 @@ public class HecDss implements AutoCloseable {
         }
     }
 
-    public DataContainer get(DSSIdentifier dssId) throws ApiException {
-        throw new ApiException("Not Implemented");
-    }
+//    public DataContainer get(DSSIdentifier dssId) throws ApiException {
+//        throw new ApiException("Not Implemented");
+//    }
 
-    protected DataContainer get(DataReference dataSet) throws ApiException {
-        throw new ApiException("Not Implemented");
-    }
+//    protected DataContainer get(DataReference dataSet) throws ApiException {
+//        throw new ApiException("Not Implemented");
+//    }
 
     /**
      * Stores a time series to the database
@@ -415,9 +427,9 @@ public class HecDss implements AutoCloseable {
         }
     }
 
-    public void put(DataContainerTransformer rsc) throws ApiException {
-        throw new ApiException("Not Implemented");
-    }
+//    public void put(DataContainerTransformer rsc) throws ApiException {
+//        throw new ApiException("Not Implemented");
+//    }
 
     /**
      * Retrieves the time extents of a time series in the database
@@ -465,18 +477,24 @@ public class HecDss implements AutoCloseable {
         return key > 0;
     }
 
-    public List<String> getPathnameList() throws ApiException {
-        throw new ApiException("Not Implemented");
-    }
+//    public List<String> getPathnameList() throws ApiException {
+//        throw new ApiException("Not Implemented");
+//    }
 
-    public List<CondensedReference> getCondensedCatalog() throws ApiException {
-        throw new ApiException("Not Implemented");
-    }
+//    public List<CondensedReference> getCondensedCatalog() throws ApiException {
+//        throw new ApiException("Not Implemented");
+//    }
 
+    /**
+     * NoOp - for backward compatibility only
+     */
     protected void checkForError() {
         // noop
     }
 
+    /**
+     * NoOp - for backward compatibility only
+     */
     public void forceMultiUserAccess() {
         // noop
     }
@@ -543,32 +561,32 @@ public class HecDss implements AutoCloseable {
         return sqldss.getIrregularStoreRuleValue();
     }
 
-    public int recordsUpdated(long startTime, List<String> pathnames, List<Long> updateTimes,
-                              List<Integer> recordTypes) throws ApiException {
-        throw new ApiException("Not Implemented");
-    }
+//    public int recordsUpdated(long startTime, List<String> pathnames, List<Long> updateTimes,
+//                              List<Integer> recordTypes) throws ApiException {
+//        throw new ApiException("Not Implemented");
+//    }
 
-    public int recordsUpdated(HecTime startTime, List<String> pathnames, List<Long> updateTimes,
-                              List<Integer> recordTypes) throws ApiException {
-        throw new ApiException("Not Implemented");
-    }
+//    public int recordsUpdated(HecTime startTime, List<String> pathnames, List<Long> updateTimes,
+//                              List<Integer> recordTypes) throws ApiException {
+//        throw new ApiException("Not Implemented");
+//    }
 
-    public int recordsUpdated(String startTime, List<String> pathnames, List<Long> updateTimes,
-                              List<Integer> recordTypes) throws ApiException {
-        throw new ApiException("Not Implemented");
-    }
+//    public int recordsUpdated(String startTime, List<String> pathnames, List<Long> updateTimes,
+//                              List<Integer> recordTypes) throws ApiException {
+//        throw new ApiException("Not Implemented");
+//    }
 
-    public List<String> recordsUpdated(long startTime) throws ApiException {
-        throw new ApiException("Not Implemented");
-    }
+//    public List<String> recordsUpdated(long startTime) throws ApiException {
+//        throw new ApiException("Not Implemented");
+//    }
 
-    public List<String> recordsUpdated(HecTime startTime) throws ApiException {
-        throw new ApiException("Not Implemented");
-    }
+//    public List<String> recordsUpdated(HecTime startTime) throws ApiException {
+//        throw new ApiException("Not Implemented");
+//    }
 
-    public List<String> recordsUpdated(String startTime) throws ApiException {
-        throw new ApiException("Not Implemented");
-    }
+//    public List<String> recordsUpdated(String startTime) throws ApiException {
+//        throw new ApiException("Not Implemented");
+//    }
 
     /**
      * Sets the default time window
@@ -618,52 +636,73 @@ public class HecDss implements AutoCloseable {
         sqldss.setIrregularStoreRule(method);
     }
 
-    public int duplicateRecords(List<String> pathnameList, List<String> newPathnameList) throws ApiException {
-        throw new ApiException("Not Implemented");
-    }
 
-    public int duplicateRecords(String[] pathnameList, String[] newPathnameList) throws ApiException {
-        throw new ApiException("Not Implemented");
-    }
+//    public int duplicateRecords(List<String> pathnameList, List<String> newPathnameList) throws ApiException {
+//        throw new ApiException("Not Implemented");
+//    }
 
-    public int renameRecords(List<String> pathnameList, List<String> newPathnameList) throws ApiException {
-        throw new ApiException("Not Implemented");
-    }
+//    public int duplicateRecords(String[] pathnameList, String[] newPathnameList) throws ApiException {
+//        throw new ApiException("Not Implemented");
+//    }
 
-    public int renameRecords(String[] pathnameList, String[] newPathnameList) throws ApiException {
-        throw new ApiException("Not Implemented");
-    }
+//    public int renameRecords(List<String> pathnameList, List<String> newPathnameList) throws ApiException {
+//        throw new ApiException("Not Implemented");
+//    }
 
-    public int copyRecordsFrom(String toDSSFilename, List<String> pathnameList) throws ApiException {
-        throw new ApiException("Not Implemented");
-    }
+//    public int renameRecords(String[] pathnameList, String[] newPathnameList) throws ApiException {
+//        throw new ApiException("Not Implemented");
+//    }
 
-    public int copyRecordsFrom(String toDSSFilename, String[] pathnameList) throws ApiException {
-        throw new ApiException("Not Implemented");
-    }
+//    public int copyRecordsFrom(String toDSSFilename, List<String> pathnameList) throws ApiException {
+//        throw new ApiException("Not Implemented");
+//    }
 
-    public int copyRecordsInto(String fromDSSFilename, List<String> pathnameList) throws ApiException {
-        throw new ApiException("Not Implemented");
-    }
+//    public int copyRecordsFrom(String toDSSFilename, String[] pathnameList) throws ApiException {
+//        throw new ApiException("Not Implemented");
+//    }
 
-    public int copyRecordsInto(String fromDSSFilename, String[] pathnameList) throws ApiException {
-        throw new ApiException("Not Implemented");
-    }
+//    public int copyRecordsInto(String fromDSSFilename, List<String> pathnameList) throws ApiException {
+//        throw new ApiException("Not Implemented");
+//    }
 
-    public int delete(List<String> pathnameList) throws ApiException {
-        throw new ApiException("Not Implemented");
-    }
+//    public int copyRecordsInto(String fromDSSFilename, String[] pathnameList) throws ApiException {
+//        throw new ApiException("Not Implemented");
+//    }
 
-    public int delete(String[] pathnameList) throws ApiException {
-        throw new ApiException("Not Implemented");
-    }
+//    public int delete(List<String> pathnameList) throws ApiException {
+//        throw new ApiException("Not Implemented");
+//    }
 
+//    public int delete(String[] pathnameList) throws ApiException {
+//        throw new ApiException("Not Implemented");
+//    }
+
+    /**
+     * Retrieve data in the default retrieval unit for the parameter of the data. For time series, the time window
+     * retrieved is the default time window, if not null; otherwise the time window is determined by the D pathname part,
+     * if present
+     * @param pathname The pathname of the data to retrieve
+     * @return The retrieved data
+     * @throws HecMathException If thrown by {@link TimeSeriesMath#TimeSeriesMath()}
+     * @throws ApiException If thrown in {@link #get(String)}
+     * @throws EncodedDateTimeException If thrown in {@link #get(String)}
+     * @throws SqlDssException If thrown in {@link #get(String)}
+     * @throws SQLException If thrown in {@link #get(String)}
+     * @throws IOException If thrown in {@link #get(String)}
+     */
     public HecMath read(String pathname) throws HecMathException, ApiException, SqlDssException, SQLException,
             EncodedDateTimeException, IOException {
         TimeSeriesContainer tsc = (TimeSeriesContainer) get(pathname);
         return new TimeSeriesMath(tsc);
     }
 
+    /**
+     * Retrieves data for a specified time window
+     * @param pathname The pathname of the data to retrieve
+     * @param timeWindow The time window (overrides any default time window)
+     * @return The retrieved data
+     * @throws Exception If thrown by {@link #get(String, String, String, String)}
+     */
     public HecMath read(String pathname, String timeWindow) throws Exception {
         HecTime startTime = new HecTime();
         HecTime endTime = new HecTime();
@@ -673,11 +712,28 @@ public class HecDss implements AutoCloseable {
         return new TimeSeriesMath(tsc);
     }
 
+    /**
+     * Retrieves data for a specified time window
+     * @param pathname The pathname of the data to retrieve
+     * @param startTime The start of the time window (overrides any default time window)
+     * @param endTime The end of the time window
+     * @return The retrieved data
+     * @throws Exception If thrown by {@link #get(String, String, String, String)}
+     */
     public HecMath read(String pathname, String startTime, String endTime) throws Exception {
         TimeSeriesContainer tsc = (TimeSeriesContainer) get(pathname, startTime, endTime);
         return new TimeSeriesMath(tsc);
     }
 
+    /**
+     * Retrieves data for a specified time window
+     * @param pathname The pathname of the data to retrieve
+     * @param startTime The start of the time window (overrides any default time window)
+     * @param endTime The end of the time window
+     * @param trimMissing Whether to trim contiguous blocks of missing values from the beginning and end of the retrieved data
+     * @return The retrieved data
+     * @throws Exception If thrown by {@link #get(String, String, String, String)}
+     */
     public HecMath read(String pathname, String startTime, String endTime, boolean trimMissing) throws Exception {
         boolean oldTrimMissing = sqldss.getTrimMissing();
         sqldss.setTrimMissing(trimMissing);
@@ -686,6 +742,11 @@ public class HecDss implements AutoCloseable {
         return new TimeSeriesMath(tsc);
     }
 
+    /**
+     * Stores a time series to the database
+     * @param mathGuy The data to store
+     * @return 0 on success
+     */
     public int write(@NotNull HecMath mathGuy) {
         try {
             put(mathGuy.getData());
@@ -696,66 +757,97 @@ public class HecDss implements AutoCloseable {
         }
     }
 
-    public int write(DataContainerTransformer rating) throws HecMathException, ApiException {
-        throw new ApiException("Not Implemented");
+//    public int write(DataContainerTransformer rating) throws HecMathException, ApiException {
+//        throw new ApiException("Not Implemented");
+//    }
+
+    /**
+     * Stores a time series to the database
+     * @param dataContainer The data to store
+     * @return 0 on success
+     */
+    public int write(DataContainer dataContainer) {
+        try {
+            put(dataContainer);
+            return 0;
+        }
+        catch (ApiException | SqlDssException | SQLException | EncodedDateTimeException e) {
+            return -1;
+        }
     }
 
-    public int write(DataContainer dataContainer) throws HecMathException, ApiException {
-        throw new ApiException("Not Implemented");
-    }
+//    public int write(TimeSeriesMath mathGuy, String storeMethod) throws HecMathException, ApiException {
+//        throw new ApiException("Not Implemented");
+//    }
 
-    public int write(TimeSeriesMath mathGuy, String storeMethod) throws HecMathException, ApiException {
-        throw new ApiException("Not Implemented");
-    }
+//    public List<String> getCatalogedPathnames() throws ApiException {
+//        throw new ApiException("Not Implemented");
+//    }
 
-    public List<String> getCatalogedPathnames() throws ApiException {
-        throw new ApiException("Not Implemented");
-    }
+//    public List<String> getCatalogedPathnames(boolean forceNew) throws ApiException {
+//        throw new ApiException("Not Implemented");
+//    }
 
-    public List<String> getCatalogedPathnames(boolean forceNew) throws ApiException {
-        throw new ApiException("Not Implemented");
-    }
+//    public List<String> getCatalogedPathnames(String scanString) throws ApiException {
+//        throw new ApiException("Not Implemented");
+//    }
 
-    public List<String> getCatalogedPathnames(String scanString) throws ApiException {
-        throw new ApiException("Not Implemented");
-    }
+//    public List<String> searchPathnames(String scanString) throws ApiException {
+//        throw new ApiException("Not Implemented");
+//    }
 
-    public List<String> searchPathnames(String scanString) throws ApiException {
-        throw new ApiException("Not Implemented");
-    }
+//    public List<String> getCatalogedPathnames(String scanString, boolean forceNew) throws ApiException {
+//        throw new ApiException("Not Implemented");
+//    }
 
-    public List<String> getCatalogedPathnames(String scanString, boolean forceNew) throws ApiException {
-        throw new ApiException("Not Implemented");
-    }
+//    public int hashCode() {
+//        throw new RuntimeException("Not Implemented");
+//    }
 
-    public int hashCode() {
-        throw new RuntimeException("Not Implemented");
-    }
+//    public boolean equals(Object obj) {
+//        throw new RuntimeException("Not Implemented");
+//    }
 
-    public boolean equals(Object obj) {
-        throw new RuntimeException("Not Implemented");
-    }
+//    protected Object clone() throws CloneNotSupportedException {
+//        throw new RuntimeException("Not Implemented");
+//    }
 
-    protected Object clone() throws CloneNotSupportedException {
-        throw new RuntimeException("Not Implemented");
-    }
-
+    /**
+     * @return a String representation of this object
+     */
     public String toString() {
         return String.format("{%s %s}", this.getClass().getName(), sqldss.getFileName());
     }
 
+    /**
+     * Perform a commit on the SQLDSS object
+     * @throws SQLException If SQL error
+     */
     public void commit() throws SQLException {
         sqldss.commit();
     }
 
-    public void setAutoCommit(boolean state) throws SQLException {
-        sqldss.setAutoCommit(state);
+    /**
+     * Sets the auto-commit state of the SQLDSS object
+     * @param autoCommit The auto-commit state
+     * @throws SQLException If thrown by {@link SqlDss#setAutoCommit(boolean)}
+     */
+    public void setAutoCommit(boolean autoCommit) throws SQLException {
+        sqldss.setAutoCommit(autoCommit);
     }
 
+    /**
+     * @return The auto-commit state of the SQLDSS object
+     */
     public boolean getAutoCommit() {
         return sqldss.getAutoCommit();
     }
 
+    /**
+     * Closes the underlying SQLDSS file
+     * @throws SqlDssException If thrown by {@link SqlDss#close()}
+     * @throws SQLException If SQL error
+     */
     @Override
     public void close() throws SqlDssException, SQLException {
         try {

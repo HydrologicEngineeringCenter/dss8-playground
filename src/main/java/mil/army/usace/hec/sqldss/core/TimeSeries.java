@@ -9,7 +9,10 @@ import org.jetbrains.annotations.Nullable;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
-import java.sql.*;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -63,10 +66,25 @@ public final class TimeSeries {
      * Class to hold time series record information (used for merging data)
      */
     public static class TsvData {
+        /**
+         * The array of times
+         */
         public long[] times = null;
+        /**
+         * The array of values
+         */
         public double[] values = null;
+        /**
+         * The array of quality codes
+         */
         public int[] qualities = null;
+        /**
+         * The offset into the arrays of the first value to use for operations
+         */
         public int offset = 0;
+        /**
+         * The number of values (starting at <code>offset</code> to use for operations
+         */
         public int count = -1;
     }
 
