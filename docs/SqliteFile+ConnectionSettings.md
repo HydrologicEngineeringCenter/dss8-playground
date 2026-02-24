@@ -6,7 +6,7 @@
 **Page Size:**
 
 In preliminary tests with regular time series, a page size of 8192 bytes seems optimal unless
-file size is prioritied over read/write performance.
+file size is prioritized over read/write performance.
 
 File size grows with page size, with a page size of 512 bytes
 resulting in the same file size as an HEC-DSS v7 file, and a page size of 65536 resulting in a file about 50%
@@ -35,7 +35,7 @@ pragma foreign_keys = ON;
 
 By default SQLite has auto-commit enabled. When inserting or updating a large number of records this becomes a performance
 problem. Performance can be greatly increased by turning off auto-commit for such activity and performing `commit;`
-statements at reasonable intervals and after the inserting/updating is finished, as in the follwoing Java example, in 
+statements at reasonable intervals and after the inserting/updating is finished, as in the following Java example, in 
 which the SqlDss object has:
 * a `setAutoCommit(boolean state)` method that sets the auto-commit state of the underlying SQLite file
 * a `commit()` method that performs a commit on the underlying SQLite file
