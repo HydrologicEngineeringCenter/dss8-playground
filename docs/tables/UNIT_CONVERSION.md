@@ -138,9 +138,9 @@ insert into unit_conversion (from_unit, to_unit, factor, offset, function) value
 insert into unit_conversion (from_unit, to_unit, factor, offset, function) values ('1000 m3', 'mgal', 0.264172037, 0, null);
 insert into unit_conversion (from_unit, to_unit, factor, offset, function) values ('1000 m3', 'mile3', 2.39913E-07, 0, null);
 insert into unit_conversion (from_unit, to_unit, factor, offset, function) values ('B', 'B', 1, 0, null);
-B	Hz			ARG1 1000 * .5 ^
-B	MHz			ARG1 1000 * .5 ^ 0.0000010 *
-B	kHz			ARG1 1000 * .5 ^ 0.0010 *
+insert into unit_conversion (from_unit, to_unit, factor, offset, function) values ('B', 'Hz', null, null, 'ARG1 1000 * .5 ^');
+insert into unit_conversion (from_unit, to_unit, factor, offset, function) values ('B', 'MHz', null, null, 'ARG1 1000 * .5 ^ 0.0000010 *');
+insert into unit_conversion (from_unit, to_unit, factor, offset, function) values ('B', 'kHz', null, null, 'ARG1 1000 * .5 ^ 0.0010 *');
 insert into unit_conversion (from_unit, to_unit, factor, offset, function) values ('C', 'C', 1, 0, null);
 insert into unit_conversion (from_unit, to_unit, factor, offset, function) values ('C', 'F', 1.8, 32, null);
 insert into unit_conversion (from_unit, to_unit, factor, offset, function) values ('C', 'K', 1, 273.15, null);
@@ -148,7 +148,7 @@ insert into unit_conversion (from_unit, to_unit, factor, offset, function) value
 insert into unit_conversion (from_unit, to_unit, factor, offset, function) values ('C-day', 'F-day', 1.8, 0, null);
 insert into unit_conversion (from_unit, to_unit, factor, offset, function) values ('F', 'C', 0.555555556, -17.77777778, null);
 insert into unit_conversion (from_unit, to_unit, factor, offset, function) values ('F', 'F', 1, 0, null);
-F	K			ARG1 32 - 1.8 / 273.15 +
+insert into unit_conversion (from_unit, to_unit, factor, offset, function) values ('F' 'K', null, null, 'ARG1 32 - 1.8 / 273.15 +');
 insert into unit_conversion (from_unit, to_unit, factor, offset, function) values ('F-day', 'C-day', 0.555555556, 0, null);
 insert into unit_conversion (from_unit, to_unit, factor, offset, function) values ('F-day', 'F-day', 1, 0, null);
 insert into unit_conversion (from_unit, to_unit, factor, offset, function) values ('FNU', 'FNU', 1, 0, null);
@@ -165,7 +165,7 @@ insert into unit_conversion (from_unit, to_unit, factor, offset, function) value
 insert into unit_conversion (from_unit, to_unit, factor, offset, function) values ('GWh', 'Wh', 1000000000, 0, null);
 insert into unit_conversion (from_unit, to_unit, factor, offset, function) values ('GWh', 'cal', 8.60421E+11, 0, null);
 insert into unit_conversion (from_unit, to_unit, factor, offset, function) values ('GWh', 'kWh', 1000000, 0, null);
-Hz	B			ARG1 2 ^ 1000 /
+insert into unit_conversion (from_unit, to_unit, factor, offset, function) values ('Hz', 'B', null, null, 'ARG1 2 ^ 1000 /');
 insert into unit_conversion (from_unit, to_unit, factor, offset, function) values ('Hz', 'Hz', 1, 0, null);
 insert into unit_conversion (from_unit, to_unit, factor, offset, function) values ('Hz', 'MHz', 0.000001, 0, null);
 insert into unit_conversion (from_unit, to_unit, factor, offset, function) values ('Hz', 'kHz', 0.001, 0, null);
@@ -181,7 +181,7 @@ insert into unit_conversion (from_unit, to_unit, factor, offset, function) value
 insert into unit_conversion (from_unit, to_unit, factor, offset, function) values ('J/m2', 'langley', 2.39006E-05, 0, null);
 insert into unit_conversion (from_unit, to_unit, factor, offset, function) values ('JTU', 'JTU', 1, 0, null);
 insert into unit_conversion (from_unit, to_unit, factor, offset, function) values ('K', 'C', 1, -273.15, null);
-K	F			ARG1 273.15 - 1.8 * 32 +
+insert into unit_conversion (from_unit, to_unit, factor, offset, function) values ('K', 'F', null, null, 'ARG1 273.15 - 1.8 * 32 +');
 insert into unit_conversion (from_unit, to_unit, factor, offset, function) values ('K', 'K', 1, 0, null);
 insert into unit_conversion (from_unit, to_unit, factor, offset, function) values ('KAF/mon', 'KAF/mon', 1, 0, null);
 insert into unit_conversion (from_unit, to_unit, factor, offset, function) values ('KAF/mon', 'cfs', 16.56399726, 0, null);
@@ -191,7 +191,7 @@ insert into unit_conversion (from_unit, to_unit, factor, offset, function) value
 insert into unit_conversion (from_unit, to_unit, factor, offset, function) values ('KAF/mon', 'kcms', 0.00046904, 0, null);
 insert into unit_conversion (from_unit, to_unit, factor, offset, function) values ('KAF/mon', 'mcm/mon', 1.233481838, 0, null);
 insert into unit_conversion (from_unit, to_unit, factor, offset, function) values ('KAF/mon', 'mgd', 10.70559047, 0, null);
-MHz	B			ARG1 1.0E+6 * 2 ^ 1000 /
+insert into unit_conversion (from_unit, to_unit, factor, offset, function) values ('MHz', 'B', null, null, 'ARG1 1.0E+6 * 2 ^ 1000 /');
 insert into unit_conversion (from_unit, to_unit, factor, offset, function) values ('MHz', 'Hz', 1000000, 0, null);
 insert into unit_conversion (from_unit, to_unit, factor, offset, function) values ('MHz', 'MHz', 1, 0, null);
 insert into unit_conversion (from_unit, to_unit, factor, offset, function) values ('MHz', 'kHz', 1000, 0, null);
@@ -487,7 +487,7 @@ insert into unit_conversion (from_unit, to_unit, factor, offset, function) value
 insert into unit_conversion (from_unit, to_unit, factor, offset, function) values ('in/hr', 'mph', 1.57828E-05, 0, null);
 insert into unit_conversion (from_unit, to_unit, factor, offset, function) values ('k$', '$', 1000, 0, null);
 insert into unit_conversion (from_unit, to_unit, factor, offset, function) values ('k$', 'k$', 1, 0, null);
-kHz	B			ARG1 1.0E+3 * 2 ^ 1000 /
+insert into unit_conversion (from_unit, to_unit, factor, offset, function) values ('kHz', 'B', null, null, 'ARG1 1.0E+3 * 2 ^ 1000 /');
 insert into unit_conversion (from_unit, to_unit, factor, offset, function) values ('kHz', 'Hz', 1000, 0, null);
 insert into unit_conversion (from_unit, to_unit, factor, offset, function) values ('kHz', 'MHz', 0.001, 0, null);
 insert into unit_conversion (from_unit, to_unit, factor, offset, function) values ('kHz', 'kHz', 1, 0, null);
