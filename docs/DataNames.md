@@ -5,22 +5,13 @@ are free to have different naming conventions. If an API layer is used, it is re
 API-centric names and the core SQLDSS names.
 
 ### Location Names ###
-Like CWMS, SQLDSS uses base locations and sub-locations, separated by the first hyphen `-`character. Base locations
-comprise an optional context, which appears before the base-location name and is separated by a colon `:` character.
-* *context*`:`*base_location*`-`*sub_location*
-* *context*`:`*base_location*
-* *base_location*
-* *base_location*`-`*sub_location*
+A location name is one piece of text, matched without regard to upper/lower case. An API layer can put
+whatever structure it wants in that text - for example, `Greensburg` or `SWT:Greensburg`.
 
-The only constraints on location names are:
-* Neither of `:`, `-` may appear in a context.
-* `-` may not appear in a base location
-
-SQLDSS imposes no meaning on the context. The DSS7 API layer maps it to the A pathname part, while a CWMS API layer
-might map it to an office.
+See [Location Names](naming/LocationNames.md) for the structure the bundled API layers use.
 
 ### Parameter Names ###
-Like CWMS, SQLDSS uses base locations and sub-locations, separated by the first hyphen `-`character. Base parameters
+Like CWMS, SQLDSS uses base parameters and sub-parameters, separated by the first hyphen `-` character. Base parameters
 are constrained by the [BASE_PARAMETER](tables/BASE_PARAMETER.md) table; sub-parameters are unconstrained.
 
 ### Parameter Type Names ###

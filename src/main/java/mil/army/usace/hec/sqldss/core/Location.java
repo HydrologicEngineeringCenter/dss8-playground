@@ -72,55 +72,16 @@ public class Location {
      * @throws SQLException If SQL error
      */
     public static long getLocationKey(@NotNull String locationName, String @NotNull [] info, Connection conn) throws SQLException {
-        String context = "";
-        String location;
-        String baseLocation;
-        String subLocation = "";
-        info[0] = "";
-        long baseKey;
         long key;
         boolean nullKey;
-        if (locationName.indexOf(':') == -1) {
-            location = locationName;
-        }
-        else {
-            String[] parts = locationName.split(":", 2);
-            context = parts[0].strip();
-            location = parts[1].strip();
-        }
-        if (location.indexOf('-') == -1) {
-            baseLocation = location;
-        }
-        else {
-            String[] parts = location.split("-", 2);
-            baseLocation = parts[0].strip();
-            subLocation = parts[1].strip();
-        }
-        //-------------------------//
-        // query for base location //
-        //-------------------------//
-        try (PreparedStatement ps = conn.prepareStatement(
-                "select key from base_location where context=? and name=?"
-        )) {
-            ps.setString(1, context);
-            ps.setString(2, baseLocation);
-            try (ResultSet rs = ps.executeQuery()) {
-                rs.next();
-                baseKey = rs.getLong("key");
-                nullKey = rs.wasNull();
-            }
-        }
-        if (nullKey) {
-            return -1;
-        }
+        info[0] = "";
         //--------------------//
         // query for location //
         //--------------------//
         try (PreparedStatement ps = conn.prepareStatement(
-                "select key, info from location where base_location=? and sub_location=?"
+                "select key, info from location where name=?"
         )) {
-            ps.setLong(1, baseKey);
-            ps.setString(2, subLocation);
+            ps.setString(1, locationName);
             try (ResultSet rs = ps.executeQuery()) {
                 rs.next();
                 key = rs.getLong("key");
@@ -159,11 +120,7 @@ public class Location {
      * @throws SqlDssException If other errors storing location
      */
     public static long putLocation(String locationName, String info, boolean mergeInfo, Connection conn) throws SQLException, SqlDssException {
-        String context = "";
-        String location;
-        String baseLocation;
-        String subLocation = "";
-        long baseKey;
+        validateLocationName(locationName);
         boolean nullKey;
         String[] existingInfo = new String[1];
         long key = getLocationKey(locationName, existingInfo, conn);
@@ -202,69 +159,11 @@ public class Location {
         //--------------------------------------//
         // location doesn't exist, so create it //
         //--------------------------------------//
-        if (locationName.indexOf(':') == -1) {
-            location = locationName;
-        }
-        else {
-            String[] parts = locationName.split(":", 2);
-            context = parts[0].strip();
-            location = parts[1].strip();
-        }
-        if (location.indexOf('-') == -1) {
-            baseLocation = location;
-        }
-        else {
-            String[] parts = location.split("-", 2);
-            baseLocation = parts[0].strip();
-            subLocation = parts[1].strip();
-        }
-        //-------------------------//
-        // query for base location //
-        //-------------------------//
         try (PreparedStatement ps = conn.prepareStatement(
-                "select key from base_location where context=? and name=?"
+                "insert into location (name, info) values (?, ?)"
         )) {
-            ps.setString(1, context);
-            ps.setString(2, baseLocation);
-            try (ResultSet rs = ps.executeQuery()) {
-                rs.next();
-                baseKey = rs.getLong("key");
-                nullKey = rs.wasNull();
-            }
-        }
-        if (nullKey) {
-            //----------------------//
-            // insert base location //
-            //----------------------//
-            try (PreparedStatement ps = conn.prepareStatement(
-                    "insert into base_location (context, name) values (?, ?)"
-            )) {
-                ps.setString(1, context);
-                ps.setString(2, baseLocation);
-                ps.executeUpdate();
-            }
-            try (PreparedStatement ps = conn.prepareStatement(
-                    Constants.SQL_SELECT_LAST_INSERT_ROWID
-            )) {
-                try (ResultSet rs = ps.executeQuery()) {
-                    rs.next();
-                    baseKey = rs.getLong(Constants.LAST_INSERT_ROWID);
-                    nullKey = rs.wasNull();
-                }
-            }
-        }
-        if (nullKey) {
-            throw new SqlDssException("Error storing base location " + locationName);
-        }
-        //-----------------//
-        // insert location //
-        //-----------------//
-        try (PreparedStatement ps = conn.prepareStatement(
-                "insert into location (base_location, sub_location, info) values (?, ?, ?)"
-        )) {
-            ps.setLong(1, baseKey);
-            ps.setString(2, subLocation);
-            ps.setString(3, info);
+            ps.setString(1, locationName);
+            ps.setString(2, info);
             ps.executeUpdate();
         }
         try (PreparedStatement ps = conn.prepareStatement(
@@ -277,14 +176,19 @@ public class Location {
             }
         }
         if (nullKey) {
-            if (context.isEmpty()) {
-                throw new SqlDssException("Error retrieving location " + location);
-            }
-            else {
-                throw new SqlDssException("Error retrieving location " + context + ":" + baseLocation);
-
-            }
+            throw new SqlDssException("Error storing location " + locationName);
         }
         return key;
+    }
+
+    /**
+     * Validates a location name: must not be null or empty.
+     * @param locationName The location name to validate
+     * @throws SqlDssException If the location name is null or empty
+     */
+    static void validateLocationName(String locationName) throws SqlDssException {
+        if (locationName == null || locationName.isEmpty()) {
+            throw new SqlDssException("Location name may not be null or empty");
+        }
     }
 }

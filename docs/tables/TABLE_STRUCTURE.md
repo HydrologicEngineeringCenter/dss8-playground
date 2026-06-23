@@ -12,8 +12,7 @@
 [BASE_PARAMETER](BASE_PARAMETER.md) Universe of available base parameters  
 ### User Tables <sup>5</sup> ###
 [PARAMETER](PARAMETER.md)  Parameters represented by values  
-[BASE_LOCATION](BASE_LOCATION.md)  Base locations with optional context  
-[LOCATION](LOCATION.md)  Locations within base locations  
+[LOCATION](LOCATION.md)  Locations, each identified by a single name 
 [TIMESERIES](TABLE_STRUCTURE.md)  Time series specifications  
 [TSV](TSV.md)  Time series value blocks  
 [TSV_INFO](TSV_INFO.md)  Stats for time series value blocks

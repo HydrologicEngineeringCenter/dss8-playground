@@ -85,7 +85,6 @@ API-centric names and the core SQLDSS names.
 * [Time Series Catalogs](naming/TimeSeriesCatalogNames.md)
 
 ## Data Storage ##
-* [Locations](storage/LocationStorage.md)
 * [Time Series](storage/TimeSeriesStorage.md)
 
 
