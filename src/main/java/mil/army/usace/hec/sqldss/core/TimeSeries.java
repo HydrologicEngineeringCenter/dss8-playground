@@ -1539,9 +1539,7 @@ public final class TimeSeries {
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {
                     long key = rs.getLong("key");
-                    String context = rs.getString("context");
-                    String baseLocation = rs.getString("base_location");
-                    String subLocation = rs.getString("sub_location");
+                    String location = rs.getString("location");
                     String baseParameter = rs.getString("base_parameter");
                     String subParameter = rs.getString("sub_parameter");
                     String parameterType = rs.getString("parameter_type");
@@ -1550,13 +1548,7 @@ public final class TimeSeries {
                     String version = rs.getString("version");
 
                     StringBuilder name = new StringBuilder();
-                    if (context != null && !context.isEmpty()) {
-                        name.append(context).append(':');
-                    }
-                    name.append(baseLocation);
-                    if (subLocation != null && !subLocation.isEmpty()) {
-                        name.append('-').append(subLocation);
-                    }
+                    name.append(location);
                     name.append('|').append(baseParameter);
                     if (subParameter != null && !subParameter.isEmpty()) {
                         name.append('-').append(subParameter);
@@ -1622,9 +1614,7 @@ public final class TimeSeries {
             if (matchDeleted) {
                 sql = """
                         select ts.key,
-                               bl.context,
-                               bl.name as base_location,
-                               l.sub_location,
+                               l.name as location,
                                p.base_parameter,
                                p.sub_parameter,
                                parameter_type,
@@ -1633,17 +1623,13 @@ public final class TimeSeries {
                                version
                           from time_series ts,
                                location l,
-                               base_location bl,
                                parameter p
                          where l.key = ts.location
-                           and bl.key = l.base_location
                            and p.key = ts.parameter""";
             } else {
                 sql = """
                         select ts.key,
-                               bl.context,
-                               bl.name as base_location,
-                               l.sub_location,
+                               l.name as location,
                                p.base_parameter,
                                p.sub_parameter,
                                parameter_type,
@@ -1652,10 +1638,8 @@ public final class TimeSeries {
                                version
                           from time_series ts,
                                location l,
-                               base_location bl,
                                parameter p
                          where l.key = ts.location
-                           and bl.key = l.base_location
                            and p.key = ts.parameter
                            and ts.deleted = 0""";
             }
@@ -1663,9 +1647,7 @@ public final class TimeSeries {
         else if (matchDeleted) {
             sql = """
                         select ts.key,
-                               bl.context,
-                               bl.name as base_location,
-                               l.sub_location,
+                               l.name as location,
                                p.base_parameter,
                                p.sub_parameter,
                                parameter_type,
@@ -1674,10 +1656,8 @@ public final class TimeSeries {
                                version
                           from time_series ts,
                                location l,
-                               base_location bl,
                                parameter p
                          where l.key = ts.location
-                           and bl.key = l.base_location
                            and p.key = ts.parameter
                            and (ts.deleted = 1
                                 or exists (select *

@@ -43,7 +43,6 @@ public class Init {
         createDurationTable(conn);
         createBaseParameterTable(conn);
         createParameterTable(conn);
-        createBaseLocationTable(conn);
         createLocationTable(conn);
         createTimeSeriesTable(conn);
         createTsvTable(conn);
@@ -476,29 +475,6 @@ public class Init {
 
 
     /**
-     * Create/populate BASE_LOCATION table
-     * @param conn The JDBC connection
-     * @throws SQLException on SQL error
-     */
-    public static void createBaseLocationTable(@NotNull Connection conn) throws SQLException {
-        String sqlTable =
-                """
-                        create table base_location(
-                          key integer primary key,
-                          context text not null default ('') collate nocase, -- office, A pathname part, ...
-                          name text not null collate nocase)""";
-
-        String sqlIndex = "create unique index idx_base_location on base_location (context, name)";
-
-        try (PreparedStatement ps = conn.prepareStatement(sqlTable)) {
-            ps.executeUpdate();
-        }
-        try (PreparedStatement ps = conn.prepareStatement(sqlIndex)) {
-            ps.executeUpdate();
-        }
-    }
-
-    /**
      * Create/populate LOCATION table
      * @param conn The JDBC connection
      * @throws SQLException on SQL error
@@ -508,12 +484,10 @@ public class Init {
                 """
                         create table location(
                           key integer primary key,
-                          base_location integer,
-                          sub_location text default ('') collate nocase,
-                          info text default (''), -- JSON object
-                          foreign key (base_location) references base_location (key))""";
+                          name text not null collate nocase, 
+                          info text default (''))""";        // info is a JSON object
 
-        String sqlIndex = "create unique index idx_location on location (base_location, sub_location)";
+        String sqlIndex = "create unique index idx_location on location (name)";
 
         try (PreparedStatement ps = conn.prepareStatement(sqlTable)) {
             ps.executeUpdate();
